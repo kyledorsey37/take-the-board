@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+
+{% block title %}Standings | Take the Board{% endblock %}
+
+{% block content %}
+<section class="standings-hero">
+  <div class="standings-hero-inner">
+    <p class="eyebrow">The standings</p>
+    <div class="section-heading section-heading-stack">
+      <div>
+        <h1>Which fanbases are showing up?</h1>
+        <p>See which fanbases are showing up, taking boards, and winning the rivalry bragging rights.</p>
+      </div>
+      {% if active_week %}
+        <div class="standings-periods" aria-label="Standings period">
+          <a class="period-link{% if period == 'week' %} is-active{% endif %}" href="?period=week">This week</a>
+          <a class="period-link{% if period == 'all' %} is-active{% endif %}" href="?period=all">All time</a>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section standings-section">
+  <div class="standings-summary" aria-label="Standings summary">
+    <div class="summary-stat">
+      <span>Schools backed</span>
+      <strong>{{ summary.school_count }}</strong>
+    </div>
+    <div class="summary-stat">
+      <span>Board takeovers</span>
+      <strong>{{ summary.takeover_count }}</strong>
+    </div>
+    <div class="summary-stat">
+      <span>Conferences represented</span>
+      <strong>{{ summary.conference_count }}</strong>
+    </div>
+    <div class="summary-stat">
+      <span>Boards under siege</span>
+      <strong>{{ summary.board_count }}</strong>
+    </div>
+  </div>
+
+  <div class="standings-grid">
+    <section class="standings-panel standings-panel-wide">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Fanbase standings</p>
+          <h2>Top schools by backing</h2>
+        </div>
+        <p class="panel-note">Backing follows the school selected by the bidder.</p>
+      </div>
+      <div class="standings-table" role="table" aria-label="Top schools by backing">
+        <div class="standings-table-head" role="row">
+          <span>Rank</span><span>School</span><span>Takeovers</span><span>Backing</span>
+        </div>
+        {% for row in fanbase_rows %}
+          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}">
+            <span class="standing-rank">{{ row.rank }}</span>
+            <span class="standing-name"><strong>{{ row.school_name }}</strong><small>{{ row.conference }}</small></span>
+            <span>{{ row.takeovers }}</span>
+            <strong>{{ row.total_spend_display }}</strong>
+          </a>
+        {% empty %}
+          <p class="standings-empty">Successful takeovers will appear here.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="standings-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Conference showdown</p>
+          <h2>Which conference is winning?</h2>
+        </div>
+      </div>
+      <div class="standings-table standings-table-compact" role="table" aria-label="Conference spending">
+        <div class="standings-table-head" role="row">
+          <span>Rank</span><span>Conference</span><span>Schools</span><span>Backing</span>
+        </div>
+        {% for row in conference_rows %}
+          <div class="standings-row" role="row">
+            <span class="standing-rank">{{ row.rank }}</span>
+            <span class="standing-name"><strong>{{ row.conference }}</strong><small>{{ row.takeovers }} takeover{{ row.takeovers|pluralize }}</small></span>
+            <span>{{ row.schools }}</span>
+            <strong>{{ row.total_spend_display }}</strong>
+          </div>
+        {% empty %}
+          <p class="standings-empty">Conference totals will appear after the first takeover.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="standings-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Fan leaderboard</p>
+          <h2>Top spenders</h2>
+        </div>
+      </div>
+      <div class="standings-table standings-table-compact" role="table" aria-label="Top spenders">
+        <div class="standings-table-head" role="row">
+          <span>Rank</span><span>Board name</span><span>Moves</span><span>Total</span>
+        </div>
+        {% for row in spender_rows %}
+          <div class="standings-row" role="row">
+            <span class="standing-rank">{{ row.rank }}</span>
+            <span class="standing-name"><strong>{{ row.display_name }}</strong><small>Biggest {{ row.biggest_bid_display }}</small></span>
+            <span>{{ row.takeovers }}</span>
+            <strong>{{ row.total_spend_display }}</strong>
+          </div>
+        {% empty %}
+          <p class="standings-empty">Top spenders will appear after the first takeover.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="standings-panel">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">Target watch</p>
+          <h2>Most attacked boards</h2>
+        </div>
+      </div>
+      <div class="standings-table standings-table-compact" role="table" aria-label="Most attacked boards">
+        <div class="standings-table-head" role="row">
+          <span>Rank</span><span>Board</span><span>Takeovers</span><span>Total</span>
+        </div>
+        {% for row in attacked_rows %}
+          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}">
+            <span class="standing-rank">{{ row.rank }}</span>
+            <span class="standing-name"><strong>{{ row.school_name }}</strong><small>Target board</small></span>
+            <span>{{ row.takeovers }}</span>
+            <strong>{{ row.total_spend_display }}</strong>
+          </a>
+        {% empty %}
+          <p class="standings-empty">Board targets will appear after the first takeover.</p>
+        {% endfor %}
+      </div>
+    </section>
+  </div>
+
+  <section class="standings-panel biggest-moves-panel">
+    <div class="panel-heading">
+      <div>
+        <p class="eyebrow">Biggest moves</p>
+        <h2>The largest takeovers</h2>
+      </div>
+    </div>
+    <div class="move-list">
+      {% for takeover in biggest_moves %}
+        <div class="move-row">
+          <span class="standing-name"><strong>{{ takeover.controller_display_name }}</strong><small>Backed {{ takeover.represented_school.name }} on {{ takeover.board.school.name }}</small></span>
+          <time datetime="{{ takeover.occurred_at|date:'c' }}">{{ takeover.occurred_at|date:"M j, Y" }}</time>
+          <strong>${{ takeover.amount_dollars|floatformat:2 }}</strong>
+        </div>
+      {% empty %}
+        <p class="standings-empty">The biggest moves will appear here.</p>
+      {% endfor %}
+    </div>
+  </section>
+
+  <p class="standings-footnote">Standings use successful takeovers only. Pending, canceled, refunded, and failed bids do not count.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,10 @@
+{% extends "base.html" %}
+
+{% block title %}Takeover Not Applied | Take the Board{% endblock %}
+
+{% block content %}
+<section class="section preview-page">
+  {% include "components/takeover_result.html" %}
+  <p><a class="button button-secondary" href="{% url 'boards:index' %}">Back to boards</a></p>
+</section>
+{% endblock %}

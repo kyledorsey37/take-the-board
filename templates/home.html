@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+
+{% block title %}Take the Board{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Independent fan rivalry game</p>
+    <h1>College football's pettiest fan wars.</h1>
+    <p>Fans battle for control of each school's public message. Highest bidder runs the board until somebody outbids them.</p>
+    <div class="hero-actions">
+      <a class="button button-primary" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="boards">Explore boards</a>
+      <a class="button button-secondary" href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="rivalries">See rivalries</a>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-heading">
+    <h2>Board Preview</h2>
+    <a class="text-link" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_board_preview" data-analytics-destination="boards">All boards</a>
+  </div>
+  <div class="placeholder-grid">
+    {% for board in boards %}
+      <a class="board-card board-card-link" href="{% url 'schools:detail' slug=board.school.slug %}" data-analytics-event="board_opened" data-analytics-surface="home_board_preview" data-analytics-school-slug="{{ board.school.slug }}">
+        <p class="school-name">{{ board.school.name }}</p>
+        <p class="board-message">{{ board.current_message }}</p>
+        {% if board.current_controller %}
+          <p class="bid-line">{{ board.current_controller.display_name }} holds it for ${{ board.current_amount_dollars|floatformat:2 }} <span aria-hidden="true">&rarr;</span></p>
+        {% else %}
+          <p class="bid-line">Open for the first takeover <span aria-hidden="true">&rarr;</span></p>
+        {% endif %}
+      </a>
+    {% empty %}
+      <p class="muted">The first boards are being set up.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

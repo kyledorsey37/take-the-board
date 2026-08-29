@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}{{ board.school.name }} | Take the Board{% endblock %}
+
+{% block content %}
+<div class="school-board-page" style="--school-accent: {{ school_accent }};">
+<section class="board-stage">
+  <div class="board-stage-inner">
+    <a class="back-link" href="{% url 'boards:index' %}"><span aria-hidden="true">&larr;</span> All boards</a>
+    <div class="board-heading">
+      <div>
+        <p class="eyebrow">{{ board.school.name }} board</p>
+        <h1>{{ board.school.name }}</h1>
+      </div>
+      <a class="text-link" href="{% url 'rivalries:index' %}">Rivalry watch</a>
+    </div>
+
+    {% if move_result == "live" %}
+      <div class="takeover-confirmation" role="status">The board is yours.</div>
+    {% elif move_result == "pending" %}
+      <div class="takeover-confirmation takeover-confirmation-pending" role="status">You're up next. Your message will appear shortly.</div>
+    {% elif move_result == "processing" %}
+      <div class="takeover-confirmation takeover-confirmation-pending" role="status">Payment received. Your takeover is still processing.</div>
+    {% endif %}
+
+    <article class="live-board" aria-label="Current {{ board.school.name }} board">
+      <div class="live-board-topline">
+        <span>Current board</span>
+        {% if board.bidding_enabled %}
+          <span class="board-status"><span aria-hidden="true"></span> Open for takeover</span>
+        {% else %}
+          <span class="board-status board-status-paused">Takeovers paused</span>
+        {% endif %}
+      </div>
+      <div class="current-message-panel">
+        <p class="current-message-label"><span aria-hidden="true"></span> Current message</p>
+        <p class="board-message live-board-message">{{ board.current_message }}</p>
+      </div>
+      <div class="live-board-footer">
+        {% if board.current_controller %}
+          <p><strong>{{ board.current_controller.display_name }} controls this board</strong><br><span>Backing {{ board.current_bid.represented_school.name }}</span></p>
+          <p class="price-lockup"><span>Current takeover</span><strong>${{ board.current_amount_dollars|floatformat:2 }}</strong></p>
+        {% else %}
+          <p><strong>No current controller</strong><br><span>Set the first message.</span></p>
+          <p class="price-lockup"><span>Starting takeover</span><strong>${{ minimum_takeover_dollars|floatformat:2 }}</strong></p>
+        {% endif %}
+      </div>
+      {% if board.pending_bid %}
+        <section class="pending-challenge" aria-label="Next takeover">
+          <div>
+            <p class="eyebrow">Next up</p>
+            <p>A new message is ready to take the board next.</p>
+          </div>
+          <p class="price-lockup"><span>Next takeover</span><strong>${{ board.pending_bid.amount_dollars|floatformat:2 }}</strong></p>
+        </section>
+      {% endif %}
+      {% if bidding_enabled %}
+        <div class="takeover-cta">
+          <div>
+            <p class="eyebrow">Your move</p>
+            <p class="takeover-cta-copy">Put your message on the board.</p>
+          </div>
+          <button class="button takeover-button" type="button" data-open-dialog="{% if auth_required_for_bidding and not auth_profile %}auth-modal{% elif auth_required_for_bidding and not auth_profile.display_name %}profile-setup-modal{% else %}bid-modal{% endif %}" data-analytics-event="bid_modal_opened" data-analytics-surface="school_board" data-analytics-school-slug="{{ board.school.slug }}">Take the board <span>from ${{ minimum_takeover_dollars|floatformat:2 }}</span></button>
+        </div>
+      {% endif %}
+    </article>
+  </div>
+</section>
+
+<section class="section activity-section school-activity-section">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Takeover history</p>
+      <h2>Who has held the board?</h2>
+    </div>
+  </div>
+  <div class="takeover-history">
+    {% for takeover in takeovers %}
+      <article class="takeover-row">
+        <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_school.name }}</p>
+        <p class="takeover-row-message">{{ takeover.message }}</p>
+        <p class="takeover-row-amount">${{ takeover.amount_dollars|floatformat:2 }}</p>
+      </article>
+    {% empty %}
+      <p class="muted">No one has taken this board yet. Make the first move.</p>
+    {% endfor %}
+  </div>
+</section>
+
+{% if bidding_enabled and bidding_modal_enabled %}
+  <dialog class="bid-dialog" id="bid-modal" aria-labelledby="bid-modal-title">
+    <div class="bid-dialog-shell">
+      <div class="bid-dialog-header">
+        <div>
+          <p class="eyebrow">{{ board.school.name }} board</p>
+          <h2 id="bid-modal-title">Take the board.</h2>
+        </div>
+        <form method="dialog">
+          <button class="icon-button" type="submit" aria-label="Close bid dialog">&times;</button>
+        </form>
+      </div>
+
+      <form
+        class="bid-form"
+        method="post"
+        action="{% url 'bidding:take' %}"
+        hx-post="{% url 'bidding:take' %}"
+        hx-target="#takeover-result"
+        hx-swap="innerHTML"
+        data-bid-form
+        data-analytics-event="takeover_submitted"
+        data-analytics-surface="bid_modal"
+        data-analytics-school-slug="{{ board.school.slug }}"
+      >
+        {% csrf_token %}
+        {{ form.board_slug }}
+
+        {% if form.display_name %}
+          <div class="form-field">
+            <label for="{{ form.display_name.id_for_label }}">Your display name</label>
+            {{ form.display_name }}
+          </div>
+        {% endif %}
+
+        <div class="form-field">
+          <label for="{{ form.represented_school.id_for_label }}">Who are you backing?</label>
+          <div class="school-picker" data-school-picker>
+            <button
+              class="school-picker-trigger"
+              type="button"
+              aria-haspopup="listbox"
+              aria-expanded="false"
+              aria-controls="school-picker-options"
+              data-school-picker-trigger
+            >
+              <span data-school-picker-label>{{ selected_represented_school.name }}</span>
+              <span class="school-picker-chevron" aria-hidden="true"></span>
+            </button>
+            <div
+              class="school-picker-menu"
+              id="school-picker-options"
+              role="listbox"
+              aria-label="Schools"
+              hidden
+              data-school-picker-menu
+            >
+              {% for school in form.represented_school.field.queryset %}
+                <button
+                  class="school-picker-option"
+                  type="button"
+                  role="option"
+                  aria-selected="{% if school.pk == selected_represented_school.pk %}true{% else %}false{% endif %}"
+                  data-school-picker-option
+                  data-school-value="{{ school.pk }}"
+                  data-school-label="{{ school.name }}"
+                >{{ school.name }}</button>
+              {% endfor %}
+            </div>
+            {{ form.represented_school }}
+          </div>
+        </div>
+
+        <div class="form-field">
+          <div class="field-label-row">
+            <label for="{{ form.amount.id_for_label }}">Your takeover</label>
+            <span>Minimum ${{ minimum_takeover_dollars|floatformat:2 }}</span>
+          </div>
+          <div class="currency-input">
+            <span aria-hidden="true">$</span>
+            {{ form.amount }}
+          </div>
+          <div class="quick-bids" aria-label="Quick bid amounts">
+            {% for amount in quick_bids %}
+              <button type="button" data-set-bid="{{ amount|floatformat:2 }}">${{ amount|floatformat:2 }}</button>
+            {% endfor %}
+          </div>
+          <p class="field-hint">Whole dollar amounts only.</p>
+        </div>
+
+        <div class="form-field">
+          <div class="field-label-row">
+            <label for="{{ form.message.id_for_label }}">Your board message</label>
+            <span><output data-character-count>0</output>/{{ message_max_length }}</span>
+          </div>
+          {{ form.message }}
+          <p class="field-hint">Rivalry trash talk is welcome. No links, personal information, slurs, or threats.</p>
+        </div>
+
+        <button class="button button-primary bid-submit" type="submit">Take the board for $<span data-bid-submit-amount>{{ minimum_takeover_dollars|floatformat:2 }}</span></button>
+        {% if demo_bidding_enabled and not stripe_enabled %}
+          <p class="preview-notice">Local free-play mode. No card is charged.</p>
+        {% else %}
+          <p class="preview-notice">Your card is authorized first. You are charged only if your takeover wins.</p>
+        {% endif %}
+      </form>
+
+      <div id="takeover-result" class="bid-preview" aria-live="polite"></div>
+    </div>
+  </dialog>
+{% endif %}
+</div>
+{% endblock %}

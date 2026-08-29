@@ -1,0 +1,76 @@
+services:
+  postgres:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: takeboard
+      POSTGRES_USER: takeboard
+      POSTGRES_PASSWORD: takeboard
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U takeboard -d takeboard"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  web:
+    build: .
+    command: >
+      sh -c "python manage.py migrate --noinput &&
+      python manage.py seed_demo_data &&
+      python manage.py runserver 0.0.0.0:8000 --insecure"
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: unsafe-local-dev-key-change-me
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      DJANGO_CSRF_TRUSTED_ORIGINS: http://localhost:8000,http://127.0.0.1:8000
+      DATABASE_URL: postgres://takeboard:takeboard@postgres:5432/takeboard
+      TAKEBOARD_DEMO_BIDDING_ENABLED: "${TAKEBOARD_DEMO_BIDDING_ENABLED:-true}"
+      TAKEBOARD_STRIPE_ENABLED: "${TAKEBOARD_STRIPE_ENABLED:-false}"
+      TAKEBOARD_COGNITO_AUTH_ENABLED: "${TAKEBOARD_COGNITO_AUTH_ENABLED:-false}"
+      TAKEBOARD_AUTH_MODAL_PREVIEW: "${TAKEBOARD_AUTH_MODAL_PREVIEW:-false}"
+      TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING: "${TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING:-false}"
+      COGNITO_REGION: "${COGNITO_REGION:-}"
+      COGNITO_USER_POOL_ID: "${COGNITO_USER_POOL_ID:-}"
+      COGNITO_CLIENT_ID: "${COGNITO_CLIENT_ID:-}"
+      COGNITO_CLIENT_SECRET: "${COGNITO_CLIENT_SECRET:-}"
+      COGNITO_DOMAIN: "${COGNITO_DOMAIN:-}"
+      COGNITO_REDIRECT_URI: "${COGNITO_REDIRECT_URI:-}"
+      AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID:-}"
+      AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY:-}"
+      AWS_SESSION_TOKEN: "${AWS_SESSION_TOKEN:-}"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_PUBLISHABLE_KEY: "${STRIPE_PUBLISHABLE_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+    ports:
+      - "127.0.0.1:${WEB_PORT:-8001}:8000"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  demo-finalizer:
+    build: .
+    command: python manage.py run_bid_worker --poll-seconds=1
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.local
+      DJANGO_DEBUG: "true"
+      DJANGO_SECRET_KEY: unsafe-local-dev-key-change-me
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1,0.0.0.0
+      DATABASE_URL: postgres://takeboard:takeboard@postgres:5432/takeboard
+      TAKEBOARD_DEMO_BIDDING_ENABLED: "${TAKEBOARD_DEMO_BIDDING_ENABLED:-true}"
+      TAKEBOARD_STRIPE_ENABLED: "${TAKEBOARD_STRIPE_ENABLED:-false}"
+      STRIPE_SECRET_KEY: "${STRIPE_SECRET_KEY:-}"
+      STRIPE_WEBHOOK_SECRET: "${STRIPE_WEBHOOK_SECRET:-}"
+    volumes:
+      - .:/app
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres_data:

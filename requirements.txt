@@ -1,0 +1,8 @@
+Django>=5.2,<6.0
+boto3>=1.34,<2
+django-unfold>=0.102,<1.0
+gunicorn>=23,<24
+psycopg[binary]>=3.2,<4
+redis>=5,<7
+sentry-sdk>=2,<3
+stripe>=11,<15

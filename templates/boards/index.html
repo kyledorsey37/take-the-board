@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Boards | Take the Board{% endblock %}
+
+{% block content %}
+<section class="section">
+  <p class="eyebrow">Board directory</p>
+  <div class="section-heading section-heading-stack">
+    <div>
+      <h1>Find a board.</h1>
+      <p class="muted">Every board below is live in the local free-play game.</p>
+    </div>
+    <a class="button button-secondary" href="{% url 'leaderboard:index' %}">View standings</a>
+  </div>
+  <div class="placeholder-grid">
+    {% for board in boards %}
+      <a class="board-card board-card-link" href="{% url 'schools:detail' slug=board.school.slug %}" data-analytics-event="board_opened" data-analytics-surface="board_directory" data-analytics-school-slug="{{ board.school.slug }}">
+        <p class="school-name">{{ board.school.name }}</p>
+        <p class="board-message">{{ board.current_message }}</p>
+        {% if board.current_controller %}
+          <p class="bid-line">Held by {{ board.current_controller.display_name }} for ${{ board.current_amount_dollars|floatformat:2 }} <span aria-hidden="true">&rarr;</span></p>
+        {% else %}
+          <p class="bid-line">Open board <span aria-hidden="true">&rarr;</span></p>
+        {% endif %}
+      </a>
+    {% empty %}
+      <p class="muted">No boards are available yet. Run the local seed command to create the starter roster.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

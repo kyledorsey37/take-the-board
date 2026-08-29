@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}{{ rivalry.name }} | Rivalries | Take the Board{% endblock %}
+
+{% block content %}
+<section class="rivalry-hero rivalry-detail-hero">
+  <div class="rivalry-hero-inner">
+    <a class="back-link" href="{% url 'rivalries:index' %}"><span aria-hidden="true">&larr;</span> All rivalries</a>
+    <p class="eyebrow">{{ rivalry.name }}</p>
+    <h1>{{ school_a.school.name }} <span class="rivalry-vs">vs.</span> {{ school_b.school.name }}</h1>
+    <p>{{ lead_text }} Successful takeovers are credited to the school being backed.</p>
+    <div class="rivalry-periods" aria-label="Rivalry period">
+      <a class="period-link {% if period == 'all' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}">All time</a>
+      {% if active_week %}
+        <a class="period-link {% if period == 'week' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}?period=week">This week</a>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section rivalry-detail-section">
+  <div class="rivalry-scoreboard" aria-labelledby="scoreboard-title">
+    <div class="rivalry-section-heading">
+      <div>
+        <p class="eyebrow">The scoreboard</p>
+        <h2 id="scoreboard-title">Who is taking over?</h2>
+      </div>
+      <p class="muted">{{ total_takeovers }} successful {% if total_takeovers == 1 %}move{% else %}moves{% endif %} counted</p>
+    </div>
+    <div class="rivalry-sides">
+      {% for side in sides %}
+        <article class="rivalry-side {% if side.school.id == leader_school_id %}is-leading{% endif %}" style="--side-accent: {{ side.accent_color }}">
+          <div class="rivalry-side-heading">
+            <div>
+              <p class="rivalry-side-label">{% if side.school.id == leader_school_id %}Leading{% else %}Fanbase{% endif %}</p>
+              <h3>{{ side.school.name }}</h3>
+            </div>
+            <span class="rivalry-side-mark" aria-hidden="true"></span>
+          </div>
+          <div class="rivalry-side-score">
+            <strong>{{ side.takeovers }}</strong>
+            <span>takeover {% if side.takeovers == 1 %}win{% else %}wins{% endif %}</span>
+          </div>
+          <dl class="rivalry-side-stats">
+            <div><dt>Backing</dt><dd>{{ side.spend_display }}</dd></div>
+            <div><dt>Rival boards taken</dt><dd>{{ side.attacks }}</dd></div>
+            <div><dt>Biggest move</dt><dd>{{ side.biggest_move_display }}</dd></div>
+          </dl>
+          <a
+            class="button button-primary rivalry-side-action"
+            href="{% if side.school.id == school_a.school.id %}{% url 'schools:detail' slug=school_b.school.slug %}?backing={{ school_a.school.slug }}{% else %}{% url 'schools:detail' slug=school_a.school.slug %}?backing={{ school_b.school.slug }}{% endif %}"
+            data-analytics-event="rivalry_back_side_clicked"
+            data-analytics-surface="rivalry_scoreboard"
+            data-analytics-rivalry-slug="{{ rivalry.slug }}"
+            data-analytics-school-slug="{{ side.school.slug }}"
+          >Back {{ side.school.short_name }} <span aria-hidden="true">&rarr;</span></a>
+        </article>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="rivalry-board-section" aria-labelledby="rivalry-boards-title">
+    <div class="rivalry-section-heading">
+      <div>
+        <p class="eyebrow">The boards</p>
+        <h2 id="rivalry-boards-title">Where the game is happening</h2>
+      </div>
+      <p class="muted">Back your side on the other board.</p>
+    </div>
+    <div class="rivalry-board-grid">
+      {% for board in boards %}
+        <article class="rivalry-board-row" style="--side-accent: {{ board.safe_accent_color }}">
+          <div class="rivalry-board-heading">
+            <span class="rivalry-side-mark" aria-hidden="true"></span>
+            <h3>{{ board.school.name }}</h3>
+          </div>
+          <p class="rivalry-board-message">{{ board.current_message }}</p>
+          {% if board.current_controller %}
+            <p class="muted">{{ board.current_controller.display_name }} controls it{% if board.current_bid.represented_school %}, backing {{ board.current_bid.represented_school.name }}{% endif %}.</p>
+          {% else %}
+            <p class="muted">No one controls it yet.</p>
+          {% endif %}
+          <a class="text-link" href="{% if board.school.id == school_a.school.id %}{% url 'schools:detail' slug=board.school.slug %}?backing={{ school_b.school.slug }}{% else %}{% url 'schools:detail' slug=board.school.slug %}?backing={{ school_a.school.slug }}{% endif %}">Take {{ board.school.short_name }}'s board <span aria-hidden="true">&rarr;</span></a>
+        </article>
+      {% empty %}
+        <p class="muted">The boards for this rivalry are not active yet.</p>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="rivalry-activity-grid">
+    <section class="rivalry-activity-panel" aria-labelledby="recent-moves-title">
+      <div class="rivalry-section-heading">
+        <div>
+          <p class="eyebrow">Recent moves</p>
+          <h2 id="recent-moves-title">The latest swings</h2>
+        </div>
+      </div>
+      <div class="rivalry-move-list">
+        {% for move in recent_moves %}
+          <article class="rivalry-move-row">
+            <div>
+              <strong>{{ move.controller_display_name }}</strong>
+              <span>backed {{ move.represented_school.name }} on {{ move.board.school.name }}</span>
+            </div>
+            <strong>${{ move.amount_dollars|floatformat:2 }}</strong>
+            <time datetime="{{ move.occurred_at|date:'c' }}">{{ move.occurred_at|date:'M j, Y' }}</time>
+          </article>
+        {% empty %}
+          <p class="muted rivalry-empty">No moves have been recorded yet.</p>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="rivalry-highlight" aria-labelledby="biggest-move-title">
+      <p class="eyebrow">Biggest move</p>
+      <h2 id="biggest-move-title">{% if biggest_move %}${{ biggest_move.amount_dollars|floatformat:2 }}{% else %}Waiting for the first move{% endif %}</h2>
+      {% if biggest_move %}
+        <p><strong>{{ biggest_move.controller_display_name }}</strong> backed {{ biggest_move.represented_school.name }} on {{ biggest_move.board.school.name }}.</p>
+      {% else %}
+        <p>The first successful takeover will set the mark to beat.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <p class="rivalry-footnote">Rivalry standings use successful takeovers only. A move counts for the school being backed, whether it lands on its own board or its rival's.</p>
+</section>
+{% endblock %}

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Rivalries | Take the Board{% endblock %}
+
+{% block content %}
+<section class="rivalry-hero">
+  <div class="rivalry-hero-inner">
+    <p class="eyebrow">Rivalry watch</p>
+    <div class="section-heading">
+      <div>
+        <h1>Pick a side.</h1>
+        <p>Every successful move on either board shifts the scoreboard. See who is showing up and make the next move count.</p>
+      </div>
+      <a class="button button-light" href="{% url 'boards:index' %}">Explore boards <span aria-hidden="true">&rarr;</span></a>
+    </div>
+  </div>
+</section>
+
+<section class="section rivalry-directory" aria-labelledby="rivalry-directory-title">
+  <div class="section-heading">
+    <div>
+      <p class="eyebrow">Head-to-head</p>
+      <h2 id="rivalry-directory-title">Which rivalry are you watching?</h2>
+    </div>
+  </div>
+
+  <div class="rivalry-directory-grid">
+    {% for card in rivalry_cards %}
+      <a
+        class="rivalry-card"
+        href="{% url 'rivalries:detail' slug=card.rivalry.slug %}"
+        data-analytics-event="rivalry_opened"
+        data-analytics-surface="rivalry_directory"
+        data-analytics-rivalry-slug="{{ card.rivalry.slug }}"
+      >
+        <div class="rivalry-card-topline">
+          <span>{{ card.rivalry.name }}</span>
+          <span aria-hidden="true">&rarr;</span>
+        </div>
+        <div class="rivalry-card-schools">
+          <span style="--side-accent: {{ card.school_a.accent_color }}">{{ card.school_a.school.name }}</span>
+          <strong>vs.</strong>
+          <span style="--side-accent: {{ card.school_b.accent_color }}">{{ card.school_b.school.name }}</span>
+        </div>
+        <p class="rivalry-card-lead">{{ card.lead_text }}</p>
+        <div class="rivalry-card-stats">
+          <span><strong>{{ card.school_a.takeovers }}</strong> {{ card.school_a.school.short_name }} moves</span>
+          <span><strong>{{ card.school_b.takeovers }}</strong> {{ card.school_b.school.short_name }} moves</span>
+        </div>
+        <p class="rivalry-card-link">See matchup <span aria-hidden="true">&rarr;</span></p>
+      </a>
+    {% empty %}
+      <p class="muted">No rivalries are active yet. Check back when the first matchup is posted.</p>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

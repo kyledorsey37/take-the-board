@@ -1,0 +1,145 @@
+"""Create one-time Stripe Checkout Sessions for authenticated takeovers."""
+
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
+
+import stripe
+from django.conf import settings
+from django.db import transaction
+from django.utils import timezone
+
+from apps.bidding.models import Bid
+from apps.bidding.services.create_bid import (
+    BidTooLowError,
+    TakeoverError,
+    authenticated_player,
+    dollars_to_cents,
+)
+from apps.bidding.services.finalize_bid import finalize_locked_pending_bid
+from apps.bidding.services.rules import BoardRules, minimum_takeover_cents
+from apps.boards.models import Board
+from apps.leaderboard.week_services import get_or_create_current_season_week
+from apps.schools.models import School
+
+from .capture_payment import capture_payment
+
+
+@dataclass(frozen=True)
+class CheckoutResult:
+    bid_id: int
+    bid_public_id: str
+    client_secret: str
+
+
+@transaction.atomic
+def create_checkout(
+    *,
+    board_id: int,
+    profile_id: int,
+    represented_school_id: int,
+    amount: Decimal,
+    message: str,
+    rules: BoardRules,
+    return_url: str,
+    now: datetime | None = None,
+) -> CheckoutResult:
+    if not settings.STRIPE_SECRET_KEY:
+        raise TakeoverError("Stripe payments are not configured yet.")
+
+    now = now or timezone.now()
+    board = Board.objects.select_for_update().select_related("school").get(pk=board_id)
+    if not board.bidding_enabled or not rules.bidding_enabled:
+        raise TakeoverError("Takeovers are paused for this board.")
+
+    # Settle an expired challenger before calculating the new price. The worker
+    # normally handles this, but checkout creation must be correct on its own.
+    finalize_locked_pending_bid(
+        board=board,
+        rules=rules,
+        now=now,
+        capture_pending_bid=capture_payment,
+    )
+    board.refresh_from_db(fields=["current_bid", "current_amount_cents", "pending_bid", "guaranteed_until"])
+
+    represented_school = School.objects.get(pk=represented_school_id, active=True)
+    season_week = get_or_create_current_season_week(now=now)
+    amount_cents = dollars_to_cents(amount)
+    pending_amount_cents = board.pending_bid.amount_cents if board.pending_bid_id else 0
+    required_cents = minimum_takeover_cents(
+        board.current_amount_cents,
+        rules,
+        pending_amount_cents,
+    )
+    if amount_cents < required_cents:
+        raise BidTooLowError(required_cents)
+
+    player = authenticated_player(
+        profile_id=profile_id,
+        favorite_school=represented_school,
+    )
+    bid = board.bids.create(
+        bidder=player,
+        represented_school=represented_school,
+        season_week=season_week,
+        message=message,
+        amount_cents=amount_cents,
+        status=Bid.Status.CREATED,
+    )
+
+    try:
+        checkout_session = stripe.checkout.Session.create(
+            mode="payment",
+            ui_mode="embedded",
+            managed_payments={"enabled": False},
+            line_items=[
+                {
+                    "price_data": {
+                        "currency": "usd",
+                        "product_data": {"name": "Takeover"},
+                        "unit_amount": amount_cents,
+                    },
+                    "quantity": 1,
+                }
+            ],
+            payment_intent_data={
+                "capture_method": "manual",
+                "metadata": {
+                    "bid_id": str(bid.public_id),
+                    "board_id": str(board.id),
+                },
+            },
+            metadata={
+                "bid_id": str(bid.public_id),
+                "board_id": str(board.id),
+            },
+            customer_email=player.email,
+            return_url=return_url,
+            redirect_on_completion="if_required",
+            api_key=settings.STRIPE_SECRET_KEY,
+            idempotency_key=f"takeboard-checkout-{bid.public_id}",
+        )
+    except stripe.error.StripeError as error:
+        raise TakeoverError("We could not start secure checkout. Please try again.") from error
+
+    client_secret = checkout_session.get("client_secret")
+    if not client_secret:
+        raise TakeoverError("Stripe did not return a checkout session.")
+
+    bid.status = Bid.Status.CHECKOUT_CREATED
+    bid.stripe_checkout_session_id = checkout_session["id"]
+    payment_intent_id = checkout_session.get("payment_intent")
+    if payment_intent_id:
+        bid.stripe_payment_intent_id = payment_intent_id
+    bid.save(
+        update_fields=[
+            "status",
+            "stripe_checkout_session_id",
+            "stripe_payment_intent_id",
+        ]
+    )
+    return CheckoutResult(
+        bid_id=bid.id,
+        bid_public_id=str(bid.public_id),
+        client_secret=client_secret,
+    )

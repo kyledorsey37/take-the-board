@@ -1,0 +1,36 @@
+<section class="preview-result preview-result-error" aria-labelledby="takeover-error-title">
+  {% if takeover_error_kind == "price_changed" %}
+    <p class="eyebrow">Takeover price changed</p>
+    <h3 id="takeover-error-title">That amount is no longer enough.</h3>
+    <p>{{ takeover_error }}</p>
+  {% elif takeover_error_kind == "validation" %}
+    <p class="eyebrow">Check your bid</p>
+    <h3 id="takeover-error-title">Enter valid takeover details.</h3>
+    <ul class="form-errors">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="eyebrow">Try again</p>
+    <h3 id="takeover-error-title">The board was not changed.</h3>
+    {% if takeover_error %}
+      <p>{{ takeover_error }}</p>
+    {% endif %}
+    <ul class="form-errors">
+      {% for field in form %}
+        {% for error in field.errors %}
+          <li>{{ error }}</li>
+        {% endfor %}
+      {% endfor %}
+      {% for error in form.non_field_errors %}
+        <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  {% endif %}
+</section>
