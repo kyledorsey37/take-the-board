@@ -1,11 +1,13 @@
 from unittest.mock import MagicMock, patch
 
+from botocore.exceptions import ClientError
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 
 from apps.accounts.models import UserProfile
 from apps.accounts.services.cognito import (
     CognitoTokens,
+    CognitoError,
     hydrate_profile,
     start_email_auth,
     verify_email_code,
@@ -161,6 +163,22 @@ class EmailAuthenticationTests(TestCase):
 
         self.assertEqual(pending["username"], "fan@example.com")
         self.assertEqual(cognito.sign_up.call_args.kwargs["Username"], "fan@example.com")
+
+    @patch("apps.accounts.services.cognito.client")
+    def test_cognito_start_logs_only_the_safe_aws_error_code(self, mock_client) -> None:
+        cognito = MagicMock()
+        cognito.list_users.side_effect = ClientError(
+            {"Error": {"Code": "AccessDeniedException", "Message": "sensitive detail"}},
+            "ListUsers",
+        )
+        mock_client.return_value = cognito
+
+        with self.assertLogs("apps.accounts.services.cognito", level="WARNING") as logs:
+            with self.assertRaises(CognitoError):
+                start_email_auth("fan@example.com")
+
+        self.assertIn("cognito_email_auth_start_failed code=AccessDeniedException", logs.output[0])
+        self.assertNotIn("sensitive detail", logs.output[0])
 
     @patch("apps.accounts.services.cognito.client")
     def test_cognito_subject_is_stored_as_an_opaque_string(self, mock_client) -> None:

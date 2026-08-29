@@ -1,5 +1,8 @@
 # Moderation Policy
 
+Implementation detail and rollout order are defined in
+`docs/moderation_and_abuse_controls_design.md`.
+
 Moderation is not implemented in this skeleton. This document defines the intended posture for public user-generated board messages.
 
 ## Philosophy

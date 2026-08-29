@@ -119,6 +119,7 @@ a {
 .hero-copy {
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto;
+  padding: clamp(2rem, 5vw, 4.5rem) 0;
 }
 
 .eyebrow {

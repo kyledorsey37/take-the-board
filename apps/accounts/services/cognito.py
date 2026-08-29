@@ -8,6 +8,7 @@ import base64
 import hashlib
 import hmac
 import json
+import logging
 import secrets
 from dataclasses import dataclass
 from typing import Any
@@ -19,6 +20,9 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from apps.accounts.models import UserProfile
+
+
+logger = logging.getLogger(__name__)
 
 
 class CognitoError(Exception):
@@ -175,6 +179,8 @@ def start_email_auth(email: str) -> dict[str, str]:
             }
         return {"flow": "signup", "username": username, "email": email}
     except ClientError as error:
+        error_code = error.response.get("Error", {}).get("Code", "Unknown")
+        logger.warning("cognito_email_auth_start_failed code=%s", error_code)
         raise CognitoError("Cognito could not start email authentication.") from error
 
 
