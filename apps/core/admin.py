@@ -29,5 +29,5 @@ class GameConfigAdmin(ModelAdmin):
 class ActivityAdmin(ModelAdmin):
     list_display = ("type", "user", "board", "created_at")
     list_filter = ("type",)
-    search_fields = ("type", "user__display_name", "board__school__name")
+    search_fields = ("type", "user__display_name", "board__entity__name")
     readonly_fields = ("created_at",)

@@ -2,7 +2,7 @@ from decimal import Decimal
 import re
 
 from django import forms
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
 from .services.rules import BoardRules
 
@@ -19,8 +19,8 @@ class TakeBoardForm(forms.Form):
             }
         ),
     )
-    represented_school = forms.ModelChoiceField(
-        queryset=School.objects.none(),
+    represented_entity = forms.ModelChoiceField(
+        queryset=Entity.objects.none(),
         empty_label="Choose a school",
         widget=forms.Select(
             attrs={
@@ -56,12 +56,22 @@ class TakeBoardForm(forms.Form):
         ),
     )
 
-    def __init__(self, *args, rules: BoardRules, require_display_name: bool = True, **kwargs) -> None:
+    def __init__(
+        self,
+        *args,
+        rules: BoardRules,
+        competition: Competition,
+        require_display_name: bool = True,
+        **kwargs,
+    ) -> None:
         super().__init__(*args, **kwargs)
         self.rules = rules
         if not require_display_name:
             self.fields.pop("display_name")
-        self.fields["represented_school"].queryset = School.objects.filter(active=True).order_by("name")
+        self.fields["represented_entity"].queryset = Entity.objects.filter(
+            competition=competition,
+            active=True,
+        ).order_by("name")
         self.fields["amount"].min_value = Decimal("0.01")
         self.fields["amount"].max_value = Decimal(rules.maximum_bid_cents) / 100
         self.fields["amount"].widget.attrs["min"] = "0.01"

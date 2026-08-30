@@ -13,9 +13,9 @@ class StripeEventAdmin(ModelAdmin):
 
 @admin.register(LedgerEntry)
 class LedgerEntryAdmin(ModelAdmin):
-    list_display = ("type", "amount_cents", "user", "school", "bid", "created_at")
-    list_filter = ("type", "school")
-    search_fields = ("user__display_name", "school__name", "bid__public_id")
+    list_display = ("type", "amount_cents", "user", "entity", "bid", "created_at")
+    list_filter = ("type", "entity")
+    search_fields = ("user__display_name", "entity__name", "bid__public_id")
     readonly_fields = ("created_at",)
 
 

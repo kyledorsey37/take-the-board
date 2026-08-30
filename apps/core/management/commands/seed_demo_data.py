@@ -3,9 +3,9 @@ from django.db import transaction
 
 from apps.boards.models import Board
 from apps.core.models import GameConfig
-from apps.leaderboard.week_services import get_or_create_current_season_week
+from apps.leaderboard.week_services import get_or_create_current_period
 from apps.rivalries.models import Rivalry
-from apps.schools.models import School
+from apps.schools.models import Competition, DEFAULT_COMPETITION_SLUG, Entity
 
 
 SCHOOLS = (
@@ -32,28 +32,33 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options) -> None:
-        schools_by_slug = {}
+        competition, _ = Competition.objects.get_or_create(
+            slug=DEFAULT_COMPETITION_SLUG,
+            defaults={"name": "College Football", "sport": "Football", "active": True},
+        )
+        entities_by_slug = {}
         for name, slug, short_name, conference, accent_color in SCHOOLS:
-            school, _ = School.objects.get_or_create(
+            entity, _ = Entity.objects.get_or_create(
+                competition=competition,
                 slug=slug,
                 defaults={
                     "name": name,
                     "short_name": short_name,
-                    "conference": conference,
+                    "group_name": conference,
                     "accent_color": accent_color,
                     "active": True,
                 },
             )
-            Board.objects.get_or_create(school=school)
-            schools_by_slug[slug] = school
+            Board.objects.get_or_create(entity=entity)
+            entities_by_slug[slug] = entity
 
-        for name, slug, school_a_slug, school_b_slug in RIVALRIES:
+        for name, slug, entity_a_slug, entity_b_slug in RIVALRIES:
             Rivalry.objects.get_or_create(
                 slug=slug,
                 defaults={
                     "name": name,
-                    "school_a": schools_by_slug[school_a_slug],
-                    "school_b": schools_by_slug[school_b_slug],
+                    "entity_a": entities_by_slug[entity_a_slug],
+                    "entity_b": entities_by_slug[entity_b_slug],
                     "active": True,
                 },
             )
@@ -61,10 +66,10 @@ class Command(BaseCommand):
         if not GameConfig.objects.exists():
             GameConfig.objects.create()
 
-        get_or_create_current_season_week()
+        get_or_create_current_period(competition=competition)
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Seeded {len(schools_by_slug)} schools and boards with the current season week."
+                f"Seeded {len(entities_by_slug)} College Football entities and boards with the current period."
             )
         )

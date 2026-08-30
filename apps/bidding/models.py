@@ -22,13 +22,13 @@ class Bid(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     board = models.ForeignKey("boards.Board", on_delete=models.CASCADE, related_name="bids")
     bidder = models.ForeignKey("accounts.UserProfile", on_delete=models.PROTECT, related_name="bids")
-    represented_school = models.ForeignKey(
-        "schools.School",
+    represented_entity = models.ForeignKey(
+        "schools.Entity",
         on_delete=models.PROTECT,
         related_name="fan_bids",
     )
-    season_week = models.ForeignKey(
-        "leaderboard.SeasonWeek",
+    period = models.ForeignKey(
+        "leaderboard.CompetitionPeriod",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
@@ -55,7 +55,7 @@ class Bid(models.Model):
         indexes = [
             models.Index(fields=["board", "-created_at"]),
             models.Index(fields=["bidder", "-created_at"]),
-            models.Index(fields=["represented_school", "-created_at"]),
+            models.Index(fields=["represented_entity", "-created_at"]),
             models.Index(fields=["status", "-created_at"]),
             models.Index(fields=["stripe_payment_intent_id"]),
         ]

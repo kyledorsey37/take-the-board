@@ -47,7 +47,7 @@ def _handle_checkout_completed(event_object: dict) -> None:
 
 @transaction.atomic
 def _authorize_bid(bid_id: int, payment_intent_id: str, now: datetime) -> list[Bid]:
-    bid = Bid.objects.select_for_update().select_related("represented_school").get(pk=bid_id)
+    bid = Bid.objects.select_for_update().select_related("represented_entity").get(pk=bid_id)
     if bid.status not in {Bid.Status.CREATED, Bid.Status.CHECKOUT_CREATED}:
         return []
 

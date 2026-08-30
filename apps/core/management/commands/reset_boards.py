@@ -3,6 +3,7 @@ from django.core.management.base import BaseCommand, CommandError
 
 from apps.boards.services.reset_boards import WeeklyResetError, reset_boards
 from apps.payments.services.cancel_authorization import cancel_authorization
+from apps.schools.services import default_competition
 
 
 class Command(BaseCommand):
@@ -11,6 +12,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         try:
             result = reset_boards(
+                competition=default_competition(),
                 cancel_pending_authorization=(
                     cancel_authorization if settings.TAKEBOARD_STRIPE_ENABLED else None
                 ),
@@ -20,13 +22,13 @@ class Command(BaseCommand):
 
         if result.already_reset:
             self.stdout.write(
-                self.style.WARNING(f"Week {result.week.week_number} {result.week.year} was already reset.")
+                self.style.WARNING(f"Week {result.period.week_number} {result.period.year} was already reset.")
             )
             return
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Reset {result.boards_reset} boards for Week {result.week.week_number} {result.week.year}; "
-                f"prepared {result.stats_rows} school-week records."
+                f"Reset {result.boards_reset} boards for Week {result.period.week_number} {result.period.year}; "
+                f"prepared {result.stats_rows} entity-period records."
             )
         )

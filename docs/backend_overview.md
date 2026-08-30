@@ -30,8 +30,8 @@ tests/
 ## App Ownership
 
 - `accounts`: local `UserProfile` records linked to Cognito identity later.
-- `schools`: school metadata using plain names, slugs, conferences, and generic accent colors.
-- `boards`: one active board per school, current board state, takeover history, board publishing and reset service boundaries.
+- `schools`: competition and entity catalog metadata. The app name remains for URL and MVP compatibility; its models are generic.
+- `boards`: one active board per entity, current board state, takeover history, board publishing and reset service boundaries.
 - `bidding`: bid records and bid lifecycle service boundaries.
 - `payments`: Stripe event storage, ledger entries, and payment service boundaries.
 - `moderation`: message validation records and deterministic/Nova moderation service boundaries.
@@ -45,13 +45,41 @@ PostgreSQL is the primary datastore for production and Docker-based local develo
 
 Core game state should not move to DynamoDB. The product needs relational constraints, transactions, foreign keys, historical queries, and row locks for bid finalization.
 
+## Competition and Entity Scope
+
+The game engine is structured for more than one sport without exposing a multi-sport
+product surface before it is needed:
+
+- `Competition` is the top-level game scope, such as College Football, NFL, or NBA.
+- `Entity` is the fanbase that owns a board within that competition. For College
+  Football, entities are schools; for the NFL, they would be clubs. Entity slugs
+  are unique within a competition, and `group_name` carries competition-specific
+  groupings such as a conference or division.
+- Every board belongs to one entity. Bids, takeovers, ledger entries, moderation
+  records, favorite fanbases, rivalries, and cached statistics refer to entities.
+- A bid service only accepts a represented entity from the board's competition.
+  Rivalries are likewise limited to two entities from the same competition.
+- `CompetitionPeriod` scopes active periods and cached `EntityPeriodStats` to one
+  competition. The current weekly schedule remains the College Football MVP's
+  policy, not a cross-sport schema assumption.
+
+The current public routes and wording remain College Football-specific
+(`/schools/<slug>/`, “school,” and “conference”). They resolve through
+`TAKEBOARD_DEFAULT_COMPETITION_SLUG=college-football`, so adding a future
+competition does not leak its entities into the MVP's board picker, board directory,
+leaderboard, reset operation, or moderation name reservation.
+
 ## Service Layer
 
 Complex business logic should live in service modules rather than views, models, or signals. Payment authorization, capture, cancellation, checkout creation, bid finalization, moderation validation, board publication, and weekly resets have explicit service boundaries.
 
 ## Local Free-Play Loop
 
-`python manage.py seed_demo_data` fills missing local schools, boards, rivalries, and a default game configuration without overwriting existing records. The public Boards page and school pages query those records directly; Django Admin remains the operational source of truth after seeding.
+`python manage.py seed_demo_data` creates the College Football competition if it is
+missing, then fills missing entities, boards, rivalries, and a default game
+configuration without overwriting existing records. The public Boards page and
+school pages query that competition directly; Django Admin remains the operational
+source of truth after seeding.
 
 When `TAKEBOARD_DEMO_BIDDING_ENABLED` is on in local settings, the bid service implements the protected-board state machine without calling Stripe. A published local bid receives a 30-second `guaranteed_until` window. During that period, only one higher `authorized` bid may be pending; a still-higher bid transactionally replaces it and records the prior authorization as canceled. The minimum uses the maximum of the current captured amount and pending amount.
 
@@ -67,11 +95,11 @@ The public leaderboard currently aggregates `BoardTakeover` records, which repre
 successful published takeovers. Pending, canceled, failed, and refunded bids do not
 count. A takeover contributes its amount to three independent views:
 
-- the school selected by the bidder (`represented_school`), for fanbase backing;
+- the entity selected by the bidder (`represented_entity`), for fanbase backing;
 - the bidder's stable board name, for the fan leaderboard;
-- the board's school, for most-attacked-board statistics.
+- the board's entity, for most-attacked-board statistics.
 
-Conference standings roll up the represented school's conference. The page supports
+College Football conference standings roll up the represented entity's `group_name`. The page supports
 all-time totals and an active `SeasonWeek` period when one has been configured in the
 admin. These read-time aggregates are intentionally derived from historical takeover
 records until the weekly cached-statistics rebuild is added.
@@ -118,6 +146,6 @@ python manage.py reset_boards
 
 The command should be invoked by EventBridge Scheduler at Sunday 11:59 PM in
 `America/New_York`. It marks the completed `(year, week_number)` period, rebuilds
-its cached school stats, creates the next period, cancels any pending authorized
+its cached entity stats, creates the next period, cancels any pending authorized
 challenger before clearing live board state, and preserves all bids, takeovers,
 and ledger entries. Repeating the command for the same period is a no-op.

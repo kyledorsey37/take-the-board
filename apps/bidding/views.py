@@ -6,6 +6,7 @@ from django.views.decorators.http import require_POST
 
 from apps.boards.models import Board
 from apps.accounts.services.session import get_authenticated_profile
+from apps.schools.services import default_competition
 from apps.moderation.models import MessageValidation
 from apps.moderation.services.rate_limits import (
     RateLimitExceeded,
@@ -42,14 +43,16 @@ def take_board(request: HttpRequest) -> HttpResponse:
         return HttpResponseForbidden("Board mechanics are not enabled in this environment.")
 
     board = get_object_or_404(
-        Board.objects.select_related("school"),
-        school__slug=request.POST.get("board_slug", ""),
+        Board.objects.select_related("entity__competition"),
+        entity__competition=default_competition(),
+        entity__slug=request.POST.get("board_slug", ""),
     )
     rules = current_board_rules()
     authenticated_profile = get_authenticated_profile(request)
     form = TakeBoardForm(
         request.POST,
         rules=rules,
+        competition=board.entity.competition,
         require_display_name=not bool(
             settings.TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING
             and authenticated_profile
@@ -71,7 +74,7 @@ def take_board(request: HttpRequest) -> HttpResponse:
             message_validation = validate_message(
                 user=authenticated_profile,
                 board=board,
-                represented_school=form.cleaned_data["represented_school"],
+                represented_entity=form.cleaned_data["represented_entity"],
                 message=form.cleaned_data["message"],
                 remote_addr=_remote_addr(request),
             )
@@ -104,14 +107,14 @@ def take_board(request: HttpRequest) -> HttpResponse:
             checkout = create_checkout(
                 board_id=board.id,
                 profile_id=authenticated_profile.id,
-                represented_school_id=form.cleaned_data["represented_school"].id,
+                represented_entity_id=form.cleaned_data["represented_entity"].id,
                 amount=form.cleaned_data["amount"],
                 message=form.cleaned_data["message"],
                 validation_id=message_validation.id,
                 rules=rules,
                 return_url=(
                     request.build_absolute_uri(
-                        reverse("schools:detail", kwargs={"slug": board.school.slug})
+                        reverse("schools:detail", kwargs={"slug": board.entity.slug})
                     )
                     + "?checkout_session_id={CHECKOUT_SESSION_ID}"
                 ),
@@ -136,7 +139,7 @@ def take_board(request: HttpRequest) -> HttpResponse:
                 if authenticated_profile
                 else form.cleaned_data["display_name"]
             ),
-            represented_school_id=form.cleaned_data["represented_school"].id,
+            represented_entity_id=form.cleaned_data["represented_entity"].id,
             amount=form.cleaned_data["amount"],
             message=form.cleaned_data["message"],
             rules=rules,
@@ -148,7 +151,7 @@ def take_board(request: HttpRequest) -> HttpResponse:
         return _error_response(request, form, str(error))
 
     move = "live" if result.published else "pending"
-    success_url = f"{reverse('schools:detail', kwargs={'slug': board.school.slug})}?move={move}"
+    success_url = f"{reverse('schools:detail', kwargs={'slug': board.entity.slug})}?move={move}"
     if request.headers.get("HX-Request"):
         response = HttpResponse(status=204)
         response["HX-Redirect"] = success_url

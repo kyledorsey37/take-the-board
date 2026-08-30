@@ -12,32 +12,40 @@ from apps.boards.models import Board
 from apps.boards.models import BoardTakeover
 from apps.moderation.models import MessageReport, MessageReportCase
 from apps.accounts.services.session import get_authenticated_profile
-from .models import School
+from .models import Entity
+from .services import default_competition
 
 
 HEX_COLOR_PATTERN = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
+    competition = default_competition()
     authenticated_profile = get_authenticated_profile(request)
-    initial_board = get_object_or_404(Board, school__slug=slug, school__active=True)
+    initial_board = get_object_or_404(
+        Board,
+        entity__competition=competition,
+        entity__slug=slug,
+        entity__active=True,
+    )
     rules = current_board_rules()
     if settings.TAKEBOARD_DEMO_BIDDING_ENABLED:
         finalize_due_board(board_id=initial_board.id, rules=rules)
 
     board = get_object_or_404(
         Board.objects.select_related(
-            "school",
+            "entity",
             "current_controller",
-            "current_bid__represented_school",
-            "pending_bid__represented_school",
+            "current_bid__represented_entity",
+            "pending_bid__represented_entity",
         ),
-        school__slug=slug,
-        school__active=True,
+        entity__competition=competition,
+        entity__slug=slug,
+        entity__active=True,
     )
-    school_accent = board.school.accent_color
-    if not HEX_COLOR_PATTERN.fullmatch(school_accent):
-        school_accent = "#b3262f"
+    entity_accent = board.entity.accent_color
+    if not HEX_COLOR_PATTERN.fullmatch(entity_accent):
+        entity_accent = "#b3262f"
     pending_amount_cents = board.pending_bid.amount_cents if board.pending_bid_id else 0
     minimum_takeover = minimum_takeover_cents(
         board.current_amount_cents,
@@ -54,32 +62,33 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         if amount not in quick_bids:
             quick_bids.append(amount)
     authenticated_player_ready = bool(authenticated_profile and authenticated_profile.display_name)
-    selected_represented_school = board.school
+    selected_represented_entity = board.entity
     backing_slug = request.GET.get("backing", "").strip()
     if backing_slug:
-        selected_represented_school = (
-            School.objects.filter(slug=backing_slug, active=True).first()
-            or selected_represented_school
+        selected_represented_entity = (
+            Entity.objects.filter(competition=competition, slug=backing_slug, active=True).first()
+            or selected_represented_entity
         )
     form = TakeBoardForm(
         rules=rules,
+        competition=competition,
         require_display_name=not bool(
             settings.TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING and authenticated_player_ready
         ),
         initial={
-            "board_slug": board.school.slug,
+            "board_slug": board.entity.slug,
             "amount": f"{minimum_takeover / 100:.2f}",
-            "represented_school": selected_represented_school.id,
+            "represented_entity": selected_represented_entity.id,
         },
     )
     takeovers = list(
-        board.takeovers.select_related("represented_school", "report_case")
+        board.takeovers.select_related("represented_entity", "report_case")
         .order_by("-occurred_at", "-id")[:5]
     )
     current_takeover = None
     if board.current_bid_id:
         current_takeover = (
-            BoardTakeover.objects.select_related("represented_school", "report_case")
+            BoardTakeover.objects.select_related("represented_entity", "report_case")
             .filter(board=board, bid_id=board.current_bid_id)
             .first()
         )
@@ -106,7 +115,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         "boards/school_detail.html",
         {
             "board": board,
-            "school_accent": school_accent,
+            "entity_accent": entity_accent,
             "form": form,
             "takeovers": takeovers,
             "current_takeover": current_takeover,
@@ -128,6 +137,6 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
                 )
             ),
             "move_result": request.GET.get("move"),
-            "selected_represented_school": selected_represented_school,
+            "selected_represented_entity": selected_represented_entity,
         },
     )

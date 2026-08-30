@@ -6,7 +6,7 @@ from .models import Rivalry
 
 @admin.register(Rivalry)
 class RivalryAdmin(ModelAdmin):
-    list_display = ("name", "school_a", "school_b", "active")
+    list_display = ("name", "entity_a", "entity_b", "active")
     list_filter = ("active",)
     prepopulated_fields = {"slug": ("name",)}
-    search_fields = ("name", "slug", "school_a__name", "school_b__name")
+    search_fields = ("name", "slug", "entity_a__name", "entity_b__name")
