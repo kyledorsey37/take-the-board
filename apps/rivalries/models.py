@@ -1,16 +1,17 @@
 from django.db import models
+from django.core.exceptions import ValidationError
 
 
 class Rivalry(models.Model):
     name = models.CharField(max_length=100)
     slug = models.SlugField(unique=True)
-    school_a = models.ForeignKey(
-        "schools.School",
+    entity_a = models.ForeignKey(
+        "schools.Entity",
         related_name="rivalries_a",
         on_delete=models.CASCADE,
     )
-    school_b = models.ForeignKey(
-        "schools.School",
+    entity_b = models.ForeignKey(
+        "schools.Entity",
         related_name="rivalries_b",
         on_delete=models.CASCADE,
     )
@@ -20,7 +21,7 @@ class Rivalry(models.Model):
     class Meta:
         verbose_name_plural = "rivalries"
         constraints = [
-            models.UniqueConstraint(fields=["school_a", "school_b"], name="unique_rivalry_pair"),
+            models.UniqueConstraint(fields=["entity_a", "entity_b"], name="unique_rivalry_pair"),
         ]
         indexes = [
             models.Index(fields=["slug"]),
@@ -29,3 +30,8 @@ class Rivalry(models.Model):
 
     def __str__(self) -> str:
         return self.name
+
+    def clean(self) -> None:
+        super().clean()
+        if self.entity_a_id and self.entity_b_id and self.entity_a.competition_id != self.entity_b.competition_id:
+            raise ValidationError("A rivalry must pair entities from the same competition.")

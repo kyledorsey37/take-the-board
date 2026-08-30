@@ -52,7 +52,7 @@
       </div>
       <div class="standings-table" role="table" aria-label="Top schools by backing">
         <div class="standings-table-head" role="row">
-          <span>Rank</span><span>School</span><span>Takeovers</span><span>Backing</span>
+          <span>Rank</span><span>Entity</span><span>Takeovers</span><span>Backing</span>
         </div>
         {% for row in fanbase_rows %}
           <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}">
@@ -150,7 +150,7 @@
     <div class="move-list">
       {% for takeover in biggest_moves %}
         <div class="move-row">
-          <span class="standing-name"><strong>{{ takeover.controller_display_name }}</strong><small>Backed {{ takeover.represented_school.name }} on {{ takeover.board.school.name }}</small></span>
+          <span class="standing-name"><strong>{{ takeover.controller_display_name }}</strong><small>Backed {{ takeover.represented_entity.name }} on {{ takeover.board.entity.name }}</small></span>
           <time datetime="{{ takeover.occurred_at|date:'c' }}">{{ takeover.occurred_at|date:"M j, Y" }}</time>
           <strong>${{ takeover.amount_dollars|floatformat:2 }}</strong>
         </div>

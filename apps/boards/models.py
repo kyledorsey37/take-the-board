@@ -5,8 +5,8 @@ import uuid
 
 
 class Board(models.Model):
-    school = models.OneToOneField(
-        "schools.School",
+    entity = models.OneToOneField(
+        "schools.Entity",
         on_delete=models.CASCADE,
         related_name="board",
     )
@@ -50,7 +50,7 @@ class Board(models.Model):
         ]
 
     def __str__(self) -> str:
-        return f"{self.school} board"
+        return f"{self.entity} board"
 
     @property
     def current_amount_dollars(self) -> Decimal:
@@ -70,9 +70,9 @@ class BoardTakeover(models.Model):
     )
     controller = models.ForeignKey("accounts.UserProfile", on_delete=models.PROTECT)
     controller_display_name = models.CharField(max_length=40, default="", editable=False)
-    represented_school = models.ForeignKey("schools.School", on_delete=models.PROTECT)
-    season_week = models.ForeignKey(
-        "leaderboard.SeasonWeek",
+    represented_entity = models.ForeignKey("schools.Entity", on_delete=models.PROTECT)
+    period = models.ForeignKey(
+        "leaderboard.CompetitionPeriod",
         null=True,
         blank=True,
         on_delete=models.PROTECT,
@@ -86,7 +86,7 @@ class BoardTakeover(models.Model):
         ordering = ["-occurred_at", "-id"]
         indexes = [
             models.Index(fields=["board", "-occurred_at"]),
-            models.Index(fields=["represented_school", "-occurred_at"]),
+            models.Index(fields=["represented_entity", "-occurred_at"]),
         ]
 
     def __str__(self) -> str:

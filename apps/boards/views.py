@@ -8,6 +8,7 @@ from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
 from apps.accounts.services.session import get_authenticated_profile
+from apps.schools.services import default_competition
 from apps.moderation.services.rate_limits import RateLimitExceeded, RateLimitUnavailable, ValidationBusy
 from apps.moderation.services.reporting import ReportUnavailable, remote_addr, submit_message_report
 
@@ -21,8 +22,8 @@ REPORT_RETRY = "Please try again later."
 
 
 def board_index(request: HttpRequest) -> HttpResponse:
-    boards = Board.objects.select_related("school", "current_controller").order_by(
-        "-current_amount_cents", "school__name"
+    boards = Board.objects.filter(entity__competition=default_competition()).select_related("entity", "current_controller").order_by(
+        "-current_amount_cents", "entity__name"
     )
     return render(request, "boards/index.html", {"boards": boards})
 

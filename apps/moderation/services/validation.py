@@ -12,7 +12,7 @@ from django.core.cache import cache
 from django.utils import timezone
 
 from apps.moderation.models import DisplayNameValidation, MessageValidation
-from apps.schools.models import School
+from apps.schools.models import Entity
 
 from .nova_classifier import (
     Classification,
@@ -114,7 +114,7 @@ def _retention_until(decision: str):
     return timezone.now() + timedelta(days=30) if decision in {"block", "review"} else None
 
 
-def validate_message(*, user, board, represented_school, message: str, remote_addr: str) -> MessageValidation:
+def validate_message(*, user, board, represented_entity, message: str, remote_addr: str) -> MessageValidation:
     if user.is_banned:
         raise ValidationBusy
     try:
@@ -131,7 +131,7 @@ def validate_message(*, user, board, represented_school, message: str, remote_ad
         # Store only a short-retention audit record; no failure detail is exposed to callers.
         record_rejection(user_id=user.id, remote_addr=remote_addr)
         return MessageValidation.objects.create(
-            user=user, board=board, represented_school=represented_school, message=message[:80],
+            user=user, board=board, represented_entity=represented_entity, message=message[:80],
             message_hash=candidate_hash("message", "invalid"), decision=MessageValidation.Decision.BLOCK,
             category="policy", policy_version=settings.TAKEBOARD_MODERATION_POLICY_VERSION,
             classifier_version=settings.TAKEBOARD_MODERATION_CLASSIFIER_MODEL_VERSION,
@@ -146,7 +146,7 @@ def validate_message(*, user, board, represented_school, message: str, remote_ad
         logger.info("moderation_rate_limited", extra={"validation_type": "message", "user_id": user.id})
         raise
     validation = MessageValidation.objects.create(
-        user=user, board=board, represented_school=represented_school, message=candidate.original,
+        user=user, board=board, represented_entity=represented_entity, message=candidate.original,
         message_hash=safe_key("message-value", candidate.original), decision=result.decision,
         category=result.category, confidence=Decimal(str(result.confidence)),
         policy_version=settings.TAKEBOARD_MODERATION_POLICY_VERSION,
@@ -170,8 +170,8 @@ def validate_display_name(*, user, display_name: str, remote_addr: str) -> Displ
     try:
         school_names = {
             value
-            for school in School.objects.filter(active=True).only("name", "short_name", "slug")
-            for value in (school.name, school.short_name, school.slug)
+            for entity in Entity.objects.filter(active=True).only("name", "short_name", "slug")
+            for value in (entity.name, entity.short_name, entity.slug)
         }
         candidate = validate_display_name_deterministically(
             display_name,

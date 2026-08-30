@@ -12,7 +12,7 @@ class MessageValidation(models.Model):
     public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     user = models.ForeignKey("accounts.UserProfile", on_delete=models.CASCADE)
     board = models.ForeignKey("boards.Board", on_delete=models.CASCADE)
-    represented_school = models.ForeignKey("schools.School", on_delete=models.PROTECT)
+    represented_entity = models.ForeignKey("schools.Entity", on_delete=models.PROTECT)
     message = models.CharField(max_length=80)
     message_hash = models.CharField(max_length=64)
     decision = models.CharField(max_length=20, choices=Decision.choices)

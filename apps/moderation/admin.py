@@ -22,9 +22,9 @@ from .services.report_cases import approve_case, remove_case
 
 @admin.register(MessageValidation)
 class MessageValidationAdmin(ModelAdmin):
-    list_display = ("public_id", "user", "board", "represented_school", "decision", "category", "expires_at")
-    list_filter = ("decision", "category", "represented_school", "expires_at")
-    search_fields = ("public_id", "user__display_name", "board__school__name", "message_hash")
+    list_display = ("public_id", "user", "board", "represented_entity", "decision", "category", "expires_at")
+    list_filter = ("decision", "category", "represented_entity", "expires_at")
+    search_fields = ("public_id", "user__display_name", "board__entity__name", "message_hash")
     readonly_fields = ("public_id", "created_at", "consumed_at", "message_hash", "policy_version", "classifier_version")
 
 
@@ -83,7 +83,7 @@ class MessageReportCaseAdmin(ModelAdmin):
     )
     list_filter = (
         "status",
-        "takeover__board__school",
+        "takeover__board__entity",
         "reports__category",
         "opened_at",
         "resolved_at",
@@ -92,7 +92,7 @@ class MessageReportCaseAdmin(ModelAdmin):
     search_fields = (
         "public_id",
         "takeover__public_id",
-        "takeover__board__school__name",
+        "takeover__board__entity__name",
         "takeover__controller_display_name",
         "takeover__bid__public_id",
     )
@@ -115,16 +115,16 @@ class MessageReportCaseAdmin(ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request).select_related(
-            "takeover__board__school",
+            "takeover__board__entity",
             "takeover__bid",
             "takeover__bid__payment_capture",
-            "takeover__represented_school",
+            "takeover__represented_entity",
             "takeover__controller",
         ).annotate(_report_count=Count("reports", distinct=True))
 
     @admin.display(description="Board / school")
     def board_school(self, obj):
-        return obj.takeover.board.school.name
+        return obj.takeover.board.entity.name
 
     @admin.display(description="Takeover at")
     def takeover_occurred_at(self, obj):
@@ -160,7 +160,7 @@ class MessageReportCaseAdmin(ModelAdmin):
             "<p><strong>Takeover amount:</strong> ${}</p>"
             "<p><strong>Current:</strong> {} &middot; <strong>Prior bid:</strong> {}</p>",
             takeover.controller_display_name,
-            takeover.represented_school.name,
+            takeover.represented_entity.name,
             f"{takeover.amount_cents / 100:.2f}",
             "Yes" if current else "No",
             prior,
