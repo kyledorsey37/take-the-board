@@ -59,7 +59,7 @@
     </p>
   </footer>
   {% if auth_modal_enabled and not auth_profile %}
-    <dialog class="bid-dialog auth-dialog" id="auth-modal" aria-labelledby="auth-modal-title" data-auth-preview="{{ auth_modal_preview|yesno:'true,false' }}">
+    <dialog class="bid-dialog auth-dialog" id="auth-modal" aria-labelledby="auth-modal-title" data-auth-preview="{{ auth_modal_preview|yesno:'true,false' }}" data-auth-default-title="Sign in to take the board." data-auth-default-intro="Enter your email and we will send a one-time code.">
       <div class="bid-dialog-shell">
         <div class="bid-dialog-header">
           <div>

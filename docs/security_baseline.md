@@ -58,10 +58,17 @@ Payment and moderation work should log named state-transition events such as `me
 ## Rate Limiting
 
 Shared Redis rate-limit state protects message and display-name validation,
-checkout creation, bid-status polling, and failed moderation attempts. Limits use
+checkout creation, bid-status polling, failed moderation attempts, and message
+report submission. Limits use
 HMAC-derived user, IP, and candidate keys plus a global moderation cap and
 concurrency circuit breaker. Use AWS WAF for edge/path/IP protection and
 app-level limits for user-aware behavior.
+
+Message reports are a fail-closed browser write: an unavailable shared
+rate-limit backend returns a generic retry response and does not create a
+report or case. Logs may include opaque report/case/takeover IDs, category, and
+safe state-transition metadata; they must not include reported message text,
+raw IP addresses, raw request bodies, or payment-provider payloads.
 
 ## Error Monitoring
 

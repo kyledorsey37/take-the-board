@@ -19,6 +19,10 @@ class ValidationBusy(Exception):
     """The circuit breaker, global cap, or concurrency limit is active."""
 
 
+class RateLimitUnavailable(Exception):
+    """Shared rate-limit state cannot be reached; protected writes must fail closed."""
+
+
 def safe_key(kind: str, value: str) -> str:
     """Return a server-only digest so cache keys never reveal submitted content or IPs."""
     secret = settings.TAKEBOARD_MODERATION_HASH_SECRET.encode("utf-8")
@@ -123,6 +127,37 @@ def enforce_bid_status_limits(*, user_id: int, remote_addr: str) -> None:
     ):
         limit, window = _limit(setting_name)
         enforce(surface, identity, limit, window)
+
+
+def enforce_message_report_limits(*, user_id: int, remote_addr: str, opening_case: bool) -> None:
+    """Apply report controls without retaining a raw IP address in cache keys."""
+    checks = [
+        ("report-user", f"user:{user_id}", "report_user", False),
+        ("report-ip", f"ip:{safe_key('ip', remote_addr)}", "report_ip", False),
+        ("report-global", "all", "report_global", True),
+    ]
+    if opening_case:
+        checks.extend(
+            [
+                ("report-new-case-user", f"user:{user_id}", "report_new_case_user", False),
+                ("report-new-case-ip", f"ip:{safe_key('ip', remote_addr)}", "report_new_case_ip", False),
+            ]
+        )
+    try:
+        for surface, identity, setting_name, is_global in checks:
+            limit, window = _limit(setting_name)
+            try:
+                enforce(surface, identity, limit, window)
+            except RateLimitExceeded as error:
+                if is_global:
+                    raise ValidationBusy from error
+                raise
+    except (RateLimitExceeded, ValidationBusy):
+        raise
+    except Exception as error:
+        # Reporting is an abuse-sensitive write. A cache/Redis outage must not
+        # turn it into an unbounded endpoint.
+        raise RateLimitUnavailable from error
 
 
 def circuit_is_open() -> bool:

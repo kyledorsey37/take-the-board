@@ -207,6 +207,11 @@ TAKEBOARD_RATE_LIMITS = {
     "bid_status_user": (30, 60),
     "bid_status_ip": (60, 60),
     "bid_status_global": (500, 60),
+    "report_user": (5, 3600),
+    "report_ip": (5, 3600),
+    "report_new_case_user": (3, 3600),
+    "report_new_case_ip": (3, 3600),
+    "report_global": (500, 60),
 }
 # Free-play takeovers are local-development mechanics only. They create no
 # payment records and must remain disabled outside local development.

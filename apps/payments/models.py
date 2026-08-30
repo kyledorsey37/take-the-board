@@ -1,4 +1,5 @@
 from django.db import models
+from django.utils import timezone
 
 
 class StripeEvent(models.Model):
@@ -42,3 +43,49 @@ class LedgerEntry(models.Model):
 
     def __str__(self) -> str:
         return f"{self.type}: {self.amount_cents}"
+
+
+class PaymentCapture(models.Model):
+    """Immutable provider accounting snapshot for one successful bid capture.
+
+    Stripe can make balance-transaction fees available after the PaymentIntent has
+    succeeded.  The capture identity and gross amount are written once; the fee
+    fields are filled only when Stripe supplies that delayed accounting data.
+    """
+
+    class FeeStatus(models.TextChoices):
+        PENDING = "pending", "Pending Stripe fee data"
+        AVAILABLE = "available", "Stripe fee data available"
+
+    bid = models.OneToOneField(
+        "bidding.Bid",
+        on_delete=models.PROTECT,
+        related_name="payment_capture",
+    )
+    stripe_payment_intent_id = models.CharField(max_length=255, unique=True)
+    stripe_charge_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    stripe_balance_transaction_id = models.CharField(max_length=255, null=True, blank=True, unique=True)
+    gross_amount_cents = models.PositiveIntegerField()
+    currency = models.CharField(max_length=3)
+    stripe_fee_cents = models.PositiveIntegerField(null=True, blank=True)
+    net_amount_cents = models.IntegerField(null=True, blank=True)
+    fee_details = models.JSONField(default=list, blank=True)
+    fee_status = models.CharField(
+        max_length=16,
+        choices=FeeStatus.choices,
+        default=FeeStatus.PENDING,
+    )
+    captured_at = models.DateTimeField(default=timezone.now)
+    fee_available_at = models.DateTimeField(null=True, blank=True)
+    fee_reconciliation_attempted_at = models.DateTimeField(null=True, blank=True)
+    fee_reconciliation_attempts = models.PositiveIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["fee_status", "fee_reconciliation_attempted_at"]),
+            models.Index(fields=["-captured_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"Capture for bid {self.bid_id}: {self.gross_amount_cents} {self.currency.upper()}"

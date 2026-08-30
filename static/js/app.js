@@ -71,6 +71,9 @@ document.addEventListener("click", function handleBidDialogClick(event) {
     return;
   }
 
+  if (dialog.id === "auth-modal") {
+    configureAuthDialog(dialog, opener);
+  }
   dialog.showModal();
   const amountInput = dialog.querySelector("[data-bid-amount]");
   if (amountInput) {
@@ -419,6 +422,41 @@ async function mountEmbeddedCheckout(event) {
 
 document.addEventListener("htmx:afterSwap", mountEmbeddedCheckout);
 
+// HTMX normally refuses to swap 4xx/5xx responses. Bid throttling and
+// temporary moderation outages deliberately use those statuses, but their
+// server-rendered fragments are still the user-facing result for this form.
+// Allow only those expected responses for this target; leave unrelated errors
+// on the default HTMX error path.
+document.addEventListener("htmx:beforeSwap", function swapExpectedBidErrors(event) {
+  const detail = event.detail;
+  const target = detail && detail.target;
+  const xhr = detail && detail.xhr;
+  if (!target || target.id !== "takeover-result" || !xhr) {
+    return;
+  }
+  if (xhr.status === 429 || xhr.status === 503) {
+    detail.shouldSwap = true;
+    detail.isError = false;
+  }
+});
+
+document.addEventListener("htmx:afterSwap", function disableSubmittedReport(event) {
+  const target = event.target;
+  if (!target || typeof target.querySelector !== "function") {
+    return;
+  }
+  const result = target.querySelector("[data-report-accepted]");
+  if (!result) {
+    return;
+  }
+  const form = target.closest("dialog") && target.closest("dialog").querySelector("form[action*='/report/']");
+  if (form) {
+    form.querySelectorAll("input, button[type='submit']").forEach(function (field) {
+      field.disabled = true;
+    });
+  }
+});
+
 function csrfToken(form) {
   const token = form.querySelector("[name=csrfmiddlewaretoken]");
   return token ? token.value : "";
@@ -478,10 +516,27 @@ function showAuthEmailStep(dialog) {
     nameForm.hidden = true;
   }
   startForm.hidden = false;
-  title.textContent = "Sign in to take the board.";
+  title.textContent = dialog.dataset.authFlowTitle || dialog.dataset.authDefaultTitle;
+  const intro = dialog.querySelector("[data-auth-email-step]");
+  if (intro) {
+    intro.textContent = dialog.dataset.authFlowIntro || intro.dataset.authDefaultIntro;
+  }
   setAuthStatus(dialog, "", false);
   emailInput.focus();
   emailInput.select();
+}
+
+function configureAuthDialog(dialog, opener) {
+  const title = dialog.querySelector("[data-auth-title]");
+  const intro = dialog.querySelector("[data-auth-email-step]");
+  dialog.dataset.authFlowTitle = opener.dataset.authTitle || dialog.dataset.authDefaultTitle;
+  dialog.dataset.authFlowIntro = opener.dataset.authIntro || dialog.dataset.authDefaultIntro;
+  if (title) {
+    title.textContent = dialog.dataset.authFlowTitle;
+  }
+  if (intro) {
+    intro.textContent = dialog.dataset.authFlowIntro;
+  }
 }
 
 function showAuthNameStep(dialog) {

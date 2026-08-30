@@ -9,6 +9,8 @@ from apps.bidding.forms import TakeBoardForm
 from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules, minimum_takeover_cents
 from apps.boards.models import Board
+from apps.boards.models import BoardTakeover
+from apps.moderation.models import MessageReport, MessageReportCase
 from apps.accounts.services.session import get_authenticated_profile
 from .models import School
 
@@ -70,7 +72,23 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "represented_school": selected_represented_school.id,
         },
     )
-    takeovers = board.takeovers.select_related("represented_school").order_by("-occurred_at", "-id")[:5]
+    takeovers = list(
+        board.takeovers.select_related("represented_school", "report_case")
+        .order_by("-occurred_at", "-id")[:5]
+    )
+    current_takeover = None
+    if board.current_bid_id:
+        current_takeover = (
+            BoardTakeover.objects.select_related("represented_school", "report_case")
+            .filter(board=board, bid_id=board.current_bid_id)
+            .first()
+        )
+    for takeover in takeovers + ([current_takeover] if current_takeover else []):
+        report_case = getattr(takeover, "report_case", None)
+        takeover.report_status = report_case.status if report_case else ""
+        takeover.reporting_closed = bool(
+            report_case and report_case.status != MessageReportCase.Status.OPEN
+        )
     auth_modal_enabled = (
         settings.TAKEBOARD_COGNITO_AUTH_ENABLED
         or settings.TAKEBOARD_AUTH_MODAL_PREVIEW
@@ -91,6 +109,8 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "school_accent": school_accent,
             "form": form,
             "takeovers": takeovers,
+            "current_takeover": current_takeover,
+            "report_categories": MessageReport.Category.choices,
             "minimum_takeover_dollars": minimum_takeover / 100,
             "quick_bids": quick_bids,
             "message_max_length": rules.message_max_length,

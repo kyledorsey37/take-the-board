@@ -39,7 +39,7 @@ def build_leaderboard(period: str = "all") -> dict:
     takeovers = BoardTakeover.objects.filter(
         controller__is_banned=False,
         bid__status__in=[Bid.Status.WON, Bid.Status.DEMO_WON],
-    )
+    ).exclude(report_case__status="removed")
     if effective_period == "week":
         takeovers = successful_takeovers_for_week(active_week)
 
