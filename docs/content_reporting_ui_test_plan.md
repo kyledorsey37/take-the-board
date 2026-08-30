@@ -157,12 +157,15 @@ Expected behavior:
 
 ## Paid bidding, confirmation, and risk tests
 
-### 7. Mandatory confirmation and first-purchase terms
+### 7. Two-step payment confirmation
 
 | Scenario | Steps | Expected behavior |
 | --- | --- | --- |
-| Normal paid bid | Sign in with a fresh test account, enter a valid whole-dollar bid and approved message, then submit the takeover form. | A review screen appears before Stripe Checkout. It shows the current board amount, any pending challenger, minimum at review, message, represented school, exact bid, authorization explanation, and 30-second guarantee. No `Bid` or Checkout Session exists yet. |
-| First real-money purchase | On that review screen, try to continue without checking the terms box, then check it and continue. | The unchecked attempt stays on the confirmation screen with an explanatory error. The checked attempt records the current terms version/timestamp and can proceed to Checkout. Later bids still require the review screen but not the first-purchase checkbox unless terms change. |
+| Normal paid bid | Sign in with a fresh test account, enter a valid whole-dollar bid and approved message, then submit the takeover form. | The modal slides to a compact review step before Stripe Checkout. It shows the board-to-beat, any pending challenger, exact bid, represented school, message, short authorization-and-capture blurb, and the 30-second guarantee. No `Bid` or Checkout Session exists yet. |
+| Edit a bid | On the review step, select **Edit bid**. | The review step slides away and returns to the original populated bid form. No Checkout Session exists. |
+| Normal payment | On a review step for a bid of $100 or less, select **Continue to payment**. | The user proceeds without a real-money terms checkbox or typed acknowledgement. The review step remains an auditable server-side confirmation before Checkout. |
+| Successful takeover | Complete Stripe test checkout and wait for the bid status to become **Won**. | The checkout view changes to an in-modal success screen with a green check in a circle, “The board is yours,” a payment-success message, and the exact submitted message rendered in the board-style message card. It does not redirect to a bare banner page. |
+| Share successful takeover | From the success screen, select **Share on Twitter**. | A new tab opens a Twitter/X intent containing the school board URL and the exact submitted message. The modal remains available to close. |
 | Stale price | Leave a confirmation screen open. In another account, raise the board or its pending challenger above the reviewed amount. Return to the first screen and continue. | No Checkout Session is created. The user sees that the board price changed and must start a fresh confirmation at the new minimum. |
 | Expired approval | Leave the confirmation screen open past the message-validation expiry, then continue. | Checkout is rejected with a fresh-approval message. The expired approval and confirmation cannot be reused. |
 
@@ -170,9 +173,9 @@ Expected behavior:
 
 | Scenario | Steps | Expected behavior |
 | --- | --- | --- |
-| Threshold bid | Submit a bid exactly at the configured high-value threshold (default $50). | The confirmation has prominent high-value language and its CTA repeats the exact dollar amount. |
-| Very high bid | Use an established/trusted test account and submit a bid at the configured very-high threshold (default $100). Try to continue without, then with, `CONFIRM 100`. | Checkout remains unavailable until the exact typed confirmation is supplied. A malformed value, decimal variant, or another amount is rejected. |
-| Normal bid | Submit a bid below the high-value threshold. | The normal confirmation screen still appears; it does not require typed confirmation. |
+| $100 bid | Use an established/trusted test account and submit a bid of exactly $100. | The compact review step appears with no real-money warning, checkbox, or typed acknowledgement. |
+| Over-$100 bid | Use an established/trusted test account and submit a bid above the configured very-high threshold (default $100). Try to continue without, then with, `CONFIRM <amount>`. | The review step adds a concise high-value acknowledgement and terms checkbox. Checkout remains unavailable until both are supplied. A malformed value, decimal variant, or another amount is rejected. |
+| Normal bid | Submit a bid below the threshold. | The normal compact confirmation screen still appears; it does not require typed confirmation. |
 
 ### 9. Risk limits and pending exposure
 

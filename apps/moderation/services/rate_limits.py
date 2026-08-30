@@ -51,6 +51,8 @@ def _increment(key: str, timeout: int) -> int:
 
 
 def enforce(surface: str, identity: str, limit: int, window_seconds: int) -> None:
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return
     if _increment(_cache_key(surface, identity), window_seconds) > limit:
         raise RateLimitExceeded
 
@@ -60,6 +62,8 @@ def _limit(name: str) -> tuple[int, int]:
 
 
 def enforce_basic_moderation_limit(*, content_type: str, user_id: int, remote_addr: str) -> None:
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return
     prefix = "message" if content_type == "message" else "display_name"
     if cache.get(_cache_key("moderation-cooldown", f"user:{user_id}")):
         raise RateLimitExceeded
@@ -92,6 +96,8 @@ def enforce_uncached_moderation_limits(
 
 def record_rejection(*, user_id: int, remote_addr: str) -> None:
     """Back off repeated blocks without retaining a raw rejected candidate."""
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return
     count = _increment(_cache_key("moderation-rejections", f"user:{user_id}"), 3600)
     if count < 3:
         return
@@ -161,10 +167,14 @@ def enforce_message_report_limits(*, user_id: int, remote_addr: str, opening_cas
 
 
 def circuit_is_open() -> bool:
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return False
     return bool(cache.get("takeboard:moderation:circuit-open"))
 
 
 def open_circuit() -> None:
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return
     cache.set(
         "takeboard:moderation:circuit-open",
         True,
@@ -175,6 +185,9 @@ def open_circuit() -> None:
 @contextmanager
 def classifier_semaphore() -> Iterator[None]:
     """A small Redis-backed counter lease; its TTL releases a dead worker's slot."""
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        yield
+        return
     if circuit_is_open():
         raise ValidationBusy
     key = "takeboard:moderation:concurrent"

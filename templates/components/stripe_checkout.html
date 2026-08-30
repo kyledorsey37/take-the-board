@@ -5,7 +5,14 @@
   data-status-url="{{ bid_status_url }}"
   aria-labelledby="stripe-checkout-title"
 >
-  <p class="eyebrow">Secure checkout</p>
-  <h3 id="stripe-checkout-title">Confirm your takeover.</h3>
+  <header class="stripe-checkout-header">
+    <div>
+      <p class="eyebrow">Secure checkout</p>
+      <h3 id="stripe-checkout-title">Confirm your takeover.</h3>
+    </div>
+    <form method="dialog">
+      <button class="icon-button" type="submit" aria-label="Close checkout">&times;</button>
+    </form>
+  </header>
   <div data-stripe-checkout-mount></div>
 </section>

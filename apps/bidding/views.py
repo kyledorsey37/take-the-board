@@ -21,7 +21,6 @@ from .forms import TakeBoardForm
 from .services.create_bid import (
     BidTooLowError,
     TakeoverError,
-    authenticated_player,
     create_bid,
     dollars_to_cents,
 )
@@ -120,13 +119,9 @@ def take_board(request: HttpRequest) -> HttpResponse:
                 )
             except ValidationBusy:
                 return _error_response(request, form, BUSY_REJECTION, error_kind="busy", status_code=503)
-            player = authenticated_player(
-                profile_id=authenticated_profile.id,
-                favorite_entity=form.cleaned_data["represented_entity"],
-            )
             confirmation, risk_decision = create_confirmation(
                 board_id=board.id,
-                user=player,
+                profile_id=authenticated_profile.id,
                 represented_entity_id=form.cleaned_data["represented_entity"].id,
                 amount_cents=amount_cents,
                 message=form.cleaned_data["message"],
@@ -144,9 +139,12 @@ def take_board(request: HttpRequest) -> HttpResponse:
                     "board": board,
                     "risk_decision": risk_decision,
                     "requires_terms": (
-                        not authenticated_profile.terms_accepted_at
-                        or authenticated_profile.terms_version
-                        != settings.TAKEBOARD_BID_TERMS_VERSION
+                        risk_decision.requires_typed_confirmation
+                        and (
+                            not authenticated_profile.terms_accepted_at
+                            or authenticated_profile.terms_version
+                            != settings.TAKEBOARD_BID_TERMS_VERSION
+                        )
                     ),
                     "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
                 },
@@ -203,7 +201,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
             ),
             decision.user_message,
         )
-    requires_terms = (
+    requires_terms = decision.requires_typed_confirmation and (
         not profile.terms_accepted_at
         or profile.terms_version != settings.TAKEBOARD_BID_TERMS_VERSION
     )
@@ -217,7 +215,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                     "board": confirmation.board,
                     "risk_decision": decision,
                     "requires_terms": True,
-                    "terms_error": "Please acknowledge the real-money purchase terms.",
+                    "terms_error": "Please acknowledge this high-value payment to continue.",
                     "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
                 },
                 status=400,
@@ -234,7 +232,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "confirmation": confirmation,
                 "board": confirmation.board,
                 "risk_decision": decision,
-                "requires_terms": False,
+                "requires_terms": requires_terms,
                 "typed_confirmation_error": f"Type CONFIRM {amount_text} to continue.",
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
             },
@@ -266,7 +264,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "confirmation": confirmation,
                 "board": confirmation.board,
                 "risk_decision": decision,
-                "requires_terms": False,
+                "requires_terms": requires_terms,
                 "confirmation_error": str(error),
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
             },

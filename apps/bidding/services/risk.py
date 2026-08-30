@@ -167,5 +167,5 @@ def validate_bid_risk(user: UserProfile, amount_cents: int, *, now=None) -> Risk
         daily_remaining_cents=daily_remaining,
         pending_authorization_cents=pending,
         requires_extra_confirmation=amount_cents >= config.high_value_confirmation_threshold_cents,
-        requires_typed_confirmation=amount_cents >= config.very_high_value_confirmation_threshold_cents,
+        requires_typed_confirmation=amount_cents > config.very_high_value_confirmation_threshold_cents,
     )

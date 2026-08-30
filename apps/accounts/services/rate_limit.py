@@ -2,6 +2,7 @@
 
 import hashlib
 
+from django.conf import settings
 from django.core.cache import cache
 
 
@@ -15,6 +16,8 @@ def _key(*parts: str) -> str:
 
 
 def enforce_auth_rate_limit(*, action: str, remote_addr: str, email: str = "") -> None:
+    if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
+        return
     limits = {"start": 5, "verify": 10, "resend": 3}
     limit = limits[action]
     identities = [f"ip:{remote_addr}"]

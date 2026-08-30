@@ -854,6 +854,8 @@ h2 {
 }
 
 .bid-dialog-shell {
+  position: relative;
+  overflow: hidden;
   padding: clamp(1.25rem, 4vw, 2rem);
   background: var(--paper);
   color: var(--ink);
@@ -1148,8 +1150,16 @@ h2 {
   margin-top: 1rem;
 }
 
-.stripe-checkout-panel h3 {
-  margin: 0 0 1rem;
+.stripe-checkout-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.stripe-checkout-header h3 {
+  margin: 0;
 }
 
 [data-stripe-checkout-mount] {
@@ -1236,6 +1246,104 @@ h2 {
   border-top: 6px solid var(--accent);
 }
 
+.takeover-success {
+  animation: takeover-success-enter 240ms ease-out;
+}
+
+.takeover-success-header,
+.takeover-success-heading {
+  display: flex;
+  align-items: start;
+  gap: 1rem;
+}
+
+.takeover-success-header {
+  justify-content: space-between;
+}
+
+.takeover-success-check {
+  display: grid;
+  flex: 0 0 auto;
+  width: 3.25rem;
+  height: 3.25rem;
+  place-items: center;
+  border: 4px solid #2f8f50;
+  border-radius: 50%;
+  background: #e5f4e9;
+  color: #216c3b;
+  font-size: 2rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.takeover-success-header h3 {
+  margin: 0;
+  font-size: clamp(1.55rem, 4vw, 2.15rem);
+}
+
+.takeover-success-copy {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+}
+
+.takeover-success-message {
+  margin: 1.35rem 0;
+  border: 1px solid var(--school-accent);
+  border-left-width: 10px;
+  padding: 1.15rem 1.25rem 1.25rem;
+  background: #1c1c1b;
+  color: #fff;
+}
+
+.takeover-success-message-text {
+  margin: 1.25rem 0 1.5rem;
+  overflow-wrap: anywhere;
+  font-size: clamp(2rem, 8vw, 4rem);
+  font-weight: 900;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+.takeover-success-message-meta {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.9rem;
+  font-weight: 750;
+}
+
+.takeover-success-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(7rem, auto);
+  gap: 0.75rem;
+}
+
+.takeover-success-actions form {
+  display: contents;
+}
+
+.takeover-success-actions .button {
+  width: 100%;
+}
+
+.takeover-success-trust {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@keyframes takeover-success-enter {
+  from {
+    opacity: 0;
+    transform: translateY(0.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .bid-submit {
   width: 100%;
   cursor: pointer;
@@ -1244,6 +1352,145 @@ h2 {
 
 .bid-preview {
   margin-top: 1.25rem;
+}
+
+.bid-dialog-shell:has(.bid-confirmation-step) > .bid-dialog-header,
+.bid-dialog-shell:has(.bid-confirmation-step) > .bid-form,
+.bid-dialog-shell:has(.stripe-checkout-panel) > .bid-dialog-header,
+.bid-dialog-shell:has(.stripe-checkout-panel) > .bid-form {
+  display: none;
+}
+
+.bid-preview:has(.bid-confirmation-step),
+.bid-preview:has(.stripe-checkout-panel) {
+  margin: 0;
+  animation: bid-confirmation-enter 220ms ease-out;
+}
+
+.bid-confirmation,
+.stripe-checkout-panel {
+  padding: 0;
+}
+
+.bid-preview:has(.stripe-checkout-panel) .stripe-checkout-panel {
+  margin-top: 0;
+}
+
+.bid-confirmation-header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.1rem;
+}
+
+.bid-confirmation-header h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 3.2vw, 1.8rem);
+}
+
+.bid-confirmation-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.text-button {
+  border: 0;
+  padding: 0.65rem 0.25rem;
+  background: transparent;
+  color: var(--accent);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+
+.text-button:hover,
+.text-button:focus-visible {
+  text-decoration: underline;
+}
+
+.bid-confirmation-summary {
+  border: 1px solid var(--line);
+  border-top: 5px solid var(--school-accent, var(--accent));
+  background: var(--field);
+}
+
+.bid-confirmation-summary-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+  padding: 0.85rem 1rem 0.75rem;
+}
+
+.bid-confirmation-summary-list > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.bid-confirmation-summary-list dt,
+.bid-confirmation-message > span {
+  color: var(--muted);
+}
+
+.bid-confirmation-summary-list dd {
+  margin: 0;
+  font-weight: 800;
+  text-align: right;
+}
+
+.bid-confirmation-summary-list .bid-confirmation-price {
+  color: var(--ink);
+  font-size: 1.2rem;
+}
+
+.bid-confirmation-message {
+  margin: 0 1rem;
+  padding: 0.85rem 0 1rem;
+  border-top: 1px solid var(--line);
+}
+
+.bid-confirmation-message p {
+  margin: 0.25rem 0 0;
+  font-size: clamp(1.25rem, 3vw, 1.7rem);
+  font-weight: 850;
+  line-height: 1.2;
+}
+
+.bid-confirmation-blurb {
+  margin: 0.85rem 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.high-value-confirmation {
+  margin: 1rem 0;
+  padding: 0.9rem 1rem;
+  border-left: 4px solid var(--accent);
+  background: #fff4dc;
+  color: var(--ink);
+  line-height: 1.45;
+}
+
+.bid-confirmation form + .bid-confirmation-trust,
+.bid-confirmation-trust {
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@keyframes bid-confirmation-enter {
+  from {
+    opacity: 0;
+    transform: translateX(1.25rem);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .auth-dialog .bid-dialog-shell {
@@ -2362,6 +2609,10 @@ a.standings-row:focus-visible {
 
   .current-message-panel {
     min-height: 10rem;
+  }
+
+  .takeover-success-actions {
+    grid-template-columns: 1fr;
   }
 
   .takeover-row {

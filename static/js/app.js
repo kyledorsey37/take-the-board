@@ -323,25 +323,67 @@ function showCheckoutStatus(container, heading, message, isError) {
   mountPoint.appendChild(status);
 }
 
-function redirectAfterCheckout(boardUrl, move) {
-  const destination = new URL(boardUrl, window.location.origin);
-  destination.searchParams.set("move", move);
-  // Start navigation before closing the native dialog so the old page never
-  // paints an empty dialog shell between checkout and the board refresh.
-  window.location.replace(destination.toString());
+function showTakeoverSuccess(container, payload) {
+  const boardName = payload.board_name || "this board";
+  const message = payload.message || "";
+  const representedEntityName = payload.represented_entity_name || "Your team";
+  const amountCents = Number(payload.amount_cents);
+  const amount = Number.isFinite(amountCents)
+    ? `$${(amountCents / 100).toFixed(2)}`
+    : "your bid";
+  const boardUrl = new URL(payload.board_url || window.location.pathname, window.location.origin).toString();
+
+  container.innerHTML = `
+    <section class="takeover-success" role="status" aria-labelledby="takeover-success-title">
+      <header class="takeover-success-header">
+        <div class="takeover-success-heading">
+          <span class="takeover-success-check" aria-hidden="true">✓</span>
+          <div>
+            <p class="eyebrow">Payment successful</p>
+            <h3 id="takeover-success-title">The board is yours.</h3>
+          </div>
+        </div>
+        <form method="dialog">
+          <button class="icon-button" type="submit" aria-label="Close takeover confirmation">&times;</button>
+        </form>
+      </header>
+      <p class="takeover-success-copy"></p>
+      <article class="takeover-success-message" aria-label="Your board message">
+        <p class="current-message-label"><span aria-hidden="true"></span>Your message</p>
+        <p class="takeover-success-message-text"></p>
+        <p class="takeover-success-message-meta"></p>
+      </article>
+      <div class="takeover-success-actions">
+        <a class="button button-primary" data-takeover-share target="_blank" rel="noopener noreferrer">Share on Twitter</a>
+        <form method="dialog"><button class="button button-secondary" type="submit">Done</button></form>
+      </div>
+      <p class="takeover-success-trust">Payment confirmed <span aria-hidden="true">·</span> Your message is live for the guaranteed display window</p>
+    </section>
+  `;
+
+  container.querySelector(".takeover-success-copy").textContent = `You now control the ${boardName} board.`;
+  container.querySelector(".takeover-success-message-text").textContent = message;
+  container.querySelector(".takeover-success-message-meta").textContent = `Backing ${representedEntityName} · ${amount}`;
+
+  const shareLink = container.querySelector("[data-takeover-share]");
+  const shareText = `I just took the ${boardName} board: “${message}”`;
+  shareLink.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(boardUrl)}`;
 }
 
 async function waitForBidStatus(container) {
   const statusUrl = container.dataset.statusUrl;
   if (!statusUrl) {
-    redirectAfterCheckout(window.location.href, "processing");
+    showCheckoutStatus(
+      container,
+      "Payment successful.",
+      "Your payment was accepted. Your takeover is still processing; you can close this window and check the board shortly.",
+      false,
+    );
     return;
   }
 
   const terminalFailures = ["payment_failed", "auth_canceled"];
   let latestStatus = "checkout_created";
-  let boardUrl = window.location.href;
-
   for (let attempt = 0; attempt < 20; attempt += 1) {
     try {
       const response = await fetch(statusUrl, {
@@ -351,10 +393,9 @@ async function waitForBidStatus(container) {
       if (response.ok) {
         const payload = await response.json();
         latestStatus = payload.status || latestStatus;
-        boardUrl = payload.board_url || boardUrl;
 
         if (latestStatus === "won") {
-          redirectAfterCheckout(boardUrl, "live");
+          showTakeoverSuccess(container, payload);
           return;
         }
         if (terminalFailures.includes(latestStatus)) {
@@ -374,9 +415,13 @@ async function waitForBidStatus(container) {
     await wait(750);
   }
 
-  redirectAfterCheckout(
-    boardUrl,
-    latestStatus === "authorized" ? "pending" : "processing",
+  showCheckoutStatus(
+    container,
+    "Payment successful.",
+    latestStatus === "authorized"
+      ? "Your payment was accepted. Your takeover is still processing; you can close this window and check the board shortly."
+      : "Your payment was accepted and your takeover is still processing.",
+    false,
   );
 }
 
@@ -431,6 +476,24 @@ async function mountEmbeddedCheckout(event) {
 }
 
 document.addEventListener("htmx:afterSwap", mountEmbeddedCheckout);
+
+document.addEventListener("click", function returnToBidForm(event) {
+  const button = event.target.closest("[data-bid-confirmation-back]");
+  if (!button) {
+    return;
+  }
+  const preview = button.closest("#takeover-result");
+  if (!preview) {
+    return;
+  }
+  preview.replaceChildren();
+  const dialog = preview.closest("dialog");
+  const bidForm = dialog && dialog.querySelector("[data-bid-form]");
+  if (bidForm) {
+    bidForm.hidden = false;
+    bidForm.querySelector("input[name='amount']")?.focus();
+  }
+});
 
 // HTMX normally refuses to swap 4xx/5xx responses. Bid throttling and
 // temporary moderation outages deliberately use those statuses, but their

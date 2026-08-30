@@ -1,25 +1,39 @@
-<section class="bid-confirmation" aria-labelledby="bid-confirmation-title">
-  <p class="eyebrow">Review your challenge</p>
-  <h3 id="bid-confirmation-title">Confirm your {{ board.entity.name }} takeover</h3>
+<section class="bid-confirmation bid-confirmation-step" aria-labelledby="bid-confirmation-title">
+  <header class="bid-confirmation-header">
+    <div>
+      <p class="eyebrow">Review your bid</p>
+      <h3 id="bid-confirmation-title">Take the {{ board.entity.name }} board.</h3>
+    </div>
+    <div class="bid-confirmation-header-actions">
+      <button class="text-button" type="button" data-bid-confirmation-back>Edit bid</button>
+      <form method="dialog">
+        <button class="icon-button" type="submit" aria-label="Close bid dialog">&times;</button>
+      </form>
+    </div>
+  </header>
   {% if confirmation_error %}<p class="form-error" role="alert">{{ confirmation_error }}</p>{% endif %}
-  <div class="bid-confirmation-summary">
-    <p><strong>Current board:</strong> ${{ confirmation.current_board_amount_dollars|floatformat:2 }}</p>
-    {% if confirmation.pending_challenge_amount_cents %}<p><strong>Highest pending challenge:</strong> ${{ confirmation.pending_challenge_amount_dollars|floatformat:2 }}</p>{% endif %}
-    <p><strong>Minimum bid when reviewed:</strong> ${{ confirmation.minimum_bid_dollars|floatformat:2 }}</p>
-    <p><strong>Your message:</strong> {{ confirmation.message }}</p>
-    <p><strong>Representing:</strong> {{ confirmation.represented_entity.name }}</p>
-    <p><strong>Your bid:</strong> ${{ confirmation.amount_dollars|floatformat:2 }}</p>
+  <div class="bid-confirmation-summary" aria-label="Bid summary">
+    <dl class="bid-confirmation-summary-list">
+      <div><dt>Board to beat</dt><dd>${{ confirmation.current_board_amount_dollars|floatformat:2 }}</dd></div>
+      {% if confirmation.pending_challenge_amount_cents %}<div><dt>Pending challenge</dt><dd>${{ confirmation.pending_challenge_amount_dollars|floatformat:2 }}</dd></div>{% endif %}
+      <div><dt>Your bid</dt><dd class="bid-confirmation-price">${{ confirmation.amount_dollars|floatformat:2 }}</dd></div>
+      <div><dt>Backing</dt><dd>{{ confirmation.represented_entity.name }}</dd></div>
+    </dl>
+    <div class="bid-confirmation-message">
+      <span>Your message</span>
+      <p>{{ confirmation.message }}</p>
+    </div>
   </div>
-  {% if risk_decision.requires_extra_confirmation %}
-    <p class="form-hint"><strong>High-value bid.</strong> You may pay ${{ confirmation.amount_dollars|floatformat:2 }} in real money if this takeover succeeds.</p>
+  <p class="bid-confirmation-blurb">We’ll authorize your card now and charge it only if your takeover wins. Your message gets at least {{ confirmation.guaranteed_seconds }} seconds on the board.</p>
+  {% if risk_decision.requires_typed_confirmation %}
+    <aside class="high-value-confirmation" aria-label="High-value bid acknowledgement">
+      <strong>This bid is over $100.</strong> Confirm the payment amount below before continuing.
+    </aside>
   {% endif %}
-  <p>If your bid becomes the winning challenge, your payment is captured and your message takes control of this board. Every successful takeover receives at least {{ confirmation.guaranteed_seconds }} seconds of public display.</p>
-  <p>Your card may be temporarily authorized while your bid is pending. If a higher bidder beats you before your takeover begins, the authorization is released by your card issuer.</p>
-  <p>Only the highest pending challenger can take over next. A bid purchases temporary control of a message on Take the Board; it creates no ownership or affiliation with a school, team, conference, university, or the NCAA.</p>
   <form method="post" action="{% url 'bidding:confirm' confirmation.public_id %}" hx-post="{% url 'bidding:confirm' confirmation.public_id %}" hx-target="#takeover-result" hx-swap="innerHTML">
     {% csrf_token %}
     {% if requires_terms %}
-      <label class="checkbox-field"><input type="checkbox" name="terms_accepted" required> I understand this is a real-money purchase and successful captured bids are generally final.</label>
+      <label class="checkbox-field"><input type="checkbox" name="terms_accepted" required> I understand that a successful ${{ confirmation.amount_dollars|floatformat:2 }} bid is a payment.</label>
       {% if terms_error %}<p class="form-error" role="alert">{{ terms_error }}</p>{% endif %}
     {% endif %}
     {% if risk_decision.requires_typed_confirmation %}
@@ -27,7 +41,7 @@
       <input id="typed-confirmation" name="typed_confirmation" autocomplete="off">
       {% if typed_confirmation_error %}<p class="form-error" role="alert">{{ typed_confirmation_error }}</p>{% endif %}
     {% endif %}
-    <button class="button button-primary bid-submit" type="submit">{% if risk_decision.requires_extra_confirmation %}Yes, continue with{% else %}Continue to payment ·{% endif %} ${{ confirmation.amount_dollars|floatformat:2 }}</button>
+    <button class="button button-primary bid-submit" type="submit">Continue to payment · ${{ confirmation.amount_dollars|floatformat:2 }}</button>
   </form>
-  <p class="field-hint">Secured by Stripe · Message approved · Only charged if takeover succeeds</p>
+  <p class="bid-confirmation-trust">Secured by Stripe <span aria-hidden="true">·</span> Message approved <span aria-hidden="true">·</span> Only charged if you win</p>
 </section>

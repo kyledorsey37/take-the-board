@@ -36,7 +36,10 @@ work.
 1. An authenticated user submits a board message.
 2. Django applies deterministic policy checks, Redis limits/cache, and the configured
    Bedrock/Nova classifier; provider failure is rejected temporarily.
-3. Django rechecks price and risk, then displays a mandatory confirmation screen.
+3. Django rechecks price and risk, then displays a mandatory, compact second-step
+   confirmation in the bid modal. It records the exact snapshot server-side for all
+   paid bids; only bids above the configured very-high threshold (default $100)
+   add the payment acknowledgement and typed confirmation.
 4. On explicit confirmation, checkout creation transactionally rechecks the approved
    validation, current board price, risk limits, and confirmation snapshot before
    creating a `Bid` and Stripe Embedded Checkout Session using manual capture.

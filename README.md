@@ -22,13 +22,19 @@ migrations, seeds demo data, and starts Django on the LAN:
 
 The launcher loads the ignored `.env` file before starting Django, so the Mac
 and any phone on the LAN use the same local Cognito, Stripe, and bidding
-settings. It uses `DATABASE_URL` when one is configured and otherwise falls
-back to the local SQLite database. Preview mode is only enabled when
+settings and the same host-mapped Postgres database as Docker. If the copied
+`.env` still contains Docker's `@postgres:5432` hostname, the launcher
+automatically normalizes it to `127.0.0.1:5433`. Set `LOCAL_DATABASE_URL` only
+when you intentionally need a different database. Preview mode is only enabled when
 `TAKEBOARD_AUTH_MODAL_PREVIEW=true` is set in `.env`.
 
-The equivalent manual server command, after activating `.venv`, is:
+The local settings also auto-apply pending migrations whenever `manage.py
+runserver` starts. The launcher is still preferred because it checks the port,
+seeds demo data, and provides the shared database defaults. If you run Django
+manually, this explicit migration remains useful for clarity:
 
 ```bash
+python manage.py migrate --noinput
 DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver 0.0.0.0:8000 --insecure
 ```
 
@@ -74,7 +80,9 @@ If the database schema is behind the code after pulling changes, apply pending m
 docker compose exec web python manage.py migrate --noinput
 ```
 
-The local settings use `DATABASE_URL` when provided. Docker Compose supplies a PostgreSQL URL for the app container; a SQLite fallback exists only so framework checks can run before local services are available.
+The local settings use `DATABASE_URL` when provided. The canonical LAN and Docker
+development paths both use PostgreSQL; SQLite is retained only as a fallback for
+isolated framework checks when no database service is available.
 
 ## Architecture Guardrails
 

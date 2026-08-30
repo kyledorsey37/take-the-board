@@ -35,7 +35,7 @@ def bid_status(request: HttpRequest, public_id) -> JsonResponse:
         )
 
     try:
-        bid = Bid.objects.select_related("board__entity").get(
+        bid = Bid.objects.select_related("board__entity", "represented_entity").get(
             public_id=public_id,
             bidder=profile,
         )
@@ -47,6 +47,10 @@ def bid_status(request: HttpRequest, public_id) -> JsonResponse:
             "ok": True,
             "status": bid.status,
             "board_url": reverse("schools:detail", kwargs={"slug": bid.board.entity.slug}),
+            "board_name": bid.board.entity.name,
+            "message": bid.message,
+            "represented_entity_name": bid.represented_entity.name,
+            "amount_cents": bid.amount_cents,
         }
     )
 

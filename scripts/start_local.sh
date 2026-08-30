@@ -18,6 +18,17 @@ if [[ -f "${PROJECT_ROOT}/.env" ]]; then
   set +a
 fi
 
+# Docker Compose exposes the shared development Postgres on the host at 5433,
+# while the web container reaches the same database at postgres:5432. If the
+# ignored .env was copied from the container setup, normalize that hostname for
+# this host process. An explicit LOCAL_DATABASE_URL remains available for a
+# deliberate alternative.
+if [[ -n "${LOCAL_DATABASE_URL:-}" ]]; then
+  export DATABASE_URL="${LOCAL_DATABASE_URL}"
+elif [[ -z "${DATABASE_URL:-}" || "${DATABASE_URL}" == *"@postgres:"* ]]; then
+  export DATABASE_URL="postgres://takeboard:takeboard@127.0.0.1:${POSTGRES_PORT:-5433}/takeboard"
+fi
+
 if [[ ! -x "${VENV_PYTHON}" ]]; then
   PYTHON_BIN="${PYTHON_BIN:-}"
   if [[ -z "${PYTHON_BIN}" ]] && command -v python3.12 >/dev/null 2>&1; then

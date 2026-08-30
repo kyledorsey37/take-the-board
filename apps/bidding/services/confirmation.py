@@ -7,9 +7,8 @@ from datetime import datetime
 from django.db import transaction
 from django.utils import timezone
 
-from apps.accounts.models import UserProfile
 from apps.bidding.models import BidConfirmation
-from apps.bidding.services.create_bid import BidTooLowError, TakeoverError
+from apps.bidding.services.create_bid import BidTooLowError, TakeoverError, authenticated_player
 from apps.bidding.services.risk import RiskDecision, validate_bid_risk
 from apps.bidding.services.rules import BoardRules, minimum_takeover_cents
 from apps.boards.models import Board
@@ -23,7 +22,7 @@ from apps.schools.models import Entity
 def create_confirmation(
     *,
     board_id: int,
-    user: UserProfile,
+    profile_id: int,
     represented_entity_id: int,
     amount_cents: int,
     message: str,
@@ -38,6 +37,7 @@ def create_confirmation(
     candidate = validate_message_deterministically(message)
     board = Board.objects.select_for_update().select_related("entity__competition").get(pk=board_id)
     entity = Entity.objects.get(pk=represented_entity_id, competition=board.entity.competition, active=True)
+    user = authenticated_player(profile_id=profile_id, favorite_entity=entity)
     if not board.bidding_enabled or not rules.bidding_enabled:
         raise TakeoverError("Takeovers are paused for this board.")
     if (

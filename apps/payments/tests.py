@@ -12,6 +12,7 @@ from django.core.cache import cache
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
 from apps.bidding.models import Bid, BidConfirmation
+from apps.bidding.services.confirmation import create_confirmation
 from apps.bidding.services.create_bid import TakeoverError
 from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules
@@ -272,23 +273,68 @@ class StripeBidFlowTests(TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Review your challenge")
+        self.assertContains(response, "Review your bid")
         self.assertContains(response, "Continue to payment")
+        self.assertContains(response, "Edit bid")
+        self.assertNotContains(response, "real-money purchase")
+        self.assertNotContains(response, "terms_accepted")
         self.assertEqual(Bid.objects.count(), 0)
         confirmation = BidConfirmation.objects.get()
         response = self.client.post(
             reverse("bidding:confirm", kwargs={"public_id": confirmation.public_id}),
-            {"terms_accepted": "on"},
+            {},
             HTTP_HX_REQUEST="true",
         )
 
         self.assertContains(response, "data-stripe-checkout")
         self.assertContains(response, "cs_secret_123")
+        self.assertContains(response, 'aria-label="Close checkout"')
         bid = Bid.objects.get()
         self.assertContains(response, f"/api/payments/bids/{bid.public_id}/status/")
         self.assertEqual(bid.status, Bid.Status.CHECKOUT_CREATED)
         self.board.refresh_from_db()
         self.assertIsNone(self.board.current_bid_id)
+
+    def test_only_bids_over_100_require_high_value_acknowledgement(self) -> None:
+        self.profile.successful_bid_count = 10
+        self.profile.created_at = timezone.now() - timedelta(days=8)
+        self.profile.save(update_fields=["successful_bid_count", "created_at"])
+        confirmation, decision = create_confirmation(
+            board_id=self.board.id,
+            profile_id=self.profile.id,
+            represented_entity_id=self.represented_entity.id,
+            amount_cents=10_100,
+            message="TAKE THE BOARD.",
+            validation=self.approved_validation(),
+            rules=current_board_rules(),
+            ip_address="127.0.0.1",
+            user_agent="test-agent",
+            request_id="test-high-value",
+        )
+        self.assertTrue(decision.requires_typed_confirmation)
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": self.profile.id,
+            "cognito_sub": self.profile.cognito_sub,
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        response = self.client.post(
+            reverse("bidding:confirm", kwargs={"public_id": confirmation.public_id}),
+            HTTP_HX_REQUEST="true",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "This bid is over $100.", status_code=400)
+        self.assertContains(response, "Please acknowledge this high-value payment", status_code=400)
+        response = self.client.post(
+            reverse("bidding:confirm", kwargs={"public_id": confirmation.public_id}),
+            {"terms_accepted": "on"},
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertContains(response, "Type CONFIRM 101 to continue.", status_code=400)
 
     def test_bid_status_is_visible_only_to_the_authenticated_bidder(self) -> None:
         bid = Bid.objects.create(
@@ -312,6 +358,10 @@ class StripeBidFlowTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["status"], Bid.Status.CHECKOUT_CREATED)
         self.assertEqual(response.json()["board_url"], "/schools/oklahoma/")
+        self.assertEqual(response.json()["board_name"], "Oklahoma")
+        self.assertEqual(response.json()["message"], "TAKE THE BOARD.")
+        self.assertEqual(response.json()["represented_entity_name"], "Texas")
+        self.assertEqual(response.json()["amount_cents"], 1700)
 
     def test_authorization_event_makes_the_bid_the_only_pending_challenger(self) -> None:
         bid = Bid.objects.create(
