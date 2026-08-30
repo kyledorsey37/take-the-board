@@ -3,7 +3,19 @@
     <p class="eyebrow">Takeover price changed</p>
     <h3 id="takeover-error-title">That amount is no longer enough.</h3>
     <p>{{ takeover_error }}</p>
-  {% elif takeover_error_kind == "validation" %}
+  {% elif takeover_error_kind == "moderation" %}
+    <p class="eyebrow">Message not approved</p>
+    <h3 id="takeover-error-title">That message doesn’t meet the community guidelines.</h3>
+    <p>Try a different message. Rivalry trash talk is welcome, but links, personal information, slurs, and threats aren’t allowed.</p>
+  {% elif takeover_error_kind == "busy" %}
+    <p class="eyebrow">Validation is busy</p>
+    <h3 id="takeover-error-title">We couldn’t review that message yet.</h3>
+    <p>{{ takeover_error }}</p>
+  {% elif takeover_error_kind == "rate_limited" %}
+    <p class="eyebrow">Rate limit reached</p>
+    <h3 id="takeover-error-title">Too many attempts for now.</h3>
+    <p>{{ takeover_error }}</p>
+  {% elif takeover_error_kind == "form" %}
     <p class="eyebrow">Check your bid</p>
     <h3 id="takeover-error-title">Enter valid takeover details.</h3>
     <ul class="form-errors">

@@ -57,7 +57,11 @@ Payment and moderation work should log named state-transition events such as `me
 
 ## Rate Limiting
 
-Shared rate-limit state is required before real public traffic. Rate-limit message validation, checkout creation, bid status polling, profile edits, failed moderation attempts, and high-velocity bidding. Use AWS WAF for edge/path/IP protection and app-level limits for user-aware behavior.
+Shared Redis rate-limit state protects message and display-name validation,
+checkout creation, bid-status polling, and failed moderation attempts. Limits use
+HMAC-derived user, IP, and candidate keys plus a global moderation cap and
+concurrency circuit breaker. Use AWS WAF for edge/path/IP protection and
+app-level limits for user-aware behavior.
 
 ## Error Monitoring
 

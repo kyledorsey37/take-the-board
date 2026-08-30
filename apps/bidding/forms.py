@@ -7,9 +7,6 @@ from apps.schools.models import School
 from .services.rules import BoardRules
 
 
-URL_PATTERN = re.compile(r"(?:https?://|www\.)", re.IGNORECASE)
-
-
 class TakeBoardForm(forms.Form):
     board_slug = forms.SlugField(widget=forms.HiddenInput())
     display_name = forms.CharField(
@@ -96,6 +93,4 @@ class TakeBoardForm(forms.Form):
         message = self.cleaned_data["message"].strip()
         if not message:
             raise forms.ValidationError("Write a message for the board.")
-        if URL_PATTERN.search(message):
-            raise forms.ValidationError("Links are not allowed on board messages.")
         return message

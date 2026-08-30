@@ -3,7 +3,10 @@
 Implementation detail and rollout order are defined in
 `docs/moderation_and_abuse_controls_design.md`.
 
-Moderation is not implemented in this skeleton. This document defines the intended posture for public user-generated board messages.
+Moderation is implemented as a deterministic validation, Redis-cost-control, and
+Bedrock/Nova classifier gate. Bedrock remains fail-closed until its dev IAM and
+model configuration are enabled. This document defines the intended posture for
+public user-generated board messages.
 
 ## Philosophy
 

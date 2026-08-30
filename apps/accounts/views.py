@@ -1,10 +1,11 @@
 import hmac
 
 from django.conf import settings
-from django.db import IntegrityError
+from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import redirect
 from django.urls import reverse
+from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
 from django.views.decorators.http import require_POST
 
@@ -29,10 +30,14 @@ from .services.session import (
     set_authenticated_session,
     set_pending_auth,
 )
+from apps.moderation.models import DisplayNameValidation
+from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded, ValidationBusy
+from apps.moderation.services.validation import BUSY_REJECTION, RATE_LIMIT_REJECTION, validate_display_name
 
 
 OAUTH_STATE_SESSION_KEY = "takeboard.auth.oauth_state"
 OAUTH_NEXT_SESSION_KEY = "takeboard.auth.oauth_next"
+AUTH_RATE_LIMIT_REJECTION = "You’ve reached the sign-in limit. Please wait before trying again."
 
 
 def _auth_enabled_response() -> JsonResponse | None:
@@ -42,6 +47,8 @@ def _auth_enabled_response() -> JsonResponse | None:
 
 
 def _remote_addr(request: HttpRequest) -> str:
+    # EC2/Caddy is not a trusted forwarding-header environment. Production must
+    # configure trusted proxies before using a forwarding header here.
     return request.META.get("REMOTE_ADDR", "unknown")
 
 
@@ -64,7 +71,7 @@ def email_start(request: HttpRequest) -> JsonResponse:
         enforce_auth_rate_limit(action="start", remote_addr=_remote_addr(request), email=email)
         pending = start_email_auth(email)
     except RateLimitExceeded:
-        return JsonResponse({"ok": False, "error": "Please wait a minute before trying again."}, status=429)
+        return JsonResponse({"ok": False, "error": AUTH_RATE_LIMIT_REJECTION}, status=429)
     except (CognitoConfigurationError, CognitoError):
         return JsonResponse(
             {"ok": False, "error": "We could not send a code. Please try again."},
@@ -95,7 +102,7 @@ def email_verify(request: HttpRequest) -> JsonResponse:
         )
         next_pending, tokens = verify_email_code(pending, form.cleaned_data["code"])
     except RateLimitExceeded:
-        return JsonResponse({"ok": False, "error": "Please wait a minute before trying again."}, status=429)
+        return JsonResponse({"ok": False, "error": AUTH_RATE_LIMIT_REJECTION}, status=429)
     except CognitoError:
         return JsonResponse({"ok": False, "error": "That code could not be verified."}, status=400)
 
@@ -143,9 +150,31 @@ def set_display_name(request: HttpRequest) -> JsonResponse:
     if UserProfile.objects.exclude(pk=profile.pk).filter(display_name__iexact=display_name).exists():
         return JsonResponse({"ok": False, "error": "That board name is already in use."}, status=400)
 
-    profile.display_name = display_name
     try:
-        profile.save(update_fields=["display_name", "updated_at"])
+        validation = validate_display_name(
+            user=profile,
+            display_name=display_name,
+            remote_addr=_remote_addr(request),
+        )
+    except ModerationRateLimitExceeded:
+        return JsonResponse({"ok": False, "error": RATE_LIMIT_REJECTION}, status=429)
+    except ValidationBusy:
+        return JsonResponse({"ok": False, "error": BUSY_REJECTION}, status=503)
+    if validation.decision != DisplayNameValidation.Decision.ALLOW:
+        return JsonResponse(
+            {"ok": False, "error": "That does not meet the Take the Board community guidelines."},
+            status=400,
+        )
+
+    try:
+        with transaction.atomic():
+            validation = DisplayNameValidation.objects.select_for_update().get(pk=validation.pk)
+            if validation.consumed_at or validation.expires_at <= timezone.now():
+                return JsonResponse({"ok": False, "error": BUSY_REJECTION}, status=409)
+            profile.display_name = display_name
+            profile.save(update_fields=["display_name", "updated_at"])
+            validation.consumed_at = timezone.now()
+            validation.save(update_fields=["consumed_at"])
     except IntegrityError:
         return JsonResponse({"ok": False, "error": "That board name is already in use."}, status=400)
     return JsonResponse({"ok": True})
@@ -167,7 +196,7 @@ def email_resend(request: HttpRequest) -> JsonResponse:
         )
         set_pending_auth(request, resend_email_code(pending))
     except RateLimitExceeded:
-        return JsonResponse({"ok": False, "error": "Please wait a minute before trying again."}, status=429)
+        return JsonResponse({"ok": False, "error": AUTH_RATE_LIMIT_REJECTION}, status=429)
     except CognitoError:
         return JsonResponse({"ok": False, "error": "We could not resend the code. Please try again."}, status=400)
     return JsonResponse({"ok": True, "message": "We sent another code."})

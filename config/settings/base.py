@@ -169,6 +169,45 @@ TAKEBOARD_MESSAGE_MAX_LENGTH = int(os.environ.get("TAKEBOARD_MESSAGE_MAX_LENGTH"
 TAKEBOARD_VALIDATION_EXPIRATION_MINUTES = int(
     os.environ.get("TAKEBOARD_VALIDATION_EXPIRATION_MINUTES", "10")
 )
+TAKEBOARD_MODERATION_POLICY_VERSION = os.environ.get("TAKEBOARD_MODERATION_POLICY_VERSION", "2026-08-1")
+TAKEBOARD_MODERATION_CLASSIFIER_MODEL_VERSION = os.environ.get(
+    "TAKEBOARD_MODERATION_CLASSIFIER_MODEL_VERSION", "nova-lite-v1"
+)
+TAKEBOARD_MODERATION_HASH_SECRET = os.environ.get("MODERATION_HASH_SECRET", SECRET_KEY)
+TAKEBOARD_BEDROCK_ENABLED = env_bool("TAKEBOARD_BEDROCK_ENABLED", False)
+TAKEBOARD_BEDROCK_MODEL_ID = os.environ.get("TAKEBOARD_BEDROCK_MODEL_ID", "")
+TAKEBOARD_BEDROCK_REGION = os.environ.get("TAKEBOARD_BEDROCK_REGION", "us-east-1")
+TAKEBOARD_BEDROCK_TIMEOUT_SECONDS = int(os.environ.get("TAKEBOARD_BEDROCK_TIMEOUT_SECONDS", "5"))
+TAKEBOARD_MODERATION_CACHE_ALLOW_SECONDS = int(
+    os.environ.get("TAKEBOARD_MODERATION_CACHE_ALLOW_SECONDS", "86400")
+)
+TAKEBOARD_MODERATION_CACHE_REVIEW_SECONDS = int(
+    os.environ.get("TAKEBOARD_MODERATION_CACHE_REVIEW_SECONDS", "300")
+)
+TAKEBOARD_MODERATION_CIRCUIT_SECONDS = int(
+    os.environ.get("TAKEBOARD_MODERATION_CIRCUIT_SECONDS", "60")
+)
+TAKEBOARD_MODERATION_CONCURRENCY = int(os.environ.get("TAKEBOARD_MODERATION_CONCURRENCY", "3"))
+TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS = int(
+    os.environ.get("TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS", "60")
+)
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE", "16384"))
+TAKEBOARD_RATE_LIMITS = {
+    "message_request": (20, 600),
+    "message_user_uncached": (5, 600),
+    "message_ip_uncached": (15, 600),
+    "display_name_request": (12, 3600),
+    "display_name_user_uncached": (3, 3600),
+    "display_name_ip_uncached": (10, 3600),
+    "candidate_uncached": (10, 600),
+    "moderation_global_uncached": (30, 60),
+    "checkout_user": (3, 600),
+    "checkout_ip": (10, 600),
+    "checkout_global": (50, 60),
+    "bid_status_user": (30, 60),
+    "bid_status_ip": (60, 60),
+    "bid_status_global": (500, 60),
+}
 # Free-play takeovers are local-development mechanics only. They create no
 # payment records and must remain disabled outside local development.
 TAKEBOARD_DEMO_BIDDING_ENABLED = env_bool("TAKEBOARD_DEMO_BIDDING_ENABLED", False)

@@ -1,11 +1,12 @@
 # Payment Flow
 
 The local Stripe sandbox path is implemented at `POST /webhooks/stripe/` and through
-the authenticated bid flow. Django creates a one-time Embedded Checkout Session with
+the authenticated bid flow. Django requires a fresh, matching, one-time approved
+`MessageValidation` before it creates an Embedded Checkout Session with
 manual capture, verifies Stripe signatures against the raw request body, stores each
 event once in `StripeEvent`, and lets the local worker process authorization,
-cancellation, and capture transitions. Ledger entries, Bedrock/Nova moderation, and
-SQS FIFO delivery remain later production work.
+cancellation, and capture transitions. Ledger entries and SQS FIFO delivery remain
+later production work.
 
 ## Invariants
 
@@ -21,13 +22,16 @@ SQS FIFO delivery remain later production work.
 ## Current Local Flow
 
 1. An authenticated user submits a board message.
-2. Checkout creation rechecks the current board price and creates a `Bid`.
-3. Django creates a Stripe Embedded Checkout Session using manual capture.
-4. Stripe authorizes the card and sends webhooks through the local Stripe CLI.
-5. Django verifies the webhook, stores a `StripeEvent`, and the local worker processes it.
-6. The worker keeps only the highest authorized challenger during the current guarantee.
-7. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
-8. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
+2. Django applies deterministic policy checks, Redis limits/cache, and the configured
+   Bedrock/Nova classifier; provider failure is rejected temporarily.
+3. Checkout creation transactionally consumes the approved validation, rechecks the
+   current board price, and creates a `Bid`.
+4. Django creates a Stripe Embedded Checkout Session using manual capture.
+5. Stripe authorizes the card and sends webhooks through the local Stripe CLI.
+6. Django verifies the webhook, stores a `StripeEvent`, and the local worker processes it.
+7. The worker keeps only the highest authorized challenger during the current guarantee.
+8. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
+9. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
 
 In the current local slice, message moderation is not yet connected to Bedrock/Nova and
 the worker polls Postgres rather than consuming SQS FIFO messages. Do not use this mode

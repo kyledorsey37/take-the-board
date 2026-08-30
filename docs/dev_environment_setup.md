@@ -154,6 +154,9 @@ Required behavior:
 - passwordless email OTP support
 - Hosted UI callback URL for the dev domain
 - app execution role can call `cognito-idp:ListUsers`
+- when Bedrock moderation is enabled, the EC2 instance profile can call only
+  `bedrock:Converse` for the configured Nova model ARN; do not grant broad
+  Bedrock administration or static AWS credentials to the container
 
 For a dev domain of `https://dev.taketheboard.com`, configure:
 
@@ -218,6 +221,11 @@ TAKEBOARD_COGNITO_AUTH_ENABLED=true
 TAKEBOARD_AUTH_MODAL_PREVIEW=false
 TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING=true
 TAKEBOARD_STRIPE_ENABLED=true
+MODERATION_HASH_SECRET=<distinct-dev-secret>
+TAKEBOARD_BEDROCK_ENABLED=false
+TAKEBOARD_BEDROCK_REGION=us-east-1
+TAKEBOARD_BEDROCK_MODEL_ID=
+TAKEBOARD_BEDROCK_TIMEOUT_SECONDS=5
 
 COGNITO_REGION=us-east-1
 COGNITO_USER_POOL_ID=<dev-pool-id>
@@ -238,6 +246,11 @@ DJANGO_LOG_LEVEL=INFO
 
 Use a confidential Cognito client secret only if the app client is created with
 one.
+
+Enable Bedrock only after the instance profile has the scoped `bedrock:Converse`
+permission and the selected model has been enabled in the dev account. Until
+then the moderation gate intentionally fails closed with a temporary validation
+response; it never creates Checkout Sessions without a matching approval.
 
 ## EC2 File Layout
 

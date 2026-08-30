@@ -2,6 +2,7 @@ from unittest.mock import MagicMock, patch
 
 from botocore.exceptions import ClientError
 from django.test import Client, TestCase, override_settings
+from django.core.cache import cache
 from django.urls import reverse
 
 from apps.accounts.models import UserProfile
@@ -13,6 +14,7 @@ from apps.accounts.services.cognito import (
     verify_email_code,
 )
 from apps.accounts.services.session import AUTH_SESSION_KEY, PENDING_AUTH_SESSION_KEY
+from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
 
 
 AUTH_SETTINGS = {
@@ -122,6 +124,7 @@ class EmailAuthenticationTests(TestCase):
         self.assertNotIn(PENDING_AUTH_SESSION_KEY, self.client.session)
 
     def test_authenticated_user_can_set_a_board_name_once(self) -> None:
+        cache.clear()
         profile = UserProfile.objects.create(
             cognito_sub="new-cognito-subject",
             email="fan@example.com",
@@ -137,10 +140,16 @@ class EmailAuthenticationTests(TestCase):
         }
         session.save()
 
-        response = self.client.post(
-            reverse("accounts:set_display_name"),
-            {"display_name": "BoardBoss"},
-        )
+        with patch(
+            "apps.moderation.services.validation.classify_message",
+            return_value=__import__(
+                "apps.moderation.services.nova_classifier", fromlist=["Classification"]
+            ).Classification("allow", "safe", 0.99),
+        ):
+            response = self.client.post(
+                reverse("accounts:set_display_name"),
+                {"display_name": "BoardBoss"},
+            )
 
         self.assertEqual(response.json(), {"ok": True})
         profile.refresh_from_db()
@@ -151,6 +160,34 @@ class EmailAuthenticationTests(TestCase):
             {"display_name": "DifferentName"},
         )
         self.assertEqual(response.status_code, 409)
+
+    def test_display_name_rate_limit_is_reported_as_a_rate_limit(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="rate-limited-cognito-subject",
+            email="rate-limited@example.com",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "access_token": "access-token",
+            "id_token": "id-token",
+            "refresh_token": "refresh-token",
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        with patch(
+            "apps.accounts.views.validate_display_name",
+            side_effect=ModerationRateLimitExceeded,
+        ):
+            response = self.client.post(
+                reverse("accounts:set_display_name"),
+                {"display_name": "RateLimitedFan"},
+            )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertIn("reached the limit", response.json()["error"])
 
     @patch("apps.accounts.services.cognito.client")
     def test_email_only_pool_uses_email_as_the_cognito_username(self, mock_client) -> None:

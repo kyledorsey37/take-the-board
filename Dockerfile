@@ -18,6 +18,7 @@ COPY . .
 
 RUN DJANGO_SETTINGS_MODULE=config.settings.production \
     DJANGO_SECRET_KEY=build-placeholder-not-runtime-secret \
+    MODERATION_HASH_SECRET=build-placeholder-not-runtime-secret \
     DJANGO_ALLOWED_HOSTS=example.com \
     DATABASE_URL=postgres://placeholder:placeholder@localhost:5432/placeholder \
     python manage.py collectstatic --noinput

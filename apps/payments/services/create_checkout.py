@@ -20,6 +20,9 @@ from apps.bidding.services.finalize_bid import finalize_locked_pending_bid
 from apps.bidding.services.rules import BoardRules, minimum_takeover_cents
 from apps.boards.models import Board
 from apps.leaderboard.week_services import get_or_create_current_season_week
+from apps.moderation.models import MessageValidation
+from apps.moderation.services.rate_limits import safe_key
+from apps.moderation.services.validators import DeterministicReject, validate_message_deterministically
 from apps.schools.models import School
 
 from .capture_payment import capture_payment
@@ -40,6 +43,7 @@ def create_checkout(
     represented_school_id: int,
     amount: Decimal,
     message: str,
+    validation_id: int,
     rules: BoardRules,
     return_url: str,
     now: datetime | None = None,
@@ -48,6 +52,10 @@ def create_checkout(
         raise TakeoverError("Stripe payments are not configured yet.")
 
     now = now or timezone.now()
+    try:
+        candidate = validate_message_deterministically(message)
+    except DeterministicReject as error:
+        raise TakeoverError("That does not meet the Take the Board community guidelines.") from error
     board = Board.objects.select_for_update().select_related("school").get(pk=board_id)
     if not board.bidding_enabled or not rules.bidding_enabled:
         raise TakeoverError("Takeovers are paused for this board.")
@@ -78,11 +86,32 @@ def create_checkout(
         profile_id=profile_id,
         favorite_school=represented_school,
     )
+    try:
+        validation = MessageValidation.objects.select_for_update().get(pk=validation_id)
+    except MessageValidation.DoesNotExist as error:
+        raise TakeoverError("A fresh message approval is required before checkout.") from error
+    if (
+        validation.user_id != player.id
+        or validation.board_id != board.id
+        or validation.represented_school_id != represented_school.id
+        or validation.message_hash != safe_key("message-value", candidate.original)
+        or validation.decision != MessageValidation.Decision.ALLOW
+        or validation.policy_version != settings.TAKEBOARD_MODERATION_POLICY_VERSION
+        or validation.expires_at <= now
+        or validation.consumed_at is not None
+    ):
+        raise TakeoverError("A fresh message approval is required before checkout.")
+    # This record is consumed before the bid is created. The surrounding atomic
+    # transaction rolls it back if Stripe setup fails, making the exact approval
+    # retryable only when no Checkout Session was persisted.
+    validation.consumed_at = now
+    validation.save(update_fields=["consumed_at"])
     bid = board.bids.create(
         bidder=player,
         represented_school=represented_school,
         season_week=season_week,
         message=message,
+        message_validation=validation,
         amount_cents=amount_cents,
         status=Bid.Status.CREATED,
     )
