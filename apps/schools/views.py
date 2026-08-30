@@ -1,5 +1,4 @@
 from decimal import Decimal
-import re
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -12,11 +11,9 @@ from apps.boards.models import Board
 from apps.boards.models import BoardTakeover
 from apps.moderation.models import MessageReport, MessageReportCase
 from apps.accounts.services.session import get_authenticated_profile
+from apps.core.services.home_board import record_board_visit
 from .models import Entity
-from .services import default_competition
-
-
-HEX_COLOR_PATTERN = re.compile(r"#[0-9a-fA-F]{6}")
+from .services import default_competition, safe_accent_color
 
 
 def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
@@ -28,6 +25,8 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         entity__slug=slug,
         entity__active=True,
     )
+    if authenticated_profile:
+        record_board_visit(profile=authenticated_profile, board=initial_board)
     rules = current_board_rules()
     if settings.TAKEBOARD_DEMO_BIDDING_ENABLED:
         finalize_due_board(board_id=initial_board.id, rules=rules)
@@ -43,9 +42,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         entity__slug=slug,
         entity__active=True,
     )
-    entity_accent = board.entity.accent_color
-    if not HEX_COLOR_PATTERN.fullmatch(entity_accent):
-        entity_accent = "#b3262f"
+    entity_accent = safe_accent_color(board.entity.accent_color)
     pending_amount_cents = board.pending_bid.amount_cents if board.pending_bid_id else 0
     minimum_takeover = minimum_takeover_cents(
         board.current_amount_cents,

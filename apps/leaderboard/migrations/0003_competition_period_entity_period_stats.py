@@ -18,8 +18,55 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RenameModel(old_name="SeasonWeek", new_name="CompetitionPeriod"),
         migrations.RenameModel(old_name="SchoolWeekStats", new_name="EntityPeriodStats"),
+        # Clear compound metadata from the state before SQLite performs the
+        # column renames. RenameField doesn't rewrite constraints or indexes,
+        # and SQLite rebuilds the table from this historical model state.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.RemoveConstraint(
+                    model_name="entityperiodstats",
+                    name="unique_school_week",
+                ),
+                migrations.RemoveIndex(
+                    model_name="entityperiodstats",
+                    name="leaderboard_school__4d5dc3_idx",
+                ),
+                migrations.RemoveIndex(
+                    model_name="entityperiodstats",
+                    name="leaderboard_week_id_0123be_idx",
+                ),
+            ],
+        ),
         migrations.RenameField(model_name="entityperiodstats", old_name="school", new_name="entity"),
         migrations.RenameField(model_name="entityperiodstats", old_name="week", new_name="period"),
+        # Keep the existing database indexes and unique constraint for the next
+        # migration to remove, while correcting their state definitions so
+        # Django can resolve entity/period after the field renames.
+        migrations.SeparateDatabaseAndState(
+            state_operations=[
+                migrations.AddIndex(
+                    model_name="entityperiodstats",
+                    index=models.Index(
+                        fields=["entity", "period"],
+                        name="leaderboard_school__4d5dc3_idx",
+                    ),
+                ),
+                migrations.AddIndex(
+                    model_name="entityperiodstats",
+                    index=models.Index(
+                        fields=["period", "-total_spend_cents"],
+                        name="leaderboard_week_id_0123be_idx",
+                    ),
+                ),
+                migrations.AddConstraint(
+                    model_name="entityperiodstats",
+                    constraint=models.UniqueConstraint(
+                        fields=("entity", "period"),
+                        name="unique_school_week",
+                    ),
+                ),
+            ],
+        ),
         migrations.AddField(
             model_name="competitionperiod",
             name="competition",

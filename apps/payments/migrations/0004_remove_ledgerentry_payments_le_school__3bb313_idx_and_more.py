@@ -14,9 +14,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='ledgerentry',
-            name='payments_le_school__3bb313_idx',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    'DROP INDEX IF EXISTS "payments_le_school__3bb313_idx"',
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveIndex(
+                    model_name='ledgerentry',
+                    name='payments_le_school__3bb313_idx',
+                ),
+            ],
         ),
         migrations.AlterField(
             model_name='ledgerentry',

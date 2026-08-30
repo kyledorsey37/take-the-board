@@ -10,7 +10,8 @@ from apps.bidding.services.create_bid import BidTooLowError, create_bid
 from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules
 from apps.boards.models import Board, BoardTakeover
-from apps.core.models import GameConfig
+from apps.core.models import BoardVisit, GameConfig
+from apps.core.services.home_hero import HERO_VARIANT_SESSION_KEY
 from apps.schools.models import Competition, Entity
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
@@ -71,6 +72,102 @@ class PublicNavigationTests(BoardTestCase):
         self.assertContains(response, reverse("rivalries:index"))
         self.assertContains(response, "Oklahoma")
         self.assertNotContains(response, 'href="/admin/"')
+
+    def test_home_hero_variant_is_session_stable_and_tracks_conversion_context(self) -> None:
+        session = self.client.session
+        session[HERO_VARIANT_SESSION_KEY] = "b"
+        session.save()
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertEqual(response.context["hero_variant"]["key"], "b")
+        self.assertContains(response, "Say something your rival can't ignore.", html=True)
+        self.assertContains(response, 'data-analytics-hero-variant="b"')
+        self.assertContains(response, 'data-analytics-event="takeover_cta_clicked"')
+        self.assertContains(response, 'data-analytics-cta="take_over_this_board"')
+        self.assertContains(response, 'data-analytics-target="school_name"')
+        self.assertContains(response, 'data-analytics-target="message"')
+
+    def test_signed_out_home_features_the_board_with_the_highest_current_amount(self) -> None:
+        texas_board = Board.objects.create(entity=self.texas)
+        self.board.current_amount_cents = 1_000
+        self.board.save(update_fields=["current_amount_cents"])
+        texas_board.current_amount_cents = 2_500
+        texas_board.save(update_fields=["current_amount_cents"])
+        profile = UserProfile.objects.create(
+            cognito_sub="home-spend-subject",
+            email="home-spend@example.com",
+            display_name="HomeSpendFan",
+        )
+        oklahoma_bid = Bid.objects.create(
+            board=self.board,
+            bidder=profile,
+            represented_entity=self.oklahoma,
+            message="OKLAHOMA FIRST.",
+            amount_cents=1_000,
+            status=Bid.Status.WON,
+        )
+        texas_bid = Bid.objects.create(
+            board=texas_board,
+            bidder=profile,
+            represented_entity=self.texas,
+            message="TEXAS TAKES IT.",
+            amount_cents=2_500,
+            status=Bid.Status.WON,
+        )
+        BoardTakeover.objects.create(
+            board=self.board,
+            bid=oklahoma_bid,
+            controller=profile,
+            controller_display_name=profile.display_name,
+            represented_entity=self.oklahoma,
+            message=oklahoma_bid.message,
+            amount_cents=oklahoma_bid.amount_cents,
+        )
+        BoardTakeover.objects.create(
+            board=texas_board,
+            bid=texas_bid,
+            controller=profile,
+            controller_display_name=profile.display_name,
+            represented_entity=self.texas,
+            message=texas_bid.message,
+            amount_cents=texas_bid.amount_cents,
+        )
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertEqual(response.context["featured_board"].pk, texas_board.pk)
+        self.assertEqual(response.context["featured_reason"], "Most active right now")
+        self.assertContains(response, "Take over this board")
+
+    def test_signed_in_home_features_the_players_most_visited_board(self) -> None:
+        texas_board = Board.objects.create(entity=self.texas)
+        profile = UserProfile.objects.create(
+            cognito_sub="home-visit-subject",
+            email="home-visit@example.com",
+            display_name="HomeVisitFan",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "access_token": "access-token",
+            "id_token": "id-token",
+            "refresh_token": "refresh-token",
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        self.client.get(reverse("schools:detail", kwargs={"slug": "texas"}))
+        self.client.get(reverse("schools:detail", kwargs={"slug": "texas"}))
+        self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        response = self.client.get(reverse("core:home"))
+
+        visit = BoardVisit.objects.get(profile=profile, board=texas_board)
+        self.assertEqual(visit.visit_count, 2)
+        self.assertEqual(response.context["featured_board"].pk, texas_board.pk)
+        self.assertEqual(response.context["featured_reason"], "Most active for you")
+        self.assertContains(response, "Most active for you")
 
     def test_public_navigation_routes_render(self) -> None:
         for url_name, kwargs in (

@@ -37,7 +37,7 @@ tests/
 - `moderation`: message validation records and deterministic/Nova moderation service boundaries.
 - `rivalries`: explicit rivalry pairs.
 - `leaderboard`: public standings, season weeks, and cached school-week statistics.
-- `core`: shared config, activity feed records, health checks, middleware, and management commands.
+- `core`: shared config, private board-visit preference counters, activity feed records, health checks, middleware, and management commands.
 
 ## Data Store
 
