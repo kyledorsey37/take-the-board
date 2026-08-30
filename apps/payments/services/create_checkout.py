@@ -10,6 +10,7 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.bidding.models import Bid
+from apps.bidding.models import BidConfirmation
 from apps.bidding.services.create_bid import (
     BidTooLowError,
     TakeoverError,
@@ -24,6 +25,7 @@ from apps.moderation.models import MessageValidation
 from apps.moderation.services.rate_limits import safe_key
 from apps.moderation.services.validators import DeterministicReject, validate_message_deterministically
 from apps.schools.models import Entity
+from apps.bidding.services.risk import validate_bid_risk
 
 from .capture_payment import capture_payment
 
@@ -44,6 +46,7 @@ def create_checkout(
     amount: Decimal,
     message: str,
     validation_id: int,
+    confirmation_id: int | None = None,
     rules: BoardRules,
     return_url: str,
     now: datetime | None = None,
@@ -90,6 +93,27 @@ def create_checkout(
         profile_id=profile_id,
         favorite_entity=represented_entity,
     )
+    confirmation = None
+    if confirmation_id is not None:
+        try:
+            confirmation = BidConfirmation.objects.select_for_update().get(pk=confirmation_id)
+        except BidConfirmation.DoesNotExist as error:
+            raise TakeoverError("A fresh bid confirmation is required before checkout.") from error
+        if (
+            confirmation.user_id != player.id
+            or confirmation.board_id != board.id
+            or confirmation.represented_entity_id != represented_entity.id
+            or confirmation.message != message
+            or confirmation.amount_cents != amount_cents
+            or confirmation.expires_at <= now
+            or confirmation.consumed_at is not None
+        ):
+            raise TakeoverError("A fresh bid confirmation is required before checkout.")
+
+    risk_decision = validate_bid_risk(player, amount_cents, now=now)
+    if not risk_decision.allowed:
+        raise TakeoverError(risk_decision.user_message)
+
     try:
         validation = MessageValidation.objects.select_for_update().get(pk=validation_id)
     except MessageValidation.DoesNotExist as error:
@@ -116,6 +140,7 @@ def create_checkout(
         period=period,
         message=message,
         message_validation=validation,
+        confirmation=confirmation,
         amount_cents=amount_cents,
         status=Bid.Status.CREATED,
     )
@@ -137,6 +162,7 @@ def create_checkout(
             ],
             payment_intent_data={
                 "capture_method": "manual",
+                "statement_descriptor": settings.TAKEBOARD_STRIPE_STATEMENT_DESCRIPTOR,
                 "metadata": {
                     "bid_id": str(bid.public_id),
                     "board_id": str(board.id),
@@ -171,6 +197,10 @@ def create_checkout(
             "stripe_payment_intent_id",
         ]
     )
+    if confirmation:
+        confirmation.confirmed_at = now
+        confirmation.consumed_at = now
+        confirmation.save(update_fields=["confirmed_at", "consumed_at"])
     return CheckoutResult(
         bid_id=bid.id,
         bid_public_id=str(bid.public_id),

@@ -43,3 +43,4 @@ Attached documents are reference material. Follow the user's current request ove
 - Prefer service modules for bidding, payments, moderation, and board publishing.
 - Add tests for payment state, idempotency, race conditions, moderation, and public rendering.
 - Update the relevant docs when changing business rules, security posture, payment behavior, moderation rules, or frontend contracts.
+- Before completing work that affects the running app, run a real HTTP `curl` against a school board (for example, `/schools/alabama/`) and report the result. If migrations are added, apply them to the running Docker web container before that check.

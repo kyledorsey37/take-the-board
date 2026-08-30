@@ -5,6 +5,7 @@ from __future__ import annotations
 import logging
 
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from apps.bidding.models import Bid
@@ -124,6 +125,9 @@ def process_payment_action(action_id: int) -> bool:
                     "user": bid.bidder,
                     "entity": bid.represented_entity,
                 },
+            )
+            bid.bidder.__class__.objects.filter(pk=bid.bidder_id).update(
+                refund_count=F("refund_count") + 1,
             )
         logger.info("message_report_payment_action_succeeded", extra={"action_id": str(action.public_id)})
         return True

@@ -9,6 +9,7 @@ from typing import Any
 import stripe
 from django.conf import settings
 from django.db import transaction
+from django.db.models import F
 from django.db.models import Q
 from django.utils import timezone
 
@@ -144,6 +145,12 @@ def record_capture_from_payment_intent(*, bid: Bid, payment_intent: Any) -> Paym
                 "user": bid.bidder,
                 "entity": bid.represented_entity,
             },
+        )
+        # A captured card payment, rather than an authorization, qualifies toward
+        # account history.  The risk service recalculates the tier on the next bid.
+        bid.bidder.__class__.objects.filter(pk=bid.bidder_id).update(
+            successful_bid_count=F("successful_bid_count") + 1,
+            total_spend_cents=F("total_spend_cents") + gross_amount_cents,
         )
     _apply_charge_details(capture, _value(payment_intent, "latest_charge"))
     return capture

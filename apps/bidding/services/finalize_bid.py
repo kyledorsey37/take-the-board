@@ -67,6 +67,16 @@ def finalize_locked_pending_bid(
         guaranteed_display_seconds=rules.guaranteed_display_seconds,
         published_at=now,
     )
+    if capture_pending_bid is not None:
+        # Import locally to keep free-play bidding independent of payments at import time.
+        from apps.payments.services.evidence import record_purchase_evidence
+
+        board.refresh_from_db(fields=["guaranteed_until"])
+        record_purchase_evidence(
+            bid=pending_bid,
+            published_at=now,
+            guaranteed_until=board.guaranteed_until,
+        )
     Activity.objects.create(
         type=(
             "pending_takeover_published"

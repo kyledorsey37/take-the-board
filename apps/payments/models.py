@@ -89,3 +89,33 @@ class PaymentCapture(models.Model):
 
     def __str__(self) -> str:
         return f"Capture for bid {self.bid_id}: {self.gross_amount_cents} {self.currency.upper()}"
+
+
+class PurchaseEvidence(models.Model):
+    """Audit-safe purchase and delivery evidence for a captured paid takeover."""
+
+    bid = models.OneToOneField("bidding.Bid", on_delete=models.PROTECT, related_name="purchase_evidence")
+    confirmation = models.OneToOneField(
+        "bidding.BidConfirmation", null=True, blank=True, on_delete=models.PROTECT, related_name="purchase_evidence"
+    )
+    cognito_sub = models.CharField(max_length=128)
+    email = models.EmailField()
+    display_name = models.CharField(max_length=40, blank=True)
+    board_name = models.CharField(max_length=120)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True)
+    request_id = models.CharField(max_length=64, blank=True)
+    terms_version = models.CharField(max_length=50, blank=True)
+    terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    confirmation_version = models.CharField(max_length=50, blank=True)
+    risk_tier_at_purchase = models.CharField(max_length=20)
+    published_at = models.DateTimeField(null=True, blank=True)
+    guaranteed_until = models.DateTimeField(null=True, blank=True)
+    ended_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [models.Index(fields=["-published_at"])]
+
+    def __str__(self) -> str:
+        return f"Evidence for bid {self.bid_id}"

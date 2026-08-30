@@ -3,7 +3,7 @@ from django.urls import reverse
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin
 
-from .models import Bid
+from .models import Bid, BidConfirmation, BidRiskConfig
 
 
 @admin.register(Bid)
@@ -16,6 +16,7 @@ class BidAdmin(ModelAdmin):
         "bidder__display_name",
         "stripe_checkout_session_id",
         "stripe_payment_intent_id",
+        "stripe_dispute_id",
     )
     readonly_fields = (
         "public_id",
@@ -38,3 +39,25 @@ class BidAdmin(ModelAdmin):
         else:
             fee_summary = "Stripe fee data pending"
         return format_html('<a href="{}">{}</a> ({})', url, "View payment capture", fee_summary)
+
+
+@admin.register(BidRiskConfig)
+class BidRiskConfigAdmin(ModelAdmin):
+    list_display = ("new_max_bid_cents", "established_max_bid_cents", "trusted_max_bid_cents", "global_max_bid_cents", "high_value_bidding_enabled", "new_user_bidding_enabled", "updated_at")
+
+    def has_add_permission(self, request):
+        return not BidRiskConfig.objects.exists()
+
+
+@admin.register(BidConfirmation)
+class BidConfirmationAdmin(ModelAdmin):
+    list_display = ("public_id", "user", "board", "amount_cents", "confirmation_version", "shown_at", "confirmed_at", "consumed_at")
+    list_filter = ("confirmation_version", "shown_at", "confirmed_at")
+    search_fields = ("public_id", "user__display_name", "board__entity__name")
+    readonly_fields = tuple(field.name for field in BidConfirmation._meta.fields)
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False

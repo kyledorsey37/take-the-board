@@ -1,7 +1,7 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
-from .models import LedgerEntry, PaymentCapture, StripeEvent
+from .models import LedgerEntry, PaymentCapture, PurchaseEvidence, StripeEvent
 
 
 @admin.register(StripeEvent)
@@ -55,6 +55,19 @@ class PaymentCaptureAdmin(ModelAdmin):
         "created_at",
     )
     fields = readonly_fields
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(PurchaseEvidence)
+class PurchaseEvidenceAdmin(ModelAdmin):
+    list_display = ("bid", "display_name", "board_name", "risk_tier_at_purchase", "published_at", "guaranteed_until", "ended_at")
+    search_fields = ("bid__public_id", "cognito_sub", "email", "display_name", "board_name")
+    readonly_fields = tuple(field.name for field in PurchaseEvidence._meta.fields)
 
     def has_add_permission(self, request):
         return False

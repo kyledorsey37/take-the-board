@@ -22,15 +22,24 @@ work.
   the PaymentIntent, charge, gross amount, currency, and a corresponding gross
   `LedgerEntry`. Stripe fee, net, and balance-transaction fields are completed only
   when Stripe makes that accounting data available.
+- Every real-money Checkout starts from an immutable `BidConfirmation` snapshot.
+  The snapshot records the confirmed amount, message, board price, pending challenger,
+  confirmation version, and request context; Checkout rechecks it server-side.
+- Risk limits are centralized in `BidRiskConfig`: captured net spend plus active
+  authorizations count toward rolling limits, and an open Stripe dispute suspends
+  paid bidding immediately.
+- A captured takeover creates immutable `PurchaseEvidence` with confirmation,
+  account, payment, publication, guarantee, and delivery-end context for disputes.
 
 ## Current Local Flow
 
 1. An authenticated user submits a board message.
 2. Django applies deterministic policy checks, Redis limits/cache, and the configured
    Bedrock/Nova classifier; provider failure is rejected temporarily.
-3. Checkout creation transactionally consumes the approved validation, rechecks the
-   current board price, and creates a `Bid`.
-4. Django creates a Stripe Embedded Checkout Session using manual capture.
+3. Django rechecks price and risk, then displays a mandatory confirmation screen.
+4. On explicit confirmation, checkout creation transactionally rechecks the approved
+   validation, current board price, risk limits, and confirmation snapshot before
+   creating a `Bid` and Stripe Embedded Checkout Session using manual capture.
 5. Stripe authorizes the card and sends webhooks through the local Stripe CLI.
 6. Django verifies the webhook, stores a `StripeEvent`, and the local worker processes it.
 7. The worker keeps only the highest authorized challenger during the current guarantee.
@@ -97,6 +106,10 @@ used for new captures.
 ## Refunds And Disputes
 
 Refunds and disputes are admin-reviewed operational workflows. They should update payment state and ledger entries while preserving historical records for audit.
+
+`charge.dispute.created` is processed asynchronously and idempotently: it stores the
+Stripe dispute ID on the bid, records a chargeback ledger entry, increments the user's
+dispute history, and suspends paid bidding while the dispute is open. Users may still browse.
 
 When moderation removes a captured paid message, the refund is a partial refund
 equal to the capture's gross amount less Stripe's actual recorded processing fee.

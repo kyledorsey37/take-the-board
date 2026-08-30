@@ -14,6 +14,10 @@ def publish_takeover(
     published_at: datetime,
 ) -> BoardTakeover:
     """Publish a captured bid while the caller holds the board row lock."""
+    # Evidence captures the actual end of the prior controller's public delivery.
+    from apps.payments.services.evidence import record_delivery_end
+
+    record_delivery_end(bid_id=board.current_bid_id, ended_at=published_at)
     takeover = BoardTakeover.objects.create(
         board=board,
         bid=bid,

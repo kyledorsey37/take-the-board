@@ -3,6 +3,7 @@
 from datetime import datetime
 
 from django.db import transaction
+from django.db.models import F
 from django.utils import timezone
 
 from apps.bidding.models import Bid
@@ -13,7 +14,7 @@ from apps.boards.models import Board
 from .cancel_authorization import cancel_authorization
 from .capture_records import record_capture_from_payment_intent, update_capture_from_charge
 from .capture_payment import capture_payment
-from ..models import StripeEvent
+from ..models import LedgerEntry, PaymentCapture, StripeEvent
 
 
 AUTHORIZATION_EVENT = "payment_intent.amount_capturable_updated"
@@ -140,6 +141,41 @@ def _handle_charge_updated(event_object: dict) -> None:
 
 
 @transaction.atomic
+def _handle_dispute_created(event_object: dict, now: datetime) -> None:
+    """Immediately suspend paid bidding and preserve a ledger audit trail."""
+    dispute_id = str(event_object.get("id") or "")
+    payment_intent_id = str(event_object.get("payment_intent") or "")
+    charge_id = str(event_object.get("charge") or "")
+    capture = PaymentCapture.objects.select_related("bid").filter(
+        stripe_payment_intent_id=payment_intent_id
+    ).first()
+    if not capture and charge_id:
+        capture = PaymentCapture.objects.select_related("bid").filter(stripe_charge_id=charge_id).first()
+    if not capture or not dispute_id:
+        return
+    bid = Bid.objects.select_for_update().select_related("bidder", "represented_entity").get(pk=capture.bid_id)
+    if bid.stripe_dispute_id == dispute_id:
+        return
+    bid.status = Bid.Status.DISPUTED
+    bid.stripe_dispute_id = dispute_id
+    bid.save(update_fields=["status", "stripe_dispute_id"])
+    bidder = bid.bidder
+    bidder.__class__.objects.filter(pk=bidder.id).update(
+        dispute_count=F("dispute_count") + 1,
+        has_open_dispute=True,
+        paid_bidding_suspended=True,
+        last_dispute_at=now,
+        risk_tier="suspended",
+    )
+    amount = int(event_object.get("amount") or bid.amount_cents)
+    LedgerEntry.objects.get_or_create(
+        type=LedgerEntry.Type.CHARGEBACK,
+        bid=bid,
+        defaults={"amount_cents": -amount, "user": bidder, "entity": bid.represented_entity},
+    )
+
+
+@transaction.atomic
 def process_stripe_event(event_id: str) -> bool:
     event = StripeEvent.objects.select_for_update().get(event_id=event_id)
     if event.processed_at:
@@ -159,6 +195,8 @@ def process_stripe_event(event_id: str) -> bool:
         _handle_payment_succeeded(event_object)
     elif event.event_type == "charge.updated":
         _handle_charge_updated(event_object)
+    elif event.event_type == "charge.dispute.created":
+        _handle_dispute_created(event_object, now)
 
     event.processed_at = now
     event.save(update_fields=["processed_at"])

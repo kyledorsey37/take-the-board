@@ -11,7 +11,7 @@ from django.core.cache import cache
 
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
-from apps.bidding.models import Bid
+from apps.bidding.models import Bid, BidConfirmation
 from apps.bidding.services.create_bid import TakeoverError
 from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules
@@ -196,6 +196,7 @@ class StripeBidFlowTests(TestCase):
         self.assertNotIn("payment_method_types", call.kwargs)
         self.assertEqual(call.kwargs["managed_payments"], {"enabled": False})
         self.assertEqual(call.kwargs["payment_intent_data"]["capture_method"], "manual")
+        self.assertEqual(call.kwargs["payment_intent_data"]["statement_descriptor"], "TAKETHEBOARD")
         self.assertEqual(call.kwargs["line_items"][0]["price_data"]["unit_amount"], 1700)
         self.assertEqual(call.kwargs["idempotency_key"], f"takeboard-checkout-{bid.public_id}")
 
@@ -241,7 +242,7 @@ class StripeBidFlowTests(TestCase):
         create_session.assert_not_called()
 
     @patch("apps.payments.services.create_checkout.stripe.checkout.Session.create")
-    def test_bid_endpoint_returns_embedded_checkout_instead_of_publishing(self, create_session) -> None:
+    def test_bid_endpoint_requires_confirmation_before_returning_checkout(self, create_session) -> None:
         create_session.return_value = {
             "id": "cs_test_123",
             "client_secret": "cs_secret_123",
@@ -271,6 +272,16 @@ class StripeBidFlowTests(TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Review your challenge")
+        self.assertContains(response, "Continue to payment")
+        self.assertEqual(Bid.objects.count(), 0)
+        confirmation = BidConfirmation.objects.get()
+        response = self.client.post(
+            reverse("bidding:confirm", kwargs={"public_id": confirmation.public_id}),
+            {"terms_accepted": "on"},
+            HTTP_HX_REQUEST="true",
+        )
+
         self.assertContains(response, "data-stripe-checkout")
         self.assertContains(response, "cs_secret_123")
         bid = Bid.objects.get()
@@ -357,6 +368,39 @@ class StripeBidFlowTests(TestCase):
         self.assertTrue(result.published)
         bid.refresh_from_db()
         self.assertEqual(bid.status, Bid.Status.WON)
+
+    def test_dispute_webhook_suspends_paid_bidding_and_creates_a_chargeback_entry(self) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=1700,
+            status=Bid.Status.WON,
+            stripe_payment_intent_id="pi_dispute_123",
+            captured_at=timezone.now(),
+        )
+        PaymentCapture.objects.create(
+            bid=bid,
+            stripe_payment_intent_id="pi_dispute_123",
+            gross_amount_cents=1700,
+            currency="usd",
+        )
+        StripeEvent.objects.create(
+            event_id="evt_dispute_123",
+            event_type="charge.dispute.created",
+            payload={"data": {"object": {"id": "dp_123", "payment_intent": "pi_dispute_123", "amount": 1700}}},
+        )
+
+        self.assertEqual(process_pending_stripe_events(), 1)
+        bid.refresh_from_db()
+        self.profile.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.DISPUTED)
+        self.assertEqual(bid.stripe_dispute_id, "dp_123")
+        self.assertTrue(self.profile.paid_bidding_suspended)
+        self.assertTrue(self.profile.has_open_dispute)
+        self.assertEqual(self.profile.dispute_count, 1)
+        self.assertTrue(LedgerEntry.objects.filter(type=LedgerEntry.Type.CHARGEBACK, bid=bid).exists())
 
     @patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture")
     def test_capture_records_immutable_stripe_fee_snapshot(self, capture) -> None:
