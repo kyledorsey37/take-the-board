@@ -25,7 +25,9 @@ def _successful_takeovers(rivalry: Rivalry, period: str):
         controller__is_banned=False,
         bid__status__in=[Bid.Status.WON, Bid.Status.DEMO_WON],
         represented_school_id__in=school_ids,
-    ).filter(Q(board__school_id=school_ids[0]) | Q(board__school_id=school_ids[1]))
+    ).exclude(report_case__status="removed").filter(
+        Q(board__school_id=school_ids[0]) | Q(board__school_id=school_ids[1])
+    )
 
     active_week = SeasonWeek.objects.filter(active=True).order_by("-starts_at").first()
     if period == "week" and active_week:

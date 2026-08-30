@@ -5,8 +5,8 @@ the authenticated bid flow. Django requires a fresh, matching, one-time approved
 `MessageValidation` before it creates an Embedded Checkout Session with
 manual capture, verifies Stripe signatures against the raw request body, stores each
 event once in `StripeEvent`, and lets the local worker process authorization,
-cancellation, and capture transitions. Ledger entries and SQS FIFO delivery remain
-later production work.
+cancellation, and capture transitions. SQS FIFO delivery remains later production
+work.
 
 ## Invariants
 
@@ -18,6 +18,10 @@ later production work.
 - During that guarantee, only the highest authorized challenger remains pending; superseded authorizations must be canceled and never captured.
 - The next minimum is based on the greater of the current captured amount and pending challenger amount.
 - User-facing bid amounts are whole dollars. Payment records remain stored in cents internally.
+- Every successful Stripe capture creates an immutable `PaymentCapture` record with
+  the PaymentIntent, charge, gross amount, currency, and a corresponding gross
+  `LedgerEntry`. Stripe fee, net, and balance-transaction fields are completed only
+  when Stripe makes that accounting data available.
 
 ## Current Local Flow
 
@@ -32,6 +36,9 @@ later production work.
 7. The worker keeps only the highest authorized challenger during the current guarantee.
 8. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
 9. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
+10. The worker processes `charge.updated` and periodically reconciles pending capture
+    snapshots so delayed Stripe balance-transaction fee data is attached without
+    changing the original captured amount.
 
 In the current local slice, message moderation is not yet connected to Bedrock/Nova and
 the worker polls Postgres rather than consuming SQS FIFO messages. Do not use this mode
@@ -70,9 +77,33 @@ Dashboard-created endpoints have different signing secrets for test and live mod
 
 Captured bids, refunds, chargebacks, and adjustments must be recorded as ledger entries. Historical bid and takeover records should not be deleted for refunds or disputes.
 
+`PaymentCapture` is the provider-accounting companion to the ledger: it contains
+only stable identifiers and money fields needed to reconcile a Stripe capture, not a
+raw provider payload or card data. A pending fee status is expected briefly because
+Stripe can create the balance transaction asynchronously. For Stripe accounts where
+Balance Transaction fees are not available, finance reconciliation must use Stripe's
+Payment fees report rather than inventing a local fee value.
+
+After deploying this feature, backfill prior Stripe captures once with:
+
+```bash
+python manage.py reconcile_payment_captures
+```
+
+It only reads historical PaymentIntents for captured, refunded, or disputed bids
+that do not yet have a `PaymentCapture`, then writes the same idempotent snapshot
+used for new captures.
+
 ## Refunds And Disputes
 
 Refunds and disputes are admin-reviewed operational workflows. They should update payment state and ledger entries while preserving historical records for audit.
+
+When moderation removes a captured paid message, the refund is a partial refund
+equal to the capture's gross amount less Stripe's actual recorded processing fee.
+The worker leaves the durable remediation action pending until the associated
+`PaymentCapture` has fee data; it never estimates a fee or sends a full refund
+as a fallback. The resulting `LedgerEntry(type=REFUND)` is the exact negative
+amount returned to the customer.
 
 ## Weekly Reset Interaction
 

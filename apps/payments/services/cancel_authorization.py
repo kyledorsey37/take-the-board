@@ -11,7 +11,7 @@ from apps.bidding.models import Bid
 logger = logging.getLogger(__name__)
 
 
-def cancel_authorization(bid: Bid) -> bool:
+def cancel_authorization(bid: Bid, *, idempotency_key: str | None = None) -> bool:
     if not settings.STRIPE_SECRET_KEY or not bid.stripe_payment_intent_id:
         return False
 
@@ -19,7 +19,7 @@ def cancel_authorization(bid: Bid) -> bool:
         payment_intent = stripe.PaymentIntent.cancel(
             bid.stripe_payment_intent_id,
             api_key=settings.STRIPE_SECRET_KEY,
-            idempotency_key=f"takeboard-cancel-{bid.public_id}",
+            idempotency_key=idempotency_key or f"takeboard-cancel-{bid.public_id}",
         )
     except stripe.error.StripeError:
         logger.warning("stripe_authorization_cancel_failed", extra={"bid_id": bid.id})

@@ -75,7 +75,7 @@ def successful_takeovers_for_week(week: SeasonWeek):
     return BoardTakeover.objects.filter(
         controller__is_banned=False,
         bid__status__in=[Bid.Status.WON, Bid.Status.DEMO_WON],
-    ).filter(
+    ).exclude(report_case__status="removed").filter(
         Q(season_week=week)
         | Q(
             season_week__isnull=True,

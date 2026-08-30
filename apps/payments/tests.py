@@ -23,7 +23,8 @@ from apps.moderation.services.rate_limits import safe_key
 from apps.moderation.services.validators import validate_message_deterministically
 from apps.schools.models import School
 
-from .models import StripeEvent
+from .models import LedgerEntry, PaymentCapture, StripeEvent
+from .services.capture_payment import capture_payment
 from .services.create_checkout import create_checkout
 from .services.process_webhooks import process_pending_stripe_events
 
@@ -351,3 +352,103 @@ class StripeBidFlowTests(TestCase):
         self.assertTrue(result.published)
         bid.refresh_from_db()
         self.assertEqual(bid.status, Bid.Status.WON)
+
+    @patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture")
+    def test_capture_records_immutable_stripe_fee_snapshot(self, capture) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_school=self.represented_school,
+            message="TAKE THE BOARD.",
+            amount_cents=1700,
+            status=Bid.Status.AUTHORIZED,
+            stripe_payment_intent_id="pi_capture_123",
+            authorized_at=timezone.now(),
+        )
+        capture.return_value = {
+            "id": "pi_capture_123",
+            "status": "succeeded",
+            "amount_received": 1700,
+            "currency": "usd",
+            "latest_charge": {
+                "id": "ch_capture_123",
+                "balance_transaction": {
+                    "id": "txn_capture_123",
+                    "amount": 1700,
+                    "currency": "usd",
+                    "fee": 79,
+                    "net": 1621,
+                    "fee_details": [{"amount": 79, "currency": "usd", "type": "stripe_fee"}],
+                },
+            },
+        }
+
+        self.assertTrue(capture_payment(bid))
+
+        snapshot = PaymentCapture.objects.get(bid=bid)
+        self.assertEqual(snapshot.stripe_payment_intent_id, "pi_capture_123")
+        self.assertEqual(snapshot.stripe_charge_id, "ch_capture_123")
+        self.assertEqual(snapshot.stripe_balance_transaction_id, "txn_capture_123")
+        self.assertEqual(snapshot.gross_amount_cents, 1700)
+        self.assertEqual(snapshot.stripe_fee_cents, 79)
+        self.assertEqual(snapshot.net_amount_cents, 1621)
+        self.assertEqual(snapshot.fee_status, PaymentCapture.FeeStatus.AVAILABLE)
+        self.assertEqual(
+            LedgerEntry.objects.filter(type=LedgerEntry.Type.BID_CAPTURE, bid=bid).count(),
+            1,
+        )
+        self.assertEqual(capture.call_args.kwargs["expand"], ["latest_charge.balance_transaction"])
+
+    @patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture")
+    def test_charge_updated_completes_delayed_fee_snapshot(self, capture) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_school=self.represented_school,
+            message="TAKE THE BOARD.",
+            amount_cents=1700,
+            status=Bid.Status.AUTHORIZED,
+            stripe_payment_intent_id="pi_capture_delayed",
+            authorized_at=timezone.now(),
+        )
+        capture.return_value = {
+            "id": "pi_capture_delayed",
+            "status": "succeeded",
+            "amount_received": 1700,
+            "currency": "usd",
+            "latest_charge": {"id": "ch_capture_delayed", "balance_transaction": "txn_capture_delayed"},
+        }
+        self.assertTrue(capture_payment(bid))
+        self.assertEqual(
+            PaymentCapture.objects.get(bid=bid).fee_status,
+            PaymentCapture.FeeStatus.PENDING,
+        )
+        StripeEvent.objects.create(
+            event_id="evt_charge_updated",
+            event_type="charge.updated",
+            payload={
+                "id": "evt_charge_updated",
+                "type": "charge.updated",
+                "data": {
+                    "object": {
+                        "id": "ch_capture_delayed",
+                        "payment_intent": "pi_capture_delayed",
+                        "balance_transaction": {
+                            "id": "txn_capture_delayed",
+                            "amount": 1700,
+                            "currency": "usd",
+                            "fee": 79,
+                            "net": 1621,
+                            "fee_details": [{"amount": 79, "currency": "usd", "type": "stripe_fee"}],
+                        },
+                    }
+                },
+            },
+        )
+
+        self.assertEqual(process_pending_stripe_events(), 1)
+
+        snapshot = PaymentCapture.objects.get(bid=bid)
+        self.assertEqual(snapshot.fee_status, PaymentCapture.FeeStatus.AVAILABLE)
+        self.assertEqual(snapshot.stripe_fee_cents, 79)
+        self.assertEqual(snapshot.net_amount_cents, 1621)

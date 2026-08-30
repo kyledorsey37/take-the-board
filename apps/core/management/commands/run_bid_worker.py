@@ -8,7 +8,9 @@ from django.db import OperationalError, ProgrammingError
 from apps.bidding.services.finalize_bid import finalize_due_boards
 from apps.bidding.services.rules import current_board_rules
 from apps.payments.services.capture_payment import capture_payment
+from apps.payments.services.capture_records import reconcile_pending_capture_fees
 from apps.payments.services.process_webhooks import process_pending_stripe_events
+from apps.moderation.services.payment_actions import process_pending_payment_actions
 
 
 logger = logging.getLogger(__name__)
@@ -36,6 +38,8 @@ class Command(BaseCommand):
             try:
                 if settings.TAKEBOARD_STRIPE_ENABLED:
                     process_pending_stripe_events()
+                    reconcile_pending_capture_fees()
+                    process_pending_payment_actions()
                 results = finalize_due_boards(
                     rules=current_board_rules(),
                     capture_pending_bid=capture_payment if settings.TAKEBOARD_STRIPE_ENABLED else None,

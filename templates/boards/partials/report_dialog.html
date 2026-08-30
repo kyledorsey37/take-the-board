@@ -1,0 +1,28 @@
+<dialog class="bid-dialog report-dialog" id="{{ dialog_prefix }}{{ takeover.public_id }}" aria-labelledby="report-title-{{ takeover.public_id }}">
+  <div class="bid-dialog-shell">
+    <div class="bid-dialog-header">
+      <div>
+        <p class="eyebrow">{% if takeover.report_status == "approved" %}Report status{% else %}Community guidelines{% endif %}</p>
+        <h2 id="report-title-{{ takeover.public_id }}">{% if takeover.report_status == "approved" %}This message has already been reviewed.{% else %}Report this message{% endif %}</h2>
+      </div>
+      <form method="dialog"><button class="icon-button" type="submit" aria-label="Close report dialog">&times;</button></form>
+    </div>
+    {% if takeover.report_status == "approved" %}
+      <p>This message has already been reported and reviewed as acceptable under our community guidelines.</p>
+      <form method="dialog"><button class="button button-primary" type="submit">Close</button></form>
+    {% else %}
+      <p>Reports are reviewed by our team. Choose the category that best fits.</p>
+      <form method="post" action="{% url 'boards:report_takeover' takeover.public_id %}" hx-post="{% url 'boards:report_takeover' takeover.public_id %}" hx-target="#report-result-{{ takeover.public_id }}" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+        {% csrf_token %}
+        <fieldset class="report-categories">
+          <legend>Reason for report</legend>
+          {% for value, label in report_categories %}
+            <label><input type="radio" name="category" value="{{ value }}" required> {{ label }}</label>
+          {% endfor %}
+        </fieldset>
+        <button class="button button-primary" type="submit">Submit report</button>
+      </form>
+      <div id="report-result-{{ takeover.public_id }}" aria-live="polite"></div>
+    {% endif %}
+  </div>
+</dialog>

@@ -35,6 +35,9 @@
       <div class="current-message-panel">
         <p class="current-message-label"><span aria-hidden="true"></span> Current message</p>
         <p class="board-message live-board-message">{{ board.current_message }}</p>
+        {% if current_takeover %}
+          {% include "boards/partials/report_affordance.html" with takeover=current_takeover dialog_prefix="report-modal-current-" %}
+        {% endif %}
       </div>
       <div class="live-board-footer">
         {% if board.current_controller %}
@@ -60,7 +63,7 @@
             <p class="eyebrow">Your move</p>
             <p class="takeover-cta-copy">Put your message on the board.</p>
           </div>
-          <button class="button takeover-button" type="button" data-open-dialog="{% if auth_required_for_bidding and not auth_profile %}auth-modal{% elif auth_required_for_bidding and not auth_profile.display_name %}profile-setup-modal{% else %}bid-modal{% endif %}" data-analytics-event="bid_modal_opened" data-analytics-surface="school_board" data-analytics-school-slug="{{ board.school.slug }}">Take the board <span>from ${{ minimum_takeover_dollars|floatformat:2 }}</span></button>
+          <button class="button takeover-button" type="button" data-open-dialog="{% if auth_required_for_bidding and not auth_profile %}auth-modal{% elif auth_required_for_bidding and not auth_profile.display_name %}profile-setup-modal{% else %}bid-modal{% endif %}" data-auth-title="Sign in to take the board." data-auth-intro="You need to be signed in to take the board." data-analytics-event="bid_modal_opened" data-analytics-surface="school_board" data-analytics-school-slug="{{ board.school.slug }}">Take the board <span>from ${{ minimum_takeover_dollars|floatformat:2 }}</span></button>
         </div>
       {% endif %}
     </article>
@@ -78,14 +81,26 @@
     {% for takeover in takeovers %}
       <article class="takeover-row">
         <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_school.name }}</p>
-        <p class="takeover-row-message">{{ takeover.message }}</p>
+        <p class="takeover-row-message">{% if takeover.report_case.status == "removed" %}Message removed for violating community guidelines.{% else %}{{ takeover.message }}{% endif %}</p>
         <p class="takeover-row-amount">${{ takeover.amount_dollars|floatformat:2 }}</p>
+        {% include "boards/partials/report_affordance.html" with dialog_prefix="report-modal-history-" %}
       </article>
     {% empty %}
       <p class="muted">No one has taken this board yet. Make the first move.</p>
     {% endfor %}
   </div>
 </section>
+
+{% if auth_profile and current_takeover and current_takeover.report_status != "removed" %}
+  {% include "boards/partials/report_dialog.html" with takeover=current_takeover dialog_prefix="report-modal-current-" %}
+{% endif %}
+{% if auth_profile %}
+  {% for takeover in takeovers %}
+    {% if takeover.report_status != "removed" %}
+      {% include "boards/partials/report_dialog.html" with dialog_prefix="report-modal-history-" %}
+    {% endif %}
+  {% endfor %}
+{% endif %}
 
 {% if bidding_enabled and bidding_modal_enabled %}
   <dialog class="bid-dialog" id="bid-modal" aria-labelledby="bid-modal-title">

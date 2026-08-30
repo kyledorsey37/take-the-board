@@ -335,8 +335,9 @@ characters.
      against the removed message and must not be captured as a side effect of
      the rollback. Mark it `AUTH_CANCELED` and release its authorization when
      applicable.
-   - Queue a full refund for a captured paid bid. A merely authorized bid is
-     canceled and is not refunded. A local demo bid is `not_required`.
+   - Queue a refund for a captured paid bid equal to its captured amount less
+     the actual Stripe processing fee. A merely authorized bid is canceled and
+     is not refunded. A local demo bid is `not_required`.
    - Write `remove_message`, `restore_previous_takeover` when applicable, and
      `payment_remediation_queued` audit records.
 
@@ -407,24 +408,25 @@ challenger.
 
 ## Payment and legal-policy boundary
 
-The MVP operational default is:
+The moderation-removal payment policy is:
 
 - no payment change on report submission or dismissal;
-- full refund of a captured paid bid when an admin upholds removal;
+- refund a captured paid bid less the actual Stripe processing fee when an admin
+  upholds removal;
 - authorization cancellation, not refund, for a not-yet-captured challenger;
 - no payment operation for local free-play bids; and
 - no deletion of historical financial records.
 
-This is simpler and safer for customer support than retaining money after the
-platform removes the purchased public placement. Terms and Conditions must
-describe the same operational rule and reserve the platform's moderation right;
-legal counsel should review any alternative “no refund after removal” policy
-before implementation. Do not silently implement a legal policy different from
-the refund service and ledger behavior.
+The refund amount must come from the immutable `PaymentCapture` snapshot
+(`gross_amount_cents - stripe_fee_cents`), never a fee estimate or a current
+pricing formula. If Stripe has not yet supplied the fee, leave the durable
+payment action pending and retry after fee reconciliation. Terms and Conditions
+must describe this rule and reserve the platform's moderation right; legal
+counsel should review it before launch.
 
 Every successful refund must call the existing payment boundary, use a stable
 Stripe idempotency key, mark the bid `REFUNDED` only after Stripe confirms it,
-and create a `LedgerEntry(type=REFUND)` for the refunded amount. A provider
+and create a `LedgerEntry(type=REFUND)` for that net refunded amount. A provider
 failure leaves the action visible as failed/pending for retry and never marks
 the bid refunded. Do not log Stripe payloads, card data, client secrets, or raw
 provider errors.
@@ -522,3 +524,18 @@ attempts are bounded without automatic takedowns, admins can review and close a
 case, an upheld current message safely restores the prior valid board state,
 public history redacts removed content, and payment remediation is durable,
 idempotent, auditable, and covered by the tests above.
+
+## Runtime configuration
+
+The MVP implementation stores report submissions in PostgreSQL and expects the
+same shared Redis cache used by other abuse controls. `TAKEBOARD_RATE_LIMITS`
+contains the report controls: five submissions per authenticated user and HMAC
+IP digest per hour, three new cases per authenticated user and HMAC IP digest
+per hour, and 500 submissions globally per minute. Report writes fail closed
+when shared rate-limit state is unavailable.
+
+The board-takeover migration adds an opaque `public_id` to existing historical
+takeovers before enforcing uniqueness. Deploy it before serving the report
+route. The bid worker processes pending moderation payment actions whenever
+Stripe is enabled; failures remain visible in Django Admin and use the same
+case-derived idempotency key on retry.

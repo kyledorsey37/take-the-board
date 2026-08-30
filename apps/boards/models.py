@@ -1,6 +1,7 @@
 from django.conf import settings
 from django.db import models
 from decimal import Decimal
+import uuid
 
 
 class Board(models.Model):
@@ -57,6 +58,7 @@ class Board(models.Model):
 
 
 class BoardTakeover(models.Model):
+    public_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
     board = models.ForeignKey(Board, on_delete=models.CASCADE, related_name="takeovers")
     bid = models.OneToOneField("bidding.Bid", on_delete=models.PROTECT, related_name="takeover")
     previous_bid = models.ForeignKey(

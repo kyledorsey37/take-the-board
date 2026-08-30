@@ -11,6 +11,7 @@ from apps.bidding.services.rules import current_board_rules, minimum_takeover_ce
 from apps.boards.models import Board
 
 from .cancel_authorization import cancel_authorization
+from .capture_records import record_capture_from_payment_intent, update_capture_from_charge
 from .capture_payment import capture_payment
 from ..models import StripeEvent
 
@@ -123,6 +124,21 @@ def _handle_payment_failure(event_object: dict, status: str, now: datetime) -> N
         board.save(update_fields=["pending_bid", "updated_at"])
 
 
+def _handle_payment_succeeded(event_object: dict) -> None:
+    bid = _find_bid(event_object)
+    if not bid:
+        return
+    # This is deliberately idempotent and also repairs a rare local write failure
+    # after Stripe has successfully captured the payment.
+    record_capture_from_payment_intent(bid=bid, payment_intent=event_object)
+
+
+def _handle_charge_updated(event_object: dict) -> None:
+    # The charge event is sent when Stripe has asynchronously attached the balance
+    # transaction. Its fee data completes the immutable capture snapshot.
+    update_capture_from_charge(charge=event_object)
+
+
 @transaction.atomic
 def process_stripe_event(event_id: str) -> bool:
     event = StripeEvent.objects.select_for_update().get(event_id=event_id)
@@ -139,6 +155,10 @@ def process_stripe_event(event_id: str) -> bool:
         _handle_payment_failure(event_object, Bid.Status.PAYMENT_FAILED, now)
     elif event.event_type == "payment_intent.canceled":
         _handle_payment_failure(event_object, Bid.Status.AUTH_CANCELED, now)
+    elif event.event_type == "payment_intent.succeeded":
+        _handle_payment_succeeded(event_object)
+    elif event.event_type == "charge.updated":
+        _handle_charge_updated(event_object)
 
     event.processed_at = now
     event.save(update_fields=["processed_at"])
