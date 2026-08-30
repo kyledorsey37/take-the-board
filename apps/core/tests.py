@@ -11,7 +11,7 @@ from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules
 from apps.boards.models import Board, BoardTakeover
 from apps.core.models import GameConfig
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
 from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
@@ -33,26 +33,33 @@ class BoardTestCase(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
         GameConfig.objects.create()
-        cls.oklahoma = School.objects.create(
+        cls.competition = Competition.objects.get(
+            name="College Football",
+            slug="college-football",
+            sport="Football",
+        )
+        cls.oklahoma = Entity.objects.create(
+            competition=cls.competition,
             name="Oklahoma",
             slug="oklahoma",
             short_name="Oklahoma",
-            conference="SEC",
+            group_name="SEC",
             accent_color="#841617",
         )
-        cls.texas = School.objects.create(
+        cls.texas = Entity.objects.create(
+            competition=cls.competition,
             name="Texas",
             slug="texas",
             short_name="Texas",
-            conference="SEC",
+            group_name="SEC",
             accent_color="#BF5700",
         )
-        cls.board = Board.objects.create(school=cls.oklahoma)
+        cls.board = Board.objects.create(entity=cls.oklahoma)
         cls.rivalry = Rivalry.objects.create(
             name="Red River",
             slug="red-river",
-            school_a=cls.oklahoma,
-            school_b=cls.texas,
+            entity_a=cls.oklahoma,
+            entity_b=cls.texas,
         )
 
 
@@ -121,7 +128,7 @@ class BoardMechanicsTests(BoardTestCase):
         payload: dict[str, object] = {
             "board_slug": "oklahoma",
             "display_name": "SoonerFan",
-            "represented_school": self.oklahoma.pk,
+            "represented_entity": self.oklahoma.pk,
             "amount": "5.00",
             "message": "THE BOARD IS OURS.",
         }
@@ -132,7 +139,7 @@ class BoardMechanicsTests(BoardTestCase):
         response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
 
         self.assertContains(response, 'id="bid-modal"')
-        self.assertContains(response, 'name="represented_school"')
+        self.assertContains(response, 'name="represented_entity"')
         self.assertContains(response, "Oklahoma")
         self.assertContains(response, "Texas")
         self.assertContains(response, reverse("bidding:take"))
@@ -140,7 +147,7 @@ class BoardMechanicsTests(BoardTestCase):
         self.assertContains(response, "--school-accent: #841617")
         self.assertContains(response, 'class="takeover-cta"')
 
-    def test_rivalry_backing_query_selects_the_represented_school(self) -> None:
+    def test_rivalry_backing_query_selects_the_represented_entity(self) -> None:
         response = self.client.get(
             reverse("schools:detail", kwargs={"slug": "oklahoma"})
             + "?backing=texas"
@@ -255,7 +262,7 @@ class BoardMechanicsTests(BoardTestCase):
         self.oklahoma.save(update_fields=["name"])
         call_command("seed_demo_data")
 
-        self.assertEqual(School.objects.filter(active=True).count(), 9)
+        self.assertEqual(Entity.objects.filter(active=True).count(), 9)
         self.assertEqual(Board.objects.count(), 9)
         self.oklahoma.refresh_from_db()
         self.assertEqual(self.oklahoma.name, "Sooner State")
@@ -281,7 +288,7 @@ class GuaranteedBidLifecycleTests(BoardTestCase):
             board_id=self.board.id,
             session_key=session_key,
             display_name=display_name,
-            represented_school_id=self.oklahoma.id,
+            represented_entity_id=self.oklahoma.id,
             amount=Decimal(amount),
             message=message,
             rules=current_board_rules(),
@@ -473,7 +480,7 @@ class AuthenticatedBiddingTests(BoardTestCase):
                 {
                     "board_slug": "oklahoma",
                     "display_name": "NotTheAuthenticatedName",
-                    "represented_school": self.oklahoma.pk,
+                    "represented_entity": self.oklahoma.pk,
                     "amount": "5.00",
                     "message": "THE BOARD IS OURS.",
                 },
@@ -510,7 +517,7 @@ class AuthenticatedBiddingTests(BoardTestCase):
                 {
                     "board_slug": "oklahoma",
                     "display_name": "NotTheAuthenticatedName",
-                    "represented_school": self.oklahoma.pk,
+                    "represented_entity": self.oklahoma.pk,
                     "amount": "5.00",
                     "message": "THE BOARD IS OURS.",
                 },
@@ -549,7 +556,7 @@ class AuthenticatedBiddingTests(BoardTestCase):
             {
                 "board_slug": "oklahoma",
                 "display_name": "GuestFan",
-                "represented_school": self.oklahoma.pk,
+                "represented_entity": self.oklahoma.pk,
                 "amount": "5.00",
                 "message": "THE BOARD IS OURS.",
             },

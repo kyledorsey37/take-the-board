@@ -39,7 +39,7 @@ def finalize_locked_pending_bid(
     if board.guaranteed_until and board.guaranteed_until > now:
         return None
 
-    pending_bid = Bid.objects.select_related("bidder", "represented_school").get(pk=board.pending_bid_id)
+    pending_bid = Bid.objects.select_related("bidder", "represented_entity").get(pk=board.pending_bid_id)
     if pending_bid.status != Bid.Status.AUTHORIZED:
         board.pending_bid = None
         board.save(update_fields=["pending_bid", "updated_at"])

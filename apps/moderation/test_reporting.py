@@ -17,16 +17,20 @@ from apps.moderation.admin import MessageReportCaseAdmin
 from apps.moderation.services.payment_actions import process_payment_action
 from apps.moderation.services.report_cases import remove_case
 from apps.payments.models import LedgerEntry, PaymentCapture
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
 
 class MessageReportingTests(TestCase):
     def setUp(self):
         cache.clear()
-        self.school = School.objects.create(
-            name="Oklahoma", slug="oklahoma", short_name="Oklahoma", conference="SEC", accent_color="#841617"
+        self.competition = Competition.objects.get(
+            name="College Football", slug="college-football", sport="Football"
         )
-        self.board = Board.objects.create(school=self.school)
+        self.school = Entity.objects.create(
+            competition=self.competition,
+            name="Oklahoma", slug="oklahoma", short_name="Oklahoma", group_name="SEC", accent_color="#841617"
+        )
+        self.board = Board.objects.create(entity=self.school)
         self.author = self.profile("author", "Author")
         self.reporter = self.profile("reporter", "Reporter")
         self.takeover, self.bid = self.publish("A safe published message.")
@@ -42,7 +46,7 @@ class MessageReportingTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.author,
-            represented_school=self.school,
+            represented_entity=self.school,
             message=message,
             amount_cents=amount,
             status=Bid.Status.DEMO_WON,
@@ -53,7 +57,7 @@ class MessageReportingTests(TestCase):
             previous_bid=previous_bid,
             controller=self.author,
             controller_display_name=self.author.display_name,
-            represented_school=self.school,
+            represented_entity=self.school,
             message=message,
             amount_cents=amount,
         )
@@ -190,7 +194,7 @@ class MessageReportingTests(TestCase):
         pending = Bid.objects.create(
             board=self.board,
             bidder=self.reporter,
-            represented_school=self.school,
+            represented_entity=self.school,
             message="Pending message.",
             amount_cents=700,
             status=Bid.Status.AUTHORIZED,

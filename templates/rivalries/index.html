@@ -38,14 +38,14 @@
           <span aria-hidden="true">&rarr;</span>
         </div>
         <div class="rivalry-card-schools">
-          <span style="--side-accent: {{ card.school_a.accent_color }}">{{ card.school_a.school.name }}</span>
+          <span style="--side-accent: {{ card.entity_a.accent_color }}">{{ card.entity_a.entity.name }}</span>
           <strong>vs.</strong>
-          <span style="--side-accent: {{ card.school_b.accent_color }}">{{ card.school_b.school.name }}</span>
+          <span style="--side-accent: {{ card.entity_b.accent_color }}">{{ card.entity_b.entity.name }}</span>
         </div>
         <p class="rivalry-card-lead">{{ card.lead_text }}</p>
         <div class="rivalry-card-stats">
-          <span><strong>{{ card.school_a.takeovers }}</strong> {{ card.school_a.school.short_name }} moves</span>
-          <span><strong>{{ card.school_b.takeovers }}</strong> {{ card.school_b.school.short_name }} moves</span>
+          <span><strong>{{ card.entity_a.takeovers }}</strong> {{ card.entity_a.entity.short_name }} moves</span>
+          <span><strong>{{ card.entity_b.takeovers }}</strong> {{ card.entity_b.entity.short_name }} moves</span>
         </div>
         <p class="rivalry-card-link">See matchup <span aria-hidden="true">&rarr;</span></p>
       </a>

@@ -9,9 +9,9 @@ from django.utils import timezone
 
 from apps.bidding.models import Bid
 from apps.boards.models import BoardTakeover
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
-from .models import SchoolWeekStats, SeasonWeek
+from .models import EntityPeriodStats, CompetitionPeriod
 
 
 RESET_WEEKDAY = 6  # Sunday; Python's weekday() uses Monday=0.
@@ -20,14 +20,14 @@ RESET_MINUTE = 59
 
 
 @dataclass(frozen=True)
-class SeasonWeekWindow:
+class CompetitionPeriodWindow:
     starts_at: datetime
     ends_at: datetime
     year: int
     week_number: int
 
 
-def current_season_week_window(now: datetime | None = None) -> SeasonWeekWindow:
+def current_period_window(now: datetime | None = None) -> CompetitionPeriodWindow:
     now = now or timezone.now()
     local_now = timezone.localtime(now, timezone.get_current_timezone())
     days_since_sunday = (local_now.weekday() - RESET_WEEKDAY) % 7
@@ -41,7 +41,7 @@ def current_season_week_window(now: datetime | None = None) -> SeasonWeekWindow:
         starts_at -= timedelta(days=7)
     ends_at = starts_at + timedelta(days=7)
     iso_calendar = starts_at.date().isocalendar()
-    return SeasonWeekWindow(
+    return CompetitionPeriodWindow(
         starts_at=starts_at,
         ends_at=ends_at,
         year=iso_calendar.year,
@@ -50,13 +50,21 @@ def current_season_week_window(now: datetime | None = None) -> SeasonWeekWindow:
 
 
 @transaction.atomic
-def get_or_create_current_season_week(now: datetime | None = None) -> SeasonWeek:
-    active_week = SeasonWeek.objects.filter(active=True).order_by("-starts_at").first()
+def get_or_create_current_period(
+    *,
+    competition: Competition,
+    now: datetime | None = None,
+) -> CompetitionPeriod:
+    active_week = CompetitionPeriod.objects.filter(
+        competition=competition,
+        active=True,
+    ).order_by("-starts_at").first()
     if active_week:
         return active_week
 
-    window = current_season_week_window(now)
-    week, _ = SeasonWeek.objects.get_or_create(
+    window = current_period_window(now)
+    week, _ = CompetitionPeriod.objects.get_or_create(
+        competition=competition,
         year=window.year,
         week_number=window.week_number,
         defaults={
@@ -71,48 +79,48 @@ def get_or_create_current_season_week(now: datetime | None = None) -> SeasonWeek
     return week
 
 
-def successful_takeovers_for_week(week: SeasonWeek):
+def successful_takeovers_for_period(period: CompetitionPeriod):
     return BoardTakeover.objects.filter(
         controller__is_banned=False,
         bid__status__in=[Bid.Status.WON, Bid.Status.DEMO_WON],
     ).exclude(report_case__status="removed").filter(
-        Q(season_week=week)
+        Q(period=period)
         | Q(
-            season_week__isnull=True,
-            occurred_at__gte=week.starts_at,
-            occurred_at__lt=week.ends_at,
+            period__isnull=True,
+            occurred_at__gte=period.starts_at,
+            occurred_at__lt=period.ends_at,
         )
     )
 
 
 @transaction.atomic
-def rebuild_school_week_stats(week: SeasonWeek) -> int:
-    takeovers = successful_takeovers_for_week(week)
+def rebuild_entity_period_stats(period: CompetitionPeriod) -> int:
+    takeovers = successful_takeovers_for_period(period)
     aggregates = {
-        row["represented_school_id"]: row
-        for row in takeovers.values("represented_school_id").annotate(
+        row["represented_entity_id"]: row
+        for row in takeovers.values("represented_entity_id").annotate(
             total_spend_cents=Sum("amount_cents"),
             takeovers=Count("id"),
             boards_attacked=Count(
                 "id",
-                filter=~Q(board__school_id=F("represented_school_id")),
+                filter=~Q(board__entity_id=F("represented_entity_id")),
             ),
             biggest_bid_cents=Max("amount_cents"),
         )
     }
-    schools = list(School.objects.filter(active=True).order_by("pk"))
-    SchoolWeekStats.objects.filter(week=week).delete()
-    SchoolWeekStats.objects.bulk_create(
+    entities = list(Entity.objects.filter(competition=period.competition, active=True).order_by("pk"))
+    EntityPeriodStats.objects.filter(period=period).delete()
+    EntityPeriodStats.objects.bulk_create(
         [
-            SchoolWeekStats(
-                school=school,
-                week=week,
-                total_spend_cents=aggregates.get(school.id, {}).get("total_spend_cents") or 0,
-                takeovers=aggregates.get(school.id, {}).get("takeovers") or 0,
-                boards_attacked=aggregates.get(school.id, {}).get("boards_attacked") or 0,
-                biggest_bid_cents=aggregates.get(school.id, {}).get("biggest_bid_cents") or 0,
+            EntityPeriodStats(
+                entity=entity,
+                period=period,
+                total_spend_cents=aggregates.get(entity.id, {}).get("total_spend_cents") or 0,
+                takeovers=aggregates.get(entity.id, {}).get("takeovers") or 0,
+                boards_attacked=aggregates.get(entity.id, {}).get("boards_attacked") or 0,
+                biggest_bid_cents=aggregates.get(entity.id, {}).get("biggest_bid_cents") or 0,
             )
-            for school in schools
+            for entity in entities
         ]
     )
-    return len(schools)
+    return len(entities)

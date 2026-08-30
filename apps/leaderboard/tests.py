@@ -7,34 +7,39 @@ from django.utils import timezone
 from apps.accounts.models import UserProfile
 from apps.bidding.models import Bid
 from apps.boards.models import Board, BoardTakeover
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
 from apps.boards.services.reset_boards import reset_boards
 
-from .models import SchoolWeekStats, SeasonWeek
+from .models import EntityPeriodStats, CompetitionPeriod
 from .services import build_leaderboard
-from .week_services import current_season_week_window
+from .week_services import current_period_window
 
 
 class LeaderboardTests(TestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.sec_school = School.objects.create(
+        cls.competition = Competition.objects.get(
+            name="College Football", slug="college-football", sport="Football"
+        )
+        cls.sec_school = Entity.objects.create(
+            competition=cls.competition,
             name="Alabama",
             slug="alabama",
             short_name="Alabama",
-            conference="SEC",
+            group_name="SEC",
             accent_color="#9E1B32",
         )
-        cls.big_ten_school = School.objects.create(
+        cls.big_ten_school = Entity.objects.create(
+            competition=cls.competition,
             name="Michigan",
             slug="michigan",
             short_name="Michigan",
-            conference="Big Ten",
+            group_name="Big Ten",
             accent_color="#00274C",
         )
-        cls.board = Board.objects.create(school=cls.sec_school)
-        cls.other_board = Board.objects.create(school=cls.big_ten_school)
+        cls.board = Board.objects.create(entity=cls.sec_school)
+        cls.other_board = Board.objects.create(entity=cls.big_ten_school)
         cls.first_fan = UserProfile.objects.create(
             cognito_sub="fan-one",
             email="one@example.com",
@@ -51,7 +56,7 @@ class LeaderboardTests(TestCase):
         *,
         bidder: UserProfile,
         board: Board,
-        represented_school: School,
+        represented_entity: Entity,
         amount_cents: int,
         occurred_at=None,
         status: str = Bid.Status.DEMO_WON,
@@ -59,7 +64,7 @@ class LeaderboardTests(TestCase):
         bid = Bid.objects.create(
             board=board,
             bidder=bidder,
-            represented_school=represented_school,
+            represented_entity=represented_entity,
             message="A TAKEOVER MESSAGE.",
             amount_cents=amount_cents,
             status=status,
@@ -69,7 +74,7 @@ class LeaderboardTests(TestCase):
             bid=bid,
             controller=bidder,
             controller_display_name=bidder.display_name,
-            represented_school=represented_school,
+            represented_entity=represented_entity,
             message=bid.message,
             amount_cents=amount_cents,
         )
@@ -78,17 +83,17 @@ class LeaderboardTests(TestCase):
             takeover.refresh_from_db()
         return takeover
 
-    def test_leaderboard_credits_fanbase_and_conference_by_represented_school(self) -> None:
+    def test_leaderboard_credits_fanbase_and_conference_by_represented_entity(self) -> None:
         self.create_takeover(
             bidder=self.first_fan,
             board=self.board,
-            represented_school=self.sec_school,
+            represented_entity=self.sec_school,
             amount_cents=1200,
         )
         self.create_takeover(
             bidder=self.first_fan,
             board=self.other_board,
-            represented_school=self.big_ten_school,
+            represented_entity=self.big_ten_school,
             amount_cents=800,
         )
 
@@ -100,9 +105,10 @@ class LeaderboardTests(TestCase):
         self.assertEqual(data["spender_rows"][0]["display_name"], "FirstFan")
         self.assertEqual(data["attacked_rows"][0]["school_name"], "Alabama")
 
-    def test_week_period_uses_active_season_week(self) -> None:
+    def test_week_period_uses_active_period(self) -> None:
         now = timezone.now()
-        SeasonWeek.objects.create(
+        CompetitionPeriod.objects.create(
+            competition=self.competition,
             year=now.year,
             week_number=1,
             starts_at=now - timedelta(days=1),
@@ -112,14 +118,14 @@ class LeaderboardTests(TestCase):
         self.create_takeover(
             bidder=self.first_fan,
             board=self.board,
-            represented_school=self.sec_school,
+            represented_entity=self.sec_school,
             amount_cents=900,
             occurred_at=now - timedelta(hours=1),
         )
         self.create_takeover(
             bidder=self.second_fan,
             board=self.other_board,
-            represented_school=self.big_ten_school,
+            represented_entity=self.big_ten_school,
             amount_cents=700,
             occurred_at=now - timedelta(days=3),
         )
@@ -133,13 +139,13 @@ class LeaderboardTests(TestCase):
         self.create_takeover(
             bidder=self.first_fan,
             board=self.board,
-            represented_school=self.sec_school,
+            represented_entity=self.sec_school,
             amount_cents=1200,
         )
         self.create_takeover(
             bidder=self.second_fan,
             board=self.other_board,
-            represented_school=self.big_ten_school,
+            represented_entity=self.big_ten_school,
             amount_cents=5000,
             status=Bid.Status.REFUNDED,
         )
@@ -153,7 +159,7 @@ class LeaderboardTests(TestCase):
         self.create_takeover(
             bidder=self.first_fan,
             board=self.board,
-            represented_school=self.sec_school,
+            represented_entity=self.sec_school,
             amount_cents=1200,
         )
 
@@ -170,15 +176,16 @@ class LeaderboardTests(TestCase):
     def test_week_marker_uses_the_iso_week_year(self) -> None:
         new_year_boundary = timezone.make_aware(datetime(2026, 1, 4, 23, 59, 1))
 
-        window = current_season_week_window(new_year_boundary)
+        window = current_period_window(new_year_boundary)
 
         self.assertEqual(window.year, 2026)
         self.assertEqual(window.week_number, 1)
 
     def test_weekly_reset_preserves_history_rebuilds_stats_and_clears_live_boards(self) -> None:
         reset_at = timezone.make_aware(datetime(2026, 8, 30, 23, 59, 1))
-        previous_window = current_season_week_window(reset_at - timedelta(minutes=2))
-        previous_week = SeasonWeek.objects.create(
+        previous_window = current_period_window(reset_at - timedelta(minutes=2))
+        previous_week = CompetitionPeriod.objects.create(
+            competition=self.competition,
             year=previous_window.year,
             week_number=previous_window.week_number,
             starts_at=previous_window.starts_at,
@@ -188,8 +195,8 @@ class LeaderboardTests(TestCase):
         current_bid = Bid.objects.create(
             board=self.board,
             bidder=self.first_fan,
-            represented_school=self.sec_school,
-            season_week=previous_week,
+            represented_entity=self.sec_school,
+            period=previous_week,
             message="LAST WEEK'S MESSAGE.",
             amount_cents=1200,
             status=Bid.Status.DEMO_WON,
@@ -199,8 +206,8 @@ class LeaderboardTests(TestCase):
             bid=current_bid,
             controller=self.first_fan,
             controller_display_name=self.first_fan.display_name,
-            represented_school=self.sec_school,
-            season_week=previous_week,
+            represented_entity=self.sec_school,
+            period=previous_week,
             message=current_bid.message,
             amount_cents=current_bid.amount_cents,
         )
@@ -210,8 +217,8 @@ class LeaderboardTests(TestCase):
         pending_bid = Bid.objects.create(
             board=self.board,
             bidder=self.second_fan,
-            represented_school=self.sec_school,
-            season_week=previous_week,
+            represented_entity=self.sec_school,
+            period=previous_week,
             message="PENDING MESSAGE.",
             amount_cents=1300,
             status=Bid.Status.AUTHORIZED,
@@ -225,18 +232,18 @@ class LeaderboardTests(TestCase):
         self.board.version = 4
         self.board.save()
 
-        result = reset_boards(now=reset_at)
+        result = reset_boards(competition=self.competition, now=reset_at)
 
         self.board.refresh_from_db()
         current_bid.refresh_from_db()
         pending_bid.refresh_from_db()
         previous_week.refresh_from_db()
-        next_week = SeasonWeek.objects.get(active=True)
-        previous_stats = SchoolWeekStats.objects.get(school=self.sec_school, week=previous_week)
+        next_week = CompetitionPeriod.objects.get(competition=self.competition, active=True)
+        previous_stats = EntityPeriodStats.objects.get(entity=self.sec_school, period=previous_week)
 
         self.assertFalse(result.already_reset)
         self.assertEqual(result.boards_reset, 2)
-        self.assertEqual(next_week.week_number, current_season_week_window(reset_at).week_number)
+        self.assertEqual(next_week.week_number, current_period_window(reset_at).week_number)
         self.assertNotEqual(next_week.pk, previous_week.pk)
         self.assertIsNotNone(next_week.reset_completed_at)
         self.assertFalse(previous_week.active)
@@ -255,7 +262,7 @@ class LeaderboardTests(TestCase):
         self.assertEqual(result.stats_rows, 2)
 
         version_after_reset = self.board.version
-        second_result = reset_boards(now=reset_at + timedelta(minutes=1))
+        second_result = reset_boards(competition=self.competition, now=reset_at + timedelta(minutes=1))
 
         self.board.refresh_from_db()
         self.assertTrue(second_result.already_reset)

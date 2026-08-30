@@ -47,7 +47,7 @@ def process_payment_action(action_id: int) -> bool:
     with transaction.atomic():
         action = (
             ModerationPaymentAction.objects.select_for_update()
-            .select_related("case", "bid", "bid__bidder", "bid__board__school")
+            .select_related("case", "bid", "bid__bidder", "bid__board__entity")
             .get(pk=action_id)
         )
         if action.status in {
@@ -122,7 +122,7 @@ def process_payment_action(action_id: int) -> bool:
                 defaults={
                     "amount_cents": -action.amount_cents,
                     "user": bid.bidder,
-                    "school": bid.represented_school,
+                    "entity": bid.represented_entity,
                 },
             )
         logger.info("message_report_payment_action_succeeded", extra={"action_id": str(action.public_id)})

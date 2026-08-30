@@ -1,11 +1,11 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin
 
-from .models import SchoolWeekStats, SeasonWeek
+from .models import EntityPeriodStats, CompetitionPeriod
 
 
-@admin.register(SeasonWeek)
-class SeasonWeekAdmin(ModelAdmin):
+@admin.register(CompetitionPeriod)
+class CompetitionPeriodAdmin(ModelAdmin):
     list_display = (
         "year",
         "week_number",
@@ -19,15 +19,15 @@ class SeasonWeekAdmin(ModelAdmin):
     readonly_fields = ("reset_completed_at",)
 
 
-@admin.register(SchoolWeekStats)
-class SchoolWeekStatsAdmin(ModelAdmin):
+@admin.register(EntityPeriodStats)
+class EntityPeriodStatsAdmin(ModelAdmin):
     list_display = (
-        "school",
-        "week",
+        "entity",
+        "period",
         "total_spend_cents",
         "takeovers",
         "boards_attacked",
         "biggest_bid_cents",
     )
-    list_filter = ("week", "school")
-    search_fields = ("school__name",)
+    list_filter = ("period", "entity")
+    search_fields = ("entity__name",)

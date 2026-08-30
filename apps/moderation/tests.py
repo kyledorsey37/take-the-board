@@ -21,7 +21,7 @@ from apps.moderation.services.validators import (
     validate_display_name_deterministically,
     validate_message_deterministically,
 )
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
 
 class DeterministicValidatorTests(TestCase):
@@ -56,13 +56,18 @@ class DeterministicValidatorTests(TestCase):
 class ModerationServiceTests(TestCase):
     def setUp(self) -> None:
         cache.clear()
-        self.school = School.objects.create(
-            name="Oklahoma", slug="oklahoma", short_name="Oklahoma", conference="SEC", accent_color="#841617"
+        self.competition = Competition.objects.get(
+            name="College Football", slug="college-football", sport="Football"
         )
-        self.represented_school = School.objects.create(
-            name="Texas", slug="texas", short_name="Texas", conference="SEC", accent_color="#BF5700"
+        self.school = Entity.objects.create(
+            competition=self.competition,
+            name="Oklahoma", slug="oklahoma", short_name="Oklahoma", group_name="SEC", accent_color="#841617"
         )
-        self.board = Board.objects.create(school=self.school)
+        self.represented_entity = Entity.objects.create(
+            competition=self.competition,
+            name="Texas", slug="texas", short_name="Texas", group_name="SEC", accent_color="#BF5700"
+        )
+        self.board = Board.objects.create(entity=self.school)
         self.user = UserProfile.objects.create(
             cognito_sub="moderation-test-subject", email="fan@example.com", display_name="TestFan"
         )
@@ -73,14 +78,14 @@ class ModerationServiceTests(TestCase):
         first = validate_message(
             user=self.user,
             board=self.board,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="Texas played like crap.",
             remote_addr="127.0.0.1",
         )
         second = validate_message(
             user=self.user,
             board=self.board,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="Texas played like crap.",
             remote_addr="127.0.0.1",
         )
@@ -94,7 +99,7 @@ class ModerationServiceTests(TestCase):
             validate_message(
                 user=self.user,
                 board=self.board,
-                represented_school=self.represented_school,
+                represented_entity=self.represented_entity,
                 message="Normal football message.",
                 remote_addr="127.0.0.1",
             )
@@ -102,7 +107,7 @@ class ModerationServiceTests(TestCase):
             validate_message(
                 user=self.user,
                 board=self.board,
-                represented_school=self.represented_school,
+                represented_entity=self.represented_entity,
                 message="Another normal message.",
                 remote_addr="127.0.0.1",
             )
@@ -114,7 +119,7 @@ class ModerationServiceTests(TestCase):
             validate_message(
                 user=self.user,
                 board=self.board,
-                represented_school=self.represented_school,
+                represented_entity=self.represented_entity,
                 message="Normal football message.",
                 remote_addr="127.0.0.1",
             )

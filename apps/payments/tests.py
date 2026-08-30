@@ -21,7 +21,7 @@ from apps.moderation.models import MessageValidation
 from apps.moderation.services.nova_classifier import Classification
 from apps.moderation.services.rate_limits import safe_key
 from apps.moderation.services.validators import validate_message_deterministically
-from apps.schools.models import School
+from apps.schools.models import Competition, Entity
 
 from .models import LedgerEntry, PaymentCapture, StripeEvent
 from .services.capture_payment import capture_payment
@@ -124,21 +124,26 @@ class StripeBidFlowTests(TestCase):
     def setUp(self) -> None:
         cache.clear()
         GameConfig.objects.create()
-        self.school = School.objects.create(
+        self.competition = Competition.objects.get(
+            name="College Football", slug="college-football", sport="Football"
+        )
+        self.school = Entity.objects.create(
+            competition=self.competition,
             name="Oklahoma",
             slug="oklahoma",
             short_name="Oklahoma",
-            conference="SEC",
+            group_name="SEC",
             accent_color="#841617",
         )
-        self.represented_school = School.objects.create(
+        self.represented_entity = Entity.objects.create(
+            competition=self.competition,
             name="Texas",
             slug="texas",
             short_name="Texas",
-            conference="SEC",
+            group_name="SEC",
             accent_color="#BF5700",
         )
-        self.board = Board.objects.create(school=self.school)
+        self.board = Board.objects.create(entity=self.school)
         self.profile = UserProfile.objects.create(
             cognito_sub="stripe-test-subject",
             email="fan@example.com",
@@ -150,7 +155,7 @@ class StripeBidFlowTests(TestCase):
         return MessageValidation.objects.create(
             user=self.profile,
             board=self.board,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message=message,
             message_hash=safe_key("message-value", candidate.original),
             decision=MessageValidation.Decision.ALLOW,
@@ -172,7 +177,7 @@ class StripeBidFlowTests(TestCase):
         result = create_checkout(
             board_id=self.board.id,
             profile_id=self.profile.id,
-            represented_school_id=self.represented_school.id,
+            represented_entity_id=self.represented_entity.id,
             amount=Decimal("17.00"),
             message="TAKE THE BOARD.",
             validation_id=self.approved_validation().id,
@@ -200,7 +205,7 @@ class StripeBidFlowTests(TestCase):
             create_checkout(
                 board_id=self.board.id,
                 profile_id=self.profile.id,
-                represented_school_id=self.represented_school.id,
+                represented_entity_id=self.represented_entity.id,
                 amount=Decimal("17.01"),
                 message="TAKE THE BOARD.",
                 validation_id=self.approved_validation().id,
@@ -216,7 +221,7 @@ class StripeBidFlowTests(TestCase):
         base_kwargs = {
             "board_id": self.board.id,
             "profile_id": self.profile.id,
-            "represented_school_id": self.represented_school.id,
+            "represented_entity_id": self.represented_entity.id,
             "amount": Decimal("17.00"),
             "message": "TAKE THE BOARD.",
             "rules": current_board_rules(),
@@ -258,7 +263,7 @@ class StripeBidFlowTests(TestCase):
                 reverse("bidding:take"),
                 {
                     "board_slug": "oklahoma",
-                    "represented_school": self.represented_school.id,
+                    "represented_entity": self.represented_entity.id,
                     "amount": "17.00",
                     "message": "TAKE THE BOARD.",
                 },
@@ -278,7 +283,7 @@ class StripeBidFlowTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
             amount_cents=1700,
             status=Bid.Status.CHECKOUT_CREATED,
@@ -301,7 +306,7 @@ class StripeBidFlowTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
             amount_cents=100,
             status=Bid.Status.CHECKOUT_CREATED,
@@ -333,7 +338,7 @@ class StripeBidFlowTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
             amount_cents=100,
             status=Bid.Status.AUTHORIZED,
@@ -358,7 +363,7 @@ class StripeBidFlowTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
             amount_cents=1700,
             status=Bid.Status.AUTHORIZED,
@@ -404,7 +409,7 @@ class StripeBidFlowTests(TestCase):
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
-            represented_school=self.represented_school,
+            represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
             amount_cents=1700,
             status=Bid.Status.AUTHORIZED,

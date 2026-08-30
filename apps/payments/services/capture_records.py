@@ -142,7 +142,7 @@ def record_capture_from_payment_intent(*, bid: Bid, payment_intent: Any) -> Paym
             defaults={
                 "amount_cents": gross_amount_cents,
                 "user": bid.bidder,
-                "school": bid.represented_school,
+                "entity": bid.represented_entity,
             },
         )
     _apply_charge_details(capture, _value(payment_intent, "latest_charge"))
@@ -219,7 +219,7 @@ def backfill_missing_capture_records(limit: int = 100) -> int:
     )
     recorded = 0
     for bid_id in bid_ids:
-        bid = Bid.objects.select_related("bidder", "represented_school").get(pk=bid_id)
+        bid = Bid.objects.select_related("bidder", "represented_entity").get(pk=bid_id)
         try:
             payment_intent = stripe.PaymentIntent.retrieve(
                 bid.stripe_payment_intent_id,

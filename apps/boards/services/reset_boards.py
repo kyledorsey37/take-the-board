@@ -9,11 +9,12 @@ from django.db import transaction
 from django.utils import timezone
 
 from apps.bidding.models import Bid
-from apps.leaderboard.models import SeasonWeek
+from apps.leaderboard.models import CompetitionPeriod
 from apps.leaderboard.week_services import (
-    current_season_week_window,
-    rebuild_school_week_stats,
+    current_period_window,
+    rebuild_entity_period_stats,
 )
+from apps.schools.models import Competition
 
 from ..models import Board
 
@@ -27,7 +28,7 @@ class WeeklyResetError(Exception):
 
 @dataclass(frozen=True)
 class WeeklyResetResult:
-    week: SeasonWeek
+    period: CompetitionPeriod
     boards_reset: int
     stats_rows: int
     already_reset: bool
@@ -36,13 +37,15 @@ class WeeklyResetResult:
 @transaction.atomic
 def reset_boards(
     *,
+    competition: Competition,
     now: datetime | None = None,
     cancel_pending_authorization: CancelPendingAuthorization | None = None,
 ) -> WeeklyResetResult:
     """Reset live boards once for the current Sunday-to-Sunday season week."""
     now = now or timezone.now()
-    window = current_season_week_window(now)
-    week, _ = SeasonWeek.objects.get_or_create(
+    window = current_period_window(now)
+    period, _ = CompetitionPeriod.objects.get_or_create(
+        competition=competition,
         year=window.year,
         week_number=window.week_number,
         defaults={
@@ -51,29 +54,29 @@ def reset_boards(
         },
     )
 
-    if week.reset_completed_at:
+    if period.reset_completed_at:
         return WeeklyResetResult(
-            week=week,
+            period=period,
             boards_reset=0,
             stats_rows=0,
             already_reset=True,
         )
 
     previous_week = (
-        SeasonWeek.objects.filter(ends_at__lte=week.starts_at)
-        .exclude(pk=week.pk)
+        CompetitionPeriod.objects.filter(competition=competition, ends_at__lte=period.starts_at)
+        .exclude(pk=period.pk)
         .order_by("-ends_at")
         .first()
     )
     if previous_week:
-        rebuild_school_week_stats(previous_week)
+        rebuild_entity_period_stats(previous_week)
 
-    SeasonWeek.objects.filter(active=True).exclude(pk=week.pk).update(active=False)
-    week.active = True
-    week.reset_completed_at = now
-    week.save(update_fields=["active", "reset_completed_at"])
+    CompetitionPeriod.objects.filter(competition=competition, active=True).exclude(pk=period.pk).update(active=False)
+    period.active = True
+    period.reset_completed_at = now
+    period.save(update_fields=["active", "reset_completed_at"])
 
-    boards = list(Board.objects.select_for_update().order_by("pk"))
+    boards = list(Board.objects.select_for_update().filter(entity__competition=competition).order_by("pk"))
     for board in boards:
         if board.pending_bid_id:
             pending_bid = Bid.objects.select_for_update().get(pk=board.pending_bid_id)
@@ -111,9 +114,9 @@ def reset_boards(
             ]
         )
 
-    stats_rows = rebuild_school_week_stats(week)
+    stats_rows = rebuild_entity_period_stats(period)
     return WeeklyResetResult(
-        week=week,
+        period=period,
         boards_reset=len(boards),
         stats_rows=stats_rows,
         already_reset=False,

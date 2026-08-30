@@ -20,8 +20,8 @@ def publish_takeover(
         previous_bid=board.current_bid,
         controller=bid.bidder,
         controller_display_name=bid.bidder.display_name,
-        represented_school=bid.represented_school,
-        season_week=bid.season_week,
+        represented_entity=bid.represented_entity,
+        period=bid.period,
         message=bid.message,
         amount_cents=bid.amount_cents,
     )

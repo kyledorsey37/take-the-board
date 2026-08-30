@@ -1,16 +1,16 @@
 {% extends "base.html" %}
 
-{% block title %}{{ board.school.name }} | Take the Board{% endblock %}
+{% block title %}{{ board.entity.name }} | Take the Board{% endblock %}
 
 {% block content %}
-<div class="school-board-page" style="--school-accent: {{ school_accent }};">
+<div class="school-board-page" style="--school-accent: {{ entity_accent }};">
 <section class="board-stage">
   <div class="board-stage-inner">
     <a class="back-link" href="{% url 'boards:index' %}"><span aria-hidden="true">&larr;</span> All boards</a>
     <div class="board-heading">
       <div>
-        <p class="eyebrow">{{ board.school.name }} board</p>
-        <h1>{{ board.school.name }}</h1>
+        <p class="eyebrow">{{ board.entity.name }} board</p>
+        <h1>{{ board.entity.name }}</h1>
       </div>
       <a class="text-link" href="{% url 'rivalries:index' %}">Rivalry watch</a>
     </div>
@@ -23,7 +23,7 @@
       <div class="takeover-confirmation takeover-confirmation-pending" role="status">Payment received. Your takeover is still processing.</div>
     {% endif %}
 
-    <article class="live-board" aria-label="Current {{ board.school.name }} board">
+    <article class="live-board" aria-label="Current {{ board.entity.name }} board">
       <div class="live-board-topline">
         <span>Current board</span>
         {% if board.bidding_enabled %}
@@ -41,7 +41,7 @@
       </div>
       <div class="live-board-footer">
         {% if board.current_controller %}
-          <p><strong>{{ board.current_controller.display_name }} controls this board</strong><br><span>Backing {{ board.current_bid.represented_school.name }}</span></p>
+          <p><strong>{{ board.current_controller.display_name }} controls this board</strong><br><span>Backing {{ board.current_bid.represented_entity.name }}</span></p>
           <p class="price-lockup"><span>Current takeover</span><strong>${{ board.current_amount_dollars|floatformat:2 }}</strong></p>
         {% else %}
           <p><strong>No current controller</strong><br><span>Set the first message.</span></p>
@@ -63,7 +63,7 @@
             <p class="eyebrow">Your move</p>
             <p class="takeover-cta-copy">Put your message on the board.</p>
           </div>
-          <button class="button takeover-button" type="button" data-open-dialog="{% if auth_required_for_bidding and not auth_profile %}auth-modal{% elif auth_required_for_bidding and not auth_profile.display_name %}profile-setup-modal{% else %}bid-modal{% endif %}" data-auth-title="Sign in to take the board." data-auth-intro="You need to be signed in to take the board." data-analytics-event="bid_modal_opened" data-analytics-surface="school_board" data-analytics-school-slug="{{ board.school.slug }}">Take the board <span>from ${{ minimum_takeover_dollars|floatformat:2 }}</span></button>
+          <button class="button takeover-button" type="button" data-open-dialog="{% if auth_required_for_bidding and not auth_profile %}auth-modal{% elif auth_required_for_bidding and not auth_profile.display_name %}profile-setup-modal{% else %}bid-modal{% endif %}" data-auth-title="Sign in to take the board." data-auth-intro="You need to be signed in to take the board." data-analytics-event="bid_modal_opened" data-analytics-surface="entity_board" data-analytics-school-slug="{{ board.entity.slug }}">Take the board <span>from ${{ minimum_takeover_dollars|floatformat:2 }}</span></button>
         </div>
       {% endif %}
     </article>
@@ -80,7 +80,7 @@
   <div class="takeover-history">
     {% for takeover in takeovers %}
       <article class="takeover-row">
-        <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_school.name }}</p>
+        <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_entity.name }}</p>
         <p class="takeover-row-message">{% if takeover.report_case.status == "removed" %}Message removed for violating community guidelines.{% else %}{{ takeover.message }}{% endif %}</p>
         <p class="takeover-row-amount">${{ takeover.amount_dollars|floatformat:2 }}</p>
         {% include "boards/partials/report_affordance.html" with dialog_prefix="report-modal-history-" %}
@@ -107,7 +107,7 @@
     <div class="bid-dialog-shell">
       <div class="bid-dialog-header">
         <div>
-          <p class="eyebrow">{{ board.school.name }} board</p>
+          <p class="eyebrow">{{ board.entity.name }} board</p>
           <h2 id="bid-modal-title">Take the board.</h2>
         </div>
         <form method="dialog">
@@ -125,7 +125,7 @@
         data-bid-form
         data-analytics-event="takeover_submitted"
         data-analytics-surface="bid_modal"
-        data-analytics-school-slug="{{ board.school.slug }}"
+        data-analytics-school-slug="{{ board.entity.slug }}"
       >
         {% csrf_token %}
         {{ form.board_slug }}
@@ -138,7 +138,7 @@
         {% endif %}
 
         <div class="form-field">
-          <label for="{{ form.represented_school.id_for_label }}">Who are you backing?</label>
+          <label for="{{ form.represented_entity.id_for_label }}">Who are you backing?</label>
           <div class="school-picker" data-school-picker>
             <button
               class="school-picker-trigger"
@@ -148,7 +148,7 @@
               aria-controls="school-picker-options"
               data-school-picker-trigger
             >
-              <span data-school-picker-label>{{ selected_represented_school.name }}</span>
+              <span data-school-picker-label>{{ selected_represented_entity.name }}</span>
               <span class="school-picker-chevron" aria-hidden="true"></span>
             </button>
             <div
@@ -159,19 +159,19 @@
               hidden
               data-school-picker-menu
             >
-              {% for school in form.represented_school.field.queryset %}
+              {% for school in form.represented_entity.field.queryset %}
                 <button
                   class="school-picker-option"
                   type="button"
                   role="option"
-                  aria-selected="{% if school.pk == selected_represented_school.pk %}true{% else %}false{% endif %}"
+                  aria-selected="{% if school.pk == selected_represented_entity.pk %}true{% else %}false{% endif %}"
                   data-school-picker-option
                   data-school-value="{{ school.pk }}"
                   data-school-label="{{ school.name }}"
                 >{{ school.name }}</button>
               {% endfor %}
             </div>
-            {{ form.represented_school }}
+            {{ form.represented_entity }}
           </div>
         </div>
 

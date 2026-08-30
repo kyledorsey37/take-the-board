@@ -7,9 +7,9 @@ from apps.moderation.services.operations import audit_action
 
 @admin.register(UserProfile)
 class UserProfileAdmin(ModelAdmin):
-    list_display = ("display_name", "email", "favorite_school", "is_banned", "total_spend_cents")
+    list_display = ("display_name", "email", "favorite_entity", "is_banned", "total_spend_cents")
     search_fields = ("display_name", "email", "cognito_sub")
-    list_filter = ("is_banned", "favorite_school")
+    list_filter = ("is_banned", "favorite_entity")
     readonly_fields = ("created_at", "updated_at")
 
     actions = ("ban_selected_users", "clear_selected_display_names")

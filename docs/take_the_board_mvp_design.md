@@ -389,17 +389,22 @@ Browsing does not.
 
 ---
 
-# 10. School Model
+# 10. Competition and Entity Models
 
 ```python
-class School(models.Model):
+class Competition(models.Model):
     name = models.CharField(max_length=100)
-
     slug = models.SlugField(unique=True)
+    sport = models.CharField(max_length=50)
+    active = models.BooleanField(default=True)
 
+
+class Entity(models.Model):
+    competition = models.ForeignKey(Competition, on_delete=models.PROTECT)
+    name = models.CharField(max_length=100)
+    slug = models.SlugField()
     short_name = models.CharField(max_length=50)
-
-    conference = models.CharField(
+    group_name = models.CharField(
         max_length=50,
         blank=True,
     )
@@ -416,6 +421,7 @@ class School(models.Model):
 Example:
 
 ```text
+competition = College Football
 name = Oklahoma
 slug = oklahoma
 accent_color = #8B1D2C
@@ -427,12 +433,14 @@ Do not store official logos.
 
 # 11. Board Model
 
-Each school has exactly one active board.
+Each entity has exactly one active board. College Football entities are schools;
+future NFL or NBA entities can be clubs without changing board, bid, payment, or
+moderation relationships. Entity slugs are unique within their competition.
 
 ```python
 class Board(models.Model):
-    school = models.OneToOneField(
-        School,
+    entity = models.OneToOneField(
+        Entity,
         on_delete=models.CASCADE,
     )
 

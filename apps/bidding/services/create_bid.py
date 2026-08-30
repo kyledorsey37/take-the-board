@@ -13,8 +13,8 @@ from apps.bidding.models import Bid
 from apps.boards.models import Board
 from apps.boards.services.publish_takeover import publish_takeover
 from apps.core.models import Activity
-from apps.leaderboard.week_services import get_or_create_current_season_week
-from apps.schools.models import School
+from apps.leaderboard.week_services import get_or_create_current_period
+from apps.schools.models import Entity
 
 from .finalize_bid import finalize_locked_pending_bid
 from .rules import BoardRules, minimum_takeover_cents
@@ -50,7 +50,7 @@ def demo_player_for_session(
     *,
     session_key: str,
     display_name: str,
-    favorite_school: School,
+    favorite_entity: Entity,
 ) -> UserProfile:
     subject = demo_subject_for_session(session_key, display_name)
     try:
@@ -59,24 +59,24 @@ def demo_player_for_session(
             defaults={
                 "email": f"demo-{subject}@example.invalid",
                 "display_name": display_name,
-                "favorite_school": favorite_school,
+                "favorite_entity": favorite_entity,
             },
         )
     except IntegrityError as error:
         raise TakeoverError("That display name is already in use in this local game.") from error
 
-    if created or profile.favorite_school_id == favorite_school.id:
+    if created or profile.favorite_entity_id == favorite_entity.id:
         return profile
 
-    profile.favorite_school = favorite_school
-    profile.save(update_fields=["favorite_school", "updated_at"])
+    profile.favorite_entity = favorite_entity
+    profile.save(update_fields=["favorite_entity", "updated_at"])
     return profile
 
 
 def authenticated_player(
     *,
     profile_id: int,
-    favorite_school: School,
+    favorite_entity: Entity,
 ) -> UserProfile:
     try:
         profile = UserProfile.objects.select_for_update().get(pk=profile_id)
@@ -86,8 +86,8 @@ def authenticated_player(
         raise TakeoverError("This account cannot take the board.")
     if not profile.display_name:
         raise TakeoverError("Choose your board name before taking the board.")
-    profile.favorite_school = favorite_school
-    profile.save(update_fields=["favorite_school", "updated_at"])
+    profile.favorite_entity = favorite_entity
+    profile.save(update_fields=["favorite_entity", "updated_at"])
     return profile
 
 
@@ -104,7 +104,7 @@ def create_bid(
     board_id: int,
     session_key: str,
     display_name: str | None,
-    represented_school_id: int,
+    represented_entity_id: int,
     amount: Decimal,
     message: str,
     rules: BoardRules,
@@ -112,7 +112,7 @@ def create_bid(
     authenticated_profile_id: int | None = None,
 ) -> TakeoverResult:
     now = now or timezone.now()
-    board = Board.objects.select_for_update().select_related("school").get(pk=board_id)
+    board = Board.objects.select_for_update().select_related("entity__competition").get(pk=board_id)
     if not board.bidding_enabled or not rules.bidding_enabled:
         raise TakeoverError("Takeovers are paused for this board.")
 
@@ -121,8 +121,12 @@ def create_bid(
     finalize_locked_pending_bid(board=board, rules=rules, now=now)
     board.refresh_from_db(fields=["current_bid", "current_amount_cents", "pending_bid", "guaranteed_until"])
 
-    represented_school = School.objects.get(pk=represented_school_id, active=True)
-    season_week = get_or_create_current_season_week(now=now)
+    represented_entity = Entity.objects.get(
+        pk=represented_entity_id,
+        competition=board.entity.competition,
+        active=True,
+    )
+    period = get_or_create_current_period(competition=board.entity.competition, now=now)
     amount_cents = dollars_to_cents(amount)
     pending_amount_cents = board.pending_bid.amount_cents if board.pending_bid_id else 0
     required_cents = minimum_takeover_cents(
@@ -136,7 +140,7 @@ def create_bid(
     if authenticated_profile_id:
         player = authenticated_player(
             profile_id=authenticated_profile_id,
-            favorite_school=represented_school,
+            favorite_entity=represented_entity,
         )
     else:
         if display_name is None:
@@ -144,12 +148,12 @@ def create_bid(
         player = demo_player_for_session(
             session_key=session_key,
             display_name=display_name,
-            favorite_school=represented_school,
+            favorite_entity=represented_entity,
         )
     bid = board.bids.create(
         bidder=player,
-        represented_school=represented_school,
-        season_week=season_week,
+        represented_entity=represented_entity,
+        period=period,
         message=message,
         amount_cents=amount_cents,
         status=Bid.Status.CREATED,

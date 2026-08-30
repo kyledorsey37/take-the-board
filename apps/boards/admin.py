@@ -9,7 +9,7 @@ from apps.moderation.services.operations import audit_action
 @admin.register(Board)
 class BoardAdmin(ModelAdmin):
     list_display = (
-        "school",
+        "entity",
         "current_controller",
         "current_amount_cents",
         "pending_bid",
@@ -18,7 +18,7 @@ class BoardAdmin(ModelAdmin):
         "updated_at",
     )
     list_filter = ("bidding_enabled",)
-    search_fields = ("school__name", "school__slug", "current_message")
+    search_fields = ("entity__name", "entity__slug", "current_message")
     readonly_fields = ("version", "updated_at")
     actions = ("disable_selected_boards", "remove_selected_current_messages")
 
@@ -42,10 +42,10 @@ class BoardTakeoverAdmin(ModelAdmin):
     list_display = (
         "board",
         "controller_display_name",
-        "represented_school",
+        "represented_entity",
         "amount_cents",
         "occurred_at",
     )
-    list_filter = ("represented_school",)
-    search_fields = ("board__school__name", "controller__display_name", "message")
+    list_filter = ("represented_entity",)
+    search_fields = ("board__entity__name", "controller__display_name", "message")
     readonly_fields = ("occurred_at",)
