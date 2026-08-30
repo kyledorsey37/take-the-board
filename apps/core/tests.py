@@ -14,6 +14,7 @@ from apps.core.models import GameConfig
 from apps.schools.models import School
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
+from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
 from apps.rivalries.models import Rivalry
 import uuid
 from apps.core.error_views import (
@@ -23,6 +24,9 @@ from apps.core.error_views import (
     server_error,
 )
 from django.test import RequestFactory
+from unittest.mock import patch
+
+from apps.moderation.services.nova_classifier import Classification
 
 
 class BoardTestCase(TestCase):
@@ -443,6 +447,43 @@ class GuaranteedBidLifecycleTests(BoardTestCase):
     TAKEBOARD_AUTH_MODAL_PREVIEW=False,
 )
 class AuthenticatedBiddingTests(BoardTestCase):
+    def test_message_rate_limit_is_explained_in_the_bid_result(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="rate-limited-bid-subject",
+            email="rate-limited-bid@example.com",
+            display_name="RateLimitedBidder",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "access_token": "access-token",
+            "id_token": "id-token",
+            "refresh_token": "refresh-token",
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        with patch(
+            "apps.bidding.views.validate_message",
+            side_effect=ModerationRateLimitExceeded,
+        ):
+            response = self.client.post(
+                reverse("bidding:take"),
+                {
+                    "board_slug": "oklahoma",
+                    "display_name": "NotTheAuthenticatedName",
+                    "represented_school": self.oklahoma.pk,
+                    "amount": "5.00",
+                    "message": "THE BOARD IS OURS.",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 429)
+        self.assertContains(response, "Rate limit reached", status_code=429)
+        self.assertContains(response, "reached the limit", status_code=429)
+
     def test_authenticated_session_is_used_for_a_takeover(self) -> None:
         profile = UserProfile.objects.create(
             cognito_sub=uuid.uuid4(),
@@ -460,16 +501,20 @@ class AuthenticatedBiddingTests(BoardTestCase):
         }
         session.save()
 
-        response = self.client.post(
-            reverse("bidding:take"),
-            {
-                "board_slug": "oklahoma",
-                "display_name": "NotTheAuthenticatedName",
-                "represented_school": self.oklahoma.pk,
-                "amount": "5.00",
-                "message": "THE BOARD IS OURS.",
-            },
-        )
+        with patch(
+            "apps.moderation.services.validation.classify_message",
+            return_value=Classification("allow", "safe", 0.99),
+        ):
+            response = self.client.post(
+                reverse("bidding:take"),
+                {
+                    "board_slug": "oklahoma",
+                    "display_name": "NotTheAuthenticatedName",
+                    "represented_school": self.oklahoma.pk,
+                    "amount": "5.00",
+                    "message": "THE BOARD IS OURS.",
+                },
+            )
 
         self.assertEqual(response.status_code, 302)
         self.board.refresh_from_db()

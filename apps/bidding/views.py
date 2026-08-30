@@ -6,6 +6,13 @@ from django.views.decorators.http import require_POST
 
 from apps.boards.models import Board
 from apps.accounts.services.session import get_authenticated_profile
+from apps.moderation.models import MessageValidation
+from apps.moderation.services.rate_limits import (
+    RateLimitExceeded,
+    ValidationBusy,
+    enforce_checkout_limits,
+)
+from apps.moderation.services.validation import BUSY_REJECTION, RATE_LIMIT_REJECTION, validate_message
 
 from .forms import TakeBoardForm
 from .services.create_bid import BidTooLowError, TakeoverError, create_bid
@@ -17,11 +24,16 @@ def _error_response(
     form: TakeBoardForm,
     error: str = "",
     error_kind: str = "error",
+    status_code: int | None = None,
 ) -> HttpResponse:
     context = {"form": form, "takeover_error": error, "takeover_error_kind": error_kind}
     if request.headers.get("HX-Request"):
-        return render(request, "components/takeover_result.html", context)
-    return render(request, "bidding/takeover_error.html", context, status=400)
+        return render(request, "components/takeover_result.html", context, status=status_code or 200)
+    return render(request, "bidding/takeover_error.html", context, status=status_code or 400)
+
+
+def _remote_addr(request: HttpRequest) -> str:
+    return request.META.get("REMOTE_ADDR", "unknown")
 
 
 @require_POST
@@ -45,7 +57,7 @@ def take_board(request: HttpRequest) -> HttpResponse:
         ),
     )
     if not form.is_valid():
-        return _error_response(request, form, error_kind="validation")
+        return _error_response(request, form, error_kind="form")
 
     if not request.session.session_key:
         request.session.create()
@@ -53,16 +65,49 @@ def take_board(request: HttpRequest) -> HttpResponse:
     if settings.TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING and not authenticated_profile:
         return _error_response(request, form, "Sign in to take the board.")
 
+    message_validation = None
+    if authenticated_profile:
+        try:
+            message_validation = validate_message(
+                user=authenticated_profile,
+                board=board,
+                represented_school=form.cleaned_data["represented_school"],
+                message=form.cleaned_data["message"],
+                remote_addr=_remote_addr(request),
+            )
+        except RateLimitExceeded:
+            return _error_response(
+                request, form, RATE_LIMIT_REJECTION, error_kind="rate_limited", status_code=429
+            )
+        except ValidationBusy:
+            return _error_response(request, form, BUSY_REJECTION, error_kind="busy", status_code=503)
+        if message_validation.decision != MessageValidation.Decision.ALLOW:
+            return _error_response(
+                request,
+                form,
+                "That does not meet the Take the Board community guidelines.",
+                error_kind="moderation",
+            )
+
     try:
         if settings.TAKEBOARD_STRIPE_ENABLED:
             from apps.payments.services.create_checkout import create_checkout
 
+            try:
+                enforce_checkout_limits(user_id=authenticated_profile.id, remote_addr=_remote_addr(request))
+            except RateLimitExceeded:
+                return _error_response(
+                    request, form, RATE_LIMIT_REJECTION, error_kind="rate_limited", status_code=429
+                )
+            except ValidationBusy:
+                return _error_response(request, form, BUSY_REJECTION, error_kind="busy", status_code=503)
             checkout = create_checkout(
                 board_id=board.id,
                 profile_id=authenticated_profile.id,
                 represented_school_id=form.cleaned_data["represented_school"].id,
                 amount=form.cleaned_data["amount"],
                 message=form.cleaned_data["message"],
+                validation_id=message_validation.id,
                 rules=rules,
                 return_url=(
                     request.build_absolute_uri(

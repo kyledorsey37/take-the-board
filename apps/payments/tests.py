@@ -1,10 +1,13 @@
 import json
+from datetime import timedelta
 from decimal import Decimal
 from unittest.mock import patch
 
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from django.conf import settings
+from django.core.cache import cache
 
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
@@ -14,6 +17,10 @@ from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.rules import current_board_rules
 from apps.boards.models import Board
 from apps.core.models import GameConfig
+from apps.moderation.models import MessageValidation
+from apps.moderation.services.nova_classifier import Classification
+from apps.moderation.services.rate_limits import safe_key
+from apps.moderation.services.validators import validate_message_deterministically
 from apps.schools.models import School
 
 from .models import StripeEvent
@@ -24,6 +31,7 @@ from .services.process_webhooks import process_pending_stripe_events
 @override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")
 class StripeWebhookTests(TestCase):
     def setUp(self) -> None:
+        cache.clear()
         self.payload = {
             "id": "evt_test_123",
             "object": "event",
@@ -113,6 +121,7 @@ class StripeWebhookTests(TestCase):
 )
 class StripeBidFlowTests(TestCase):
     def setUp(self) -> None:
+        cache.clear()
         GameConfig.objects.create()
         self.school = School.objects.create(
             name="Oklahoma",
@@ -135,6 +144,22 @@ class StripeBidFlowTests(TestCase):
             display_name="StripeFan",
         )
 
+    def approved_validation(self, message: str = "TAKE THE BOARD.") -> MessageValidation:
+        candidate = validate_message_deterministically(message)
+        return MessageValidation.objects.create(
+            user=self.profile,
+            board=self.board,
+            represented_school=self.represented_school,
+            message=message,
+            message_hash=safe_key("message-value", candidate.original),
+            decision=MessageValidation.Decision.ALLOW,
+            category="safe",
+            confidence="0.9900",
+            policy_version=settings.TAKEBOARD_MODERATION_POLICY_VERSION,
+            classifier_version=settings.TAKEBOARD_MODERATION_CLASSIFIER_MODEL_VERSION,
+            expires_at=timezone.now() + timedelta(minutes=10),
+        )
+
     @patch("apps.payments.services.create_checkout.stripe.checkout.Session.create")
     def test_checkout_uses_the_server_side_bid_amount_and_manual_capture(self, create_session) -> None:
         create_session.return_value = {
@@ -149,6 +174,7 @@ class StripeBidFlowTests(TestCase):
             represented_school_id=self.represented_school.id,
             amount=Decimal("17.00"),
             message="TAKE THE BOARD.",
+            validation_id=self.approved_validation().id,
             rules=current_board_rules(),
             return_url="http://testserver/schools/oklahoma/?checkout_session_id={CHECKOUT_SESSION_ID}",
         )
@@ -176,10 +202,36 @@ class StripeBidFlowTests(TestCase):
                 represented_school_id=self.represented_school.id,
                 amount=Decimal("17.01"),
                 message="TAKE THE BOARD.",
+                validation_id=self.approved_validation().id,
                 rules=current_board_rules(),
                 return_url="http://testserver/schools/oklahoma/?checkout_session_id={CHECKOUT_SESSION_ID}",
             )
 
+        create_session.assert_not_called()
+
+    @patch("apps.payments.services.create_checkout.stripe.checkout.Session.create")
+    def test_checkout_requires_a_fresh_matching_one_time_validation(self, create_session) -> None:
+        validation = self.approved_validation()
+        base_kwargs = {
+            "board_id": self.board.id,
+            "profile_id": self.profile.id,
+            "represented_school_id": self.represented_school.id,
+            "amount": Decimal("17.00"),
+            "message": "TAKE THE BOARD.",
+            "rules": current_board_rules(),
+            "return_url": "http://testserver/return/?checkout_session_id={CHECKOUT_SESSION_ID}",
+        }
+        with self.assertRaisesRegex(TakeoverError, "fresh message approval"):
+            create_checkout(**base_kwargs, validation_id=999999)
+        with self.assertRaisesRegex(TakeoverError, "fresh message approval"):
+            create_checkout(
+                **{**base_kwargs, "message": "Different message."},
+                validation_id=validation.id,
+            )
+        validation.expires_at = timezone.now() - timedelta(seconds=1)
+        validation.save(update_fields=["expires_at"])
+        with self.assertRaisesRegex(TakeoverError, "fresh message approval"):
+            create_checkout(**base_kwargs, validation_id=validation.id)
         create_session.assert_not_called()
 
     @patch("apps.payments.services.create_checkout.stripe.checkout.Session.create")
@@ -197,16 +249,20 @@ class StripeBidFlowTests(TestCase):
         }
         session.save()
 
-        response = self.client.post(
-            reverse("bidding:take"),
-            {
-                "board_slug": "oklahoma",
-                "represented_school": self.represented_school.id,
-                "amount": "17.00",
-                "message": "TAKE THE BOARD.",
-            },
-            HTTP_HX_REQUEST="true",
-        )
+        with patch(
+            "apps.moderation.services.validation.classify_message",
+            return_value=Classification("allow", "safe", 0.99),
+        ):
+            response = self.client.post(
+                reverse("bidding:take"),
+                {
+                    "board_slug": "oklahoma",
+                    "represented_school": self.represented_school.id,
+                    "amount": "17.00",
+                    "message": "TAKE THE BOARD.",
+                },
+                HTTP_HX_REQUEST="true",
+            )
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-stripe-checkout")

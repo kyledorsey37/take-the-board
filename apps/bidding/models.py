@@ -35,6 +35,13 @@ class Bid(models.Model):
         related_name="bids",
     )
     message = models.CharField(max_length=80)
+    message_validation = models.ForeignKey(
+        "moderation.MessageValidation",
+        null=True,
+        blank=True,
+        on_delete=models.PROTECT,
+        related_name="bids",
+    )
     amount_cents = models.PositiveIntegerField()
     status = models.CharField(max_length=32, choices=Status.choices, default=Status.CREATED)
     stripe_checkout_session_id = models.CharField(max_length=255, blank=True)

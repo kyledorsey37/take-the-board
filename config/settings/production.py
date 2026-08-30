@@ -11,6 +11,9 @@ DEBUG = False
 if not os.environ.get("DJANGO_SECRET_KEY"):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY is required in production.")
 
+if not os.environ.get("MODERATION_HASH_SECRET"):
+    raise ImproperlyConfigured("MODERATION_HASH_SECRET is required in production.")
+
 if not os.environ.get("DATABASE_URL"):
     raise ImproperlyConfigured("DATABASE_URL is required in production.")
 

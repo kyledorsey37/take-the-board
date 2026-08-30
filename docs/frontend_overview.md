@@ -30,7 +30,12 @@ Local development enables a CSRF-protected board-takeover modal. It uses a schoo
 
 This is intentionally guarded by `TAKEBOARD_DEMO_BIDDING_ENABLED`, which defaults to `true` only in local settings. It uses a session-backed local player identity. A local winner records `demo_won`; a challenger records `authorized` until the local finalizer simulates capture. It creates no payment records, never calls Bedrock, and must remain disabled in staging and production.
 
-The authenticated flow replaces the local player identity with Cognito, accepts whole-dollar bid amounts, rechecks the price, and creates Stripe Embedded Checkout with manual capture. After Stripe reports completion, the checkout instance is destroyed, the browser polls the bidder-owned status endpoint while the webhook worker finalizes the bid, and the user returns to the board with a live, pending, or still-processing state. Bedrock/Nova message validation remains a later integration.
+The authenticated flow replaces the local player identity with Cognito, accepts
+whole-dollar bid amounts, validates a board message before payment, rechecks the
+price, and creates Stripe Embedded Checkout with manual capture. After Stripe
+reports completion, the checkout instance is destroyed, the browser polls the
+bidder-owned status endpoint while the webhook worker finalizes the bid, and the
+user returns to the board with a live, pending, or still-processing state.
 
 ## HTMX Contract
 

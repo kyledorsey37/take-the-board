@@ -11,6 +11,7 @@ from django.views.decorators.http import require_POST
 
 from apps.accounts.services.session import get_authenticated_profile
 from apps.bidding.models import Bid
+from apps.moderation.services.rate_limits import RateLimitExceeded, enforce_bid_status_limits
 
 from .models import StripeEvent
 
@@ -22,6 +23,16 @@ def bid_status(request: HttpRequest, public_id) -> JsonResponse:
     profile = get_authenticated_profile(request)
     if not profile:
         return JsonResponse({"ok": False, "error": "Authentication required."}, status=401)
+    try:
+        enforce_bid_status_limits(
+            user_id=profile.id,
+            remote_addr=request.META.get("REMOTE_ADDR", "unknown"),
+        )
+    except RateLimitExceeded:
+        return JsonResponse(
+            {"ok": False, "error": "You’ve reached the refresh limit. Please wait before checking again."},
+            status=429,
+        )
 
     try:
         bid = Bid.objects.select_related("board__school").get(
