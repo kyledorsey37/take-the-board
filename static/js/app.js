@@ -7,6 +7,16 @@ window.takeTheBoard.trackEvent = function trackEvent(name, params) {
   window.gtag("event", name, params || {});
 };
 
+document.addEventListener("DOMContentLoaded", function trackHeroExposure() {
+  const hero = document.querySelector("[data-analytics-hero-exposure]");
+
+  if (!hero) {
+    return;
+  }
+
+  window.takeTheBoard.trackEvent("hero_viewed", analyticsParams(hero));
+});
+
 document.addEventListener("click", function trackAnalyticsClick(event) {
   const target = event.target.closest("[data-analytics-event]");
 
@@ -17,7 +27,7 @@ document.addEventListener("click", function trackAnalyticsClick(event) {
   const dataset = target.dataset;
   const params = {};
 
-  ["surface", "destination", "schoolSlug", "rivalrySlug"].forEach(function (key) {
+  ["surface", "destination", "schoolSlug", "rivalrySlug", "heroVariant", "cta", "target"].forEach(function (key) {
     if (dataset["analytics" + key.charAt(0).toUpperCase() + key.slice(1)]) {
       params[key.replace(/[A-Z]/g, function (letter) {
         return "_" + letter.toLowerCase();
@@ -32,7 +42,7 @@ function analyticsParams(element) {
   const dataset = element.dataset;
   const params = {};
 
-  ["surface", "destination", "schoolSlug", "rivalrySlug", "amountBucket"].forEach(function (key) {
+  ["surface", "destination", "schoolSlug", "rivalrySlug", "amountBucket", "heroVariant", "cta", "target"].forEach(function (key) {
     const datasetKey = "analytics" + key.charAt(0).toUpperCase() + key.slice(1);
     if (dataset[datasetKey]) {
       params[key.replace(/[A-Z]/g, function (letter) {

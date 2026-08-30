@@ -16,9 +16,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='bid',
-            name='bidding_bid_represe_7873c3_idx',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    'DROP INDEX IF EXISTS "bidding_bid_represe_7873c3_idx"',
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveIndex(
+                    model_name='bid',
+                    name='bidding_bid_represe_7873c3_idx',
+                ),
+            ],
         ),
         migrations.AlterField(
             model_name='bid',

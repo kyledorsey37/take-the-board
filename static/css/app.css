@@ -168,6 +168,245 @@ h2 {
   margin-top: 1.5rem;
 }
 
+/* Landing page: editorial copy, with the live board as the visual hook. */
+.landing-hero {
+  overflow: hidden;
+  border-bottom: 1px solid #302f2b;
+  background:
+    radial-gradient(circle at 78% 18%, rgba(179, 38, 47, 0.2), transparent 32%),
+    linear-gradient(115deg, #151515 0%, #201f1d 52%, #111111 100%);
+  color: #fff;
+}
+
+.landing-hero-inner {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(390px, 1.1fr);
+  align-items: center;
+  gap: clamp(2rem, 5vw, 6rem);
+  width: min(1200px, calc(100% - 2rem));
+  min-height: min(720px, 78vh);
+  margin: 0 auto;
+  padding: clamp(3rem, 7vw, 6.5rem) 0;
+}
+
+.landing-hero-copy {
+  max-width: 590px;
+  padding: 1rem 0;
+}
+
+.landing-hero-copy .eyebrow {
+  max-width: 23rem;
+  margin-bottom: 1.25rem;
+  color: #ffb84d;
+  letter-spacing: 0.04em;
+}
+
+.landing-hero-copy h1 {
+  max-width: 620px;
+  font-size: clamp(3.2rem, 6.4vw, 6.8rem);
+  letter-spacing: -0.045em;
+  line-height: 0.88;
+  text-transform: none;
+}
+
+.landing-hero-copy h1 em {
+  color: #ffb84d;
+  font-style: normal;
+}
+
+.landing-hero-intro {
+  max-width: 34rem;
+  margin: 1.75rem 0 0;
+  color: rgba(255, 255, 255, 0.74);
+  font-size: clamp(1rem, 1.45vw, 1.3rem);
+  line-height: 1.45;
+}
+
+.landing-hero-copy .hero-actions {
+  margin-top: 2rem;
+}
+
+.button-ghost {
+  border-color: rgba(255, 255, 255, 0.34);
+  background: transparent;
+  color: #fff;
+}
+
+.button-ghost:hover,
+.button-ghost:focus-visible {
+  border-color: #fff;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.landing-featured-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 470px;
+  max-width: 550px;
+  margin-left: auto;
+  border: 1px solid var(--board-accent, #ffb84d);
+  border-top: 9px solid var(--board-accent, #ffb84d);
+  border-radius: 14px;
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: #f7f3eb;
+  color: var(--ink);
+  box-shadow: 18px 22px 0 rgba(0, 0, 0, 0.2);
+}
+
+.landing-card-topline,
+.landing-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.landing-card-kicker,
+.landing-card-status,
+.landing-card-message-label {
+  margin: 0;
+  color: var(--board-accent, var(--muted));
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.landing-card-status {
+  border: 1px solid var(--board-accent, #c9c2b7);
+  border-radius: 999px;
+  padding: 0.25rem 0.55rem;
+  color: var(--board-accent, var(--accent-dark));
+  white-space: nowrap;
+}
+
+.landing-card-heading {
+  align-items: end;
+  margin-top: 2.75rem;
+}
+
+.landing-card-heading h2 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3.25rem);
+  letter-spacing: -0.04em;
+  line-height: 0.95;
+}
+
+.landing-card-board-link {
+  color: inherit;
+  text-decoration: none;
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.12em;
+}
+
+.landing-card-board-link:hover,
+.landing-card-board-link:focus-visible {
+  color: var(--board-accent, var(--accent-dark));
+  text-decoration: underline;
+}
+
+.landing-card-heading p {
+  margin: 0.45rem 0 0;
+  color: var(--muted);
+}
+
+.landing-card-price {
+  flex: 0 0 auto;
+  margin: 0 !important;
+  text-align: right;
+}
+
+.landing-card-price span {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.landing-card-price strong {
+  display: block;
+  color: var(--board-accent, var(--accent-dark));
+  font-size: 1.65rem;
+  line-height: 1;
+}
+
+.landing-card-message-wrap {
+  margin: 2rem 0;
+  border-left: 8px solid var(--board-accent, #ffb84d);
+  border-radius: 8px;
+  padding: 1rem 1.1rem 1.2rem;
+  background: #171717;
+  color: #fff;
+}
+
+.landing-card-message-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.landing-card-message-label::before {
+  width: 0.55rem;
+  height: 0.55rem;
+  background: var(--board-accent, #ffb84d);
+  content: "";
+}
+
+.landing-card-message {
+  margin: 0.7rem 0 0;
+  color: #fff;
+  font-size: clamp(2rem, 4.2vw, 3.5rem);
+  font-weight: 900;
+  letter-spacing: -0.025em;
+  line-height: 0.95;
+  text-transform: uppercase;
+}
+
+.landing-card-message-link {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+.landing-card-message-link:hover .landing-card-message,
+.landing-card-message-link:focus-visible .landing-card-message {
+  color: var(--board-accent, #fff);
+}
+
+.landing-card-message-link:focus-visible {
+  border-radius: 4px;
+  outline: 2px solid var(--board-accent, #ffb84d);
+  outline-offset: 4px;
+}
+
+.landing-card-cta {
+  width: 100%;
+  min-height: 3.35rem;
+  border-radius: 6px;
+  font-size: 1.05rem;
+}
+
+.landing-featured-card .landing-card-cta.button-primary {
+  background: var(--board-accent, var(--accent));
+}
+
+.landing-featured-card .landing-card-cta.button-primary:hover,
+.landing-featured-card .landing-card-cta.button-primary:focus-visible {
+  border-color: var(--board-accent, var(--accent));
+  background: #171717;
+  box-shadow: inset 0 -4px 0 var(--board-accent, var(--accent));
+}
+
+.landing-card-hint {
+  margin: 0.8rem 0 0;
+  color: var(--muted);
+  font-size: 0.83rem;
+  text-align: center;
+}
+
 .section {
   width: min(1120px, calc(100% - 2rem));
   margin: 0 auto;
@@ -2229,6 +2468,25 @@ a.standings-row:focus-visible {
 }
 
 @media (max-width: 900px) {
+  .landing-hero-inner {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+    min-height: 0;
+    padding-top: 3.25rem;
+    padding-bottom: 4rem;
+  }
+
+  .landing-featured-card {
+    width: min(100%, 640px);
+    min-height: 0;
+    margin: 0 auto;
+  }
+
+  .landing-hero-copy {
+    width: min(100%, 640px);
+    margin: 0 auto;
+  }
+
   .rivalry-hero .section-heading {
     align-items: flex-start;
     flex-direction: column;
@@ -2251,6 +2509,102 @@ a.standings-row:focus-visible {
 }
 
 @media (max-width: 640px) {
+  .landing-hero-inner {
+    width: min(100% - 1.25rem, 640px);
+    gap: 0.9rem;
+    padding-top: 1.1rem;
+    padding-bottom: 1.5rem;
+  }
+
+  .landing-hero-copy {
+    padding: 0;
+  }
+
+  .landing-hero-copy .eyebrow {
+    margin-bottom: 0.65rem;
+    font-size: 0.7rem;
+  }
+
+  .landing-hero-copy h1 {
+    font-size: clamp(2.35rem, 11vw, 3.35rem);
+    line-height: 0.92;
+  }
+
+  .landing-hero-intro {
+    margin-top: 0.85rem;
+    font-size: 0.98rem;
+    line-height: 1.32;
+  }
+
+  /* The board CTA is the primary mobile action; keep it in the first viewport. */
+  .landing-hero-copy .hero-actions {
+    display: none;
+  }
+
+  .landing-featured-card {
+    min-height: 0;
+    border-top-width: 7px;
+    border-radius: 11px;
+    padding: 0.9rem;
+    box-shadow: 10px 13px 0 rgba(0, 0, 0, 0.2);
+  }
+
+  .landing-card-heading {
+    align-items: end;
+    gap: 0.6rem;
+    margin-top: 1rem;
+  }
+
+  .landing-card-heading > div {
+    min-width: 0;
+  }
+
+  .landing-card-heading h2 {
+    font-size: clamp(1.85rem, 9vw, 2.5rem);
+  }
+
+  .landing-card-heading p {
+    margin-top: 0.2rem;
+    font-size: 0.88rem;
+  }
+
+  .landing-card-price {
+    text-align: right;
+  }
+
+  .landing-card-price span {
+    font-size: 0.62rem;
+  }
+
+  .landing-card-price strong {
+    font-size: 1.45rem;
+  }
+
+  .landing-card-message-wrap {
+    margin: 1rem 0;
+    border-left-width: 6px;
+    padding: 0.75rem 0.85rem 0.8rem;
+  }
+
+  .landing-card-message-label {
+    font-size: 0.65rem;
+  }
+
+  .landing-card-message {
+    margin-top: 0.45rem;
+    font-size: clamp(1.75rem, 10vw, 2.8rem);
+  }
+
+  .landing-card-cta {
+    min-height: 2.9rem;
+    font-size: 0.98rem;
+  }
+
+  .landing-card-hint {
+    margin-top: 0.55rem;
+    font-size: 0.75rem;
+  }
+
   .rivalry-hero-inner {
     padding: 2.5rem 0 2.25rem;
   }

@@ -15,9 +15,19 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='boardtakeover',
-            name='boards_boar_represe_b9905b_idx',
+        migrations.SeparateDatabaseAndState(
+            database_operations=[
+                migrations.RunSQL(
+                    'DROP INDEX IF EXISTS "boards_boar_represe_b9905b_idx"',
+                    reverse_sql=migrations.RunSQL.noop,
+                ),
+            ],
+            state_operations=[
+                migrations.RemoveIndex(
+                    model_name='boardtakeover',
+                    name='boards_boar_represe_b9905b_idx',
+                ),
+            ],
         ),
         migrations.AlterField(
             model_name='board',

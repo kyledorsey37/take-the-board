@@ -5,7 +5,7 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 ## Template Structure
 
 - `templates/base.html`: global layout, metadata, navigation, legal disclaimer, static includes.
-- `templates/home.html`: public entry point with board and rivalry discovery links.
+- `templates/home.html`: public entry point with a takeover-focused featured board and board discovery links.
 - `templates/boards/`: school board pages.
 - `templates/rivalries/`: rivalry discovery and detail pages.
 - `templates/accounts/`: future account/profile templates.
@@ -23,6 +23,22 @@ The visual system should be independent from official school brands. Use plain s
 The public header links to Boards, Rivalries, and Leaderboard. Django Admin remains available only at its direct operational URL and must not be linked in fan-facing navigation.
 
 The current board and rivalry content is public, while the local environment can also run the authenticated Stripe sandbox takeover flow.
+
+## Landing Page Board Selection
+
+The home page leads with one live board card and a direct route into that board's
+existing takeover flow. A signed-out visitor sees the active board with the highest
+current takeover amount. A
+signed-in visitor sees their most-visited active board instead. Visits are stored as
+a private per-profile counter with a most-visits, then most-recent tie-break; no
+unsigned visitor history or board-message content is collected for this feature.
+
+The landing hero uses a stable per-session A/B assignment (`a` or `b`) so a visitor
+sees the same copy while their session is active. A `hero_viewed` event records the
+low-cardinality `hero_variant` assignment, and hero navigation events carry that same
+parameter. The featured “Take over this board” link emits `takeover_cta_clicked`
+with `surface`, `school_slug`, `cta`, and `hero_variant` parameters for GA4
+conversion analysis.
 
 ## Local Free-Play Takeovers
 
@@ -74,8 +90,8 @@ Escape user-generated board messages and display names everywhere, including pag
 
 Analytics loads only in production when `GOOGLE_ANALYTICS_MEASUREMENT_ID` contains a valid GA4 measurement ID (`G-...`). The standard Google tag sits in the shared document head, so GA4 receives page views for all server-rendered public pages. It is deliberately absent in local and staging settings.
 
-The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. The current navigation events are `navigation_click`, `board_opened`, and `rivalry_opened`; each is limited to the documented parameters below.
+The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. The current events are `hero_viewed`, `navigation_click`, `board_opened`, `takeover_cta_clicked`, and `rivalry_opened`; each is limited to the documented parameters below.
 
-Do not send board messages, moderation text, payment identifiers, emails, or full display names to analytics. Prefer low-cardinality parameters such as `school_slug`, `surface`, `status`, `result`, `amount_bucket`, and `auth_state`.
+Do not send board messages, moderation text, payment identifiers, emails, or full display names to analytics. Prefer low-cardinality parameters such as `school_slug`, `surface`, `status`, `result`, `amount_bucket`, `auth_state`, `hero_variant`, and `cta`.
 
 Before enabling production collection, create the GA4 web data stream for the production domain, add its measurement ID to the production environment, and ensure the public privacy notice and consent approach meet the jurisdictions in which the product is offered. GA4's optional Enhanced Measurement can supply scroll and outbound-link measurements without adding new application event payloads.

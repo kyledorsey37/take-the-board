@@ -1,39 +1,73 @@
 {% extends "base.html" %}
 
-{% block title %}Take the Board{% endblock %}
+{% block title %}Take the Board | College football's public fan boards{% endblock %}
+
+{% block meta_description %}Take control of a college football fan board. The highest bidder gets the message until the next fan takes it over.{% endblock %}
 
 {% block content %}
-<section class="hero">
-  <div class="hero-copy">
-    <p class="eyebrow">Independent fan rivalry game</p>
-    <h1>College football's pettiest fan wars.</h1>
-    <p>Fans battle for control of each school's public message. Highest bidder runs the board until somebody outbids them.</p>
-    <div class="hero-actions">
-      <a class="button button-primary" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="boards">Explore boards</a>
-      <a class="button button-secondary" href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="rivalries">See rivalries</a>
-    </div>
-  </div>
-</section>
+<div class="landing-page">
+  <section class="landing-hero" aria-labelledby="landing-title" data-analytics-hero-exposure data-analytics-surface="home_hero" data-analytics-hero-variant="{{ hero_variant.key }}">
+    <div class="landing-hero-inner">
+      <div class="landing-hero-copy">
+        <p class="eyebrow">{{ hero_variant.kicker }}</p>
+        <h1 id="landing-title">{{ hero_variant.title_first }}<br>{% if hero_variant.title_second_prefix %}{{ hero_variant.title_second_prefix }} {% endif %}<em>{{ hero_variant.title_second_emphasis }}</em>{% if hero_variant.title_second_suffix %} {{ hero_variant.title_second_suffix }}{% endif %}</h1>
+        <p class="landing-hero-intro">{{ hero_variant.intro }}</p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="boards" data-analytics-hero-variant="{{ hero_variant.key }}">Explore boards</a>
+          <a class="button button-ghost" href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_hero" data-analytics-destination="rivalries" data-analytics-hero-variant="{{ hero_variant.key }}">See rivalries</a>
+        </div>
+      </div>
 
-<section class="section">
-  <div class="section-heading">
-    <h2>Board Preview</h2>
-    <a class="text-link" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_board_preview" data-analytics-destination="boards">All boards</a>
-  </div>
-  <div class="placeholder-grid">
-    {% for board in boards %}
-      <a class="board-card board-card-link" href="{% url 'schools:detail' slug=board.entity.slug %}" data-analytics-event="board_opened" data-analytics-surface="home_board_preview" data-analytics-school-slug="{{ board.entity.slug }}">
-        <p class="school-name">{{ board.entity.name }}</p>
-        <p class="board-message">{{ board.current_message }}</p>
-        {% if board.current_controller %}
-          <p class="bid-line">{{ board.current_controller.display_name }} holds it for ${{ board.current_amount_dollars|floatformat:2 }} <span aria-hidden="true">&rarr;</span></p>
-        {% else %}
-          <p class="bid-line">Open for the first takeover <span aria-hidden="true">&rarr;</span></p>
-        {% endif %}
-      </a>
-    {% empty %}
-      <p class="muted">The first boards are being set up.</p>
-    {% endfor %}
-  </div>
-</section>
+      {% if featured_board %}
+        <article class="landing-featured-card" style="--board-accent: {{ featured_board_accent }};" aria-labelledby="featured-board-title">
+          <div class="landing-card-topline">
+            <p class="landing-card-kicker">{{ featured_reason }}</p>
+            <span class="landing-card-status">{% if featured_board.bidding_enabled %}Live{% else %}Paused{% endif %}</span>
+          </div>
+          <div class="landing-card-heading">
+            <div>
+              <h2 id="featured-board-title">
+                <a class="landing-card-board-link" href="{% url 'schools:detail' slug=featured_board.entity.slug %}" data-analytics-event="board_opened" data-analytics-surface="home_featured_board" data-analytics-school-slug="{{ featured_board.entity.slug }}" data-analytics-target="school_name">{{ featured_board.entity.name }}</a>
+              </h2>
+              {% if featured_board.current_controller %}
+                <p>Held by {{ featured_board.current_controller.display_name }}</p>
+              {% else %}
+                <p>Open for the first takeover</p>
+              {% endif %}
+            </div>
+            <p class="landing-card-price"><span>Takeover from</span><strong>${{ featured_minimum_takeover_dollars|floatformat:2 }}</strong></p>
+          </div>
+          <div class="landing-card-message-wrap">
+            <span class="landing-card-message-label">The message right now</span>
+            <a class="landing-card-message-link" href="{% url 'schools:detail' slug=featured_board.entity.slug %}" data-analytics-event="board_opened" data-analytics-surface="home_featured_board" data-analytics-school-slug="{{ featured_board.entity.slug }}" data-analytics-target="message"><p class="landing-card-message">{{ featured_board.current_message }}</p></a>
+          </div>
+          <a class="button button-primary landing-card-cta" href="{% url 'schools:detail' slug=featured_board.entity.slug %}" data-analytics-event="takeover_cta_clicked" data-analytics-surface="home_featured_board" data-analytics-school-slug="{{ featured_board.entity.slug }}" data-analytics-cta="take_over_this_board" data-analytics-hero-variant="{{ hero_variant.key }}">Take over this board <span aria-hidden="true">&rarr;</span></a>
+          <p class="landing-card-hint">Change the message. Start the next fight.</p>
+        </article>
+      {% endif %}
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="board-preview-title">
+    <div class="section-heading">
+      <h2 id="board-preview-title">Board Preview</h2>
+      <a class="text-link" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_board_preview" data-analytics-destination="boards">All boards</a>
+    </div>
+    <div class="placeholder-grid">
+      {% for board in boards %}
+        <a class="board-card board-card-link" href="{% url 'schools:detail' slug=board.entity.slug %}" data-analytics-event="board_opened" data-analytics-surface="home_board_preview" data-analytics-school-slug="{{ board.entity.slug }}">
+          <p class="school-name">{{ board.entity.name }}</p>
+          <p class="board-message">{{ board.current_message }}</p>
+          {% if board.current_controller %}
+            <p class="bid-line">{{ board.current_controller.display_name }} holds it for ${{ board.current_amount_dollars|floatformat:2 }} <span aria-hidden="true">&rarr;</span></p>
+          {% else %}
+            <p class="bid-line">Open for the first takeover <span aria-hidden="true">&rarr;</span></p>
+          {% endif %}
+        </a>
+      {% empty %}
+        <p class="muted">The first boards are being set up.</p>
+      {% endfor %}
+    </div>
+  </section>
+</div>
 {% endblock %}

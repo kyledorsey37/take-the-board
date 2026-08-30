@@ -45,3 +45,34 @@ class Activity(models.Model):
 
     def __str__(self) -> str:
         return self.type
+
+
+class BoardVisit(models.Model):
+    """A private, per-player board-view counter used to tailor the home page."""
+
+    profile = models.ForeignKey(
+        "accounts.UserProfile",
+        on_delete=models.CASCADE,
+        related_name="board_visits",
+    )
+    board = models.ForeignKey(
+        "boards.Board",
+        on_delete=models.CASCADE,
+        related_name="profile_visits",
+    )
+    visit_count = models.PositiveIntegerField(default=0)
+    last_visited_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["profile", "board"],
+                name="core_unique_profile_board_visit",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["profile", "-visit_count", "-last_visited_at"]),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.profile} visited {self.board}"

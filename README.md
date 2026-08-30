@@ -10,6 +10,56 @@ Start Postgres and Django:
 docker compose up --build
 ```
 
+The local web container runs Django on `0.0.0.0:8000`, and Compose maps port
+`8000` on all host interfaces so another device on the same Wi-Fi network can
+reach it. To run the current checkout directly on the Mac, use the launcher
+script. It creates or reuses `.venv`, installs dependencies if needed, applies
+migrations, seeds demo data, and starts Django on the LAN:
+
+```bash
+./scripts/start_local.sh
+```
+
+The launcher loads the ignored `.env` file before starting Django, so the Mac
+and any phone on the LAN use the same local Cognito, Stripe, and bidding
+settings. It uses `DATABASE_URL` when one is configured and otherwise falls
+back to the local SQLite database. Preview mode is only enabled when
+`TAKEBOARD_AUTH_MODAL_PREVIEW=true` is set in `.env`.
+
+The equivalent manual server command, after activating `.venv`, is:
+
+```bash
+DJANGO_SETTINGS_MODULE=config.settings.local python manage.py runserver 0.0.0.0:8000 --insecure
+```
+
+Find the Mac's current Wi-Fi address with:
+
+```bash
+ipconfig getifaddr en0
+```
+
+Then open the returned address on your iPhone, for example:
+`http://192.168.1.42:8000`. The local settings allow LAN host headers and keep
+CSRF protection enabled; the phone is using the same origin it loaded, so no
+production security settings are changed. If macOS asks whether Docker or
+Python may accept incoming connections, allow it for your private network.
+
+You can override the Compose bind address or host port when needed:
+
+```bash
+WEB_BIND_ADDRESS=0.0.0.0 WEB_PORT=8000 docker compose up --build
+```
+
+If the launcher reports that port `8000` is already in use, inspect the process
+before stopping it:
+
+```bash
+lsof -nP -iTCP:8000 -sTCP:LISTEN
+```
+
+For a temporary alternate port, run `DJANGO_BIND_ADDRESS=0.0.0.0:8002
+./scripts/start_local.sh` and use that port in the laptop and phone URLs.
+
 Run Django checks with the local settings module:
 
 ```bash

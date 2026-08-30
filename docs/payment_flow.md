@@ -67,7 +67,7 @@ Requirements:
 The local receiver can be exercised with the Stripe CLI:
 
 ```bash
-stripe listen --forward-to http://127.0.0.1:8001/webhooks/stripe/
+stripe listen --forward-to http://127.0.0.1:8000/webhooks/stripe/
 ```
 
 Use the signing secret printed by `stripe listen` as the local `STRIPE_WEBHOOK_SECRET`.
