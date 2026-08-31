@@ -40,6 +40,9 @@ These are good remote handoffs that do not need your credentials first:
   service behind an environment-based provider interface.
 - Build the board reset countdown from the server-provided reset timestamp and
   add the public weekly-reset explanation.
+- Build the authenticated account history/support surface: active and historical
+  takeovers, bid/payment status, safe receipt or transaction references,
+  refund/dispute state, and clear failed, delayed, and outbid outcomes.
 - Add logo/favicons/social-card integration once the chosen asset is supplied;
   prepare SEO metadata and verification checks.
 - Add Sentry filtering, PII scrubbing, structured operational metrics, and
@@ -110,6 +113,7 @@ moderation operations, reconciliation/alerting, and the security gates listed in
 | Brand asset package | Build | Turn the existing basic logo into the approved SVG/PNG set, favicon and browser/app icons, social-card mark, light/dark variants if needed, and accessible alt text. Keep it independent from official school marks. |
 | SEO and branded social metadata | Verify/configure | Apply the logo and final brand name consistently to site metadata, Open Graph/X cards, default share images, favicon links, and any structured data; then verify previews on public board pages. |
 | Automatic takeover posts | Build | Connect the Take the Board X/Twitter account so a successfully captured and published takeover can generate one automatic public post. Trigger only from the server-side published outcome, make delivery idempotent, keep posting failures from blocking the game, and provide an operational retry/disable path. |
+| Post-purchase account history and support | Build | Add an authenticated account surface for active and historical takeovers, bid/payment status, safe receipt or transaction references, refund/dispute state, and failed, delayed, and outbid outcomes. The existing bidder-owned status endpoint is not a substitute for this history/support view. |
 | 18+ acknowledgement for paid bidding | Build | Add the first-paid-bid checkbox, enforce it server-side, and preserve the acknowledgement with purchase evidence. This is the one explicit paid-bidding launch blocker currently tracked in [security TODOs](security_todo.md). |
 
 ## Payments and money movement

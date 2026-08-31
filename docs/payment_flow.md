@@ -111,6 +111,14 @@ used for new captures.
 
 Refunds and disputes are admin-reviewed operational workflows. They should update payment state and ledger entries while preserving historical records for audit.
 
+Before taking live money, the authenticated user experience also needs a
+post-purchase support surface. It should show active and historical takeovers,
+the state of each bid and payment, a safe receipt or transaction reference that
+does not expose card details, and refund/dispute status. Failed, delayed, and
+outbid bids need plain-language outcomes and a route to support. The existing
+bidder-owned status endpoint supports checkout polling but is not a replacement
+for an account history view. See `docs/launch_readiness.md`.
+
 `charge.dispute.created` is processed asynchronously and idempotently: it stores the
 Stripe dispute ID on the bid, records a chargeback ledger entry, increments the user's
 dispute history, and suspends paid bidding while the dispute is open. Users may still browse.

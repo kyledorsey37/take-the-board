@@ -10,7 +10,10 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 - `templates/how_it_works.html`: public, plain-language explainer for the takeover loop, settlement, moderation boundaries, and weekly reset.
 - `templates/boards/`: school board pages.
 - `templates/rivalries/`: rivalry discovery and detail pages.
-- `templates/accounts/`: future account/profile templates.
+- `templates/accounts/`: account/profile templates. A post-purchase history and
+  support view remains a launch requirement; it should be authenticated and
+  expose only the signed-in user's own bids, takeovers, payment states, and
+  safe support references.
 - `templates/components/`: future HTMX fragments and reusable template partials.
 
 ## Static Assets
