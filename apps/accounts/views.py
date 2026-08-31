@@ -1,9 +1,10 @@
 import hmac
+from urllib.parse import quote
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.http import HttpRequest, HttpResponse, JsonResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.utils import timezone
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -33,6 +34,8 @@ from .services.session import (
 from apps.moderation.models import DisplayNameValidation
 from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded, ValidationBusy
 from apps.moderation.services.validation import BUSY_REJECTION, RATE_LIMIT_REJECTION, validate_display_name
+
+from .services.history import build_account_history
 
 
 OAUTH_STATE_SESSION_KEY = "takeboard.auth.oauth_state"
@@ -246,6 +249,18 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
 def logout(request: HttpRequest) -> HttpResponse:
     clear_authenticated_session(request)
     return redirect(_safe_next(request, request.POST.get("next")))
+
+
+def account_detail(request: HttpRequest) -> HttpResponse:
+    profile = get_authenticated_profile(request)
+    if not profile:
+        next_url = quote(request.get_full_path(), safe="")
+        return redirect(f"{reverse('accounts:login')}?next={next_url}")
+    return render(
+        request,
+        "accounts/account_detail.html",
+        {"profile": profile, **build_account_history(profile)},
+    )
 
 
 def profile_detail(request: HttpRequest, display_name: str) -> HttpResponse:

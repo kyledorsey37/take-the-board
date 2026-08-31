@@ -6,7 +6,7 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 
 ## Critical before public launch
 
-- [ ] Add a first-paid-bid acknowledgement that the user is 18 or older, enforce
+- [x] Add a first-paid-bid acknowledgement that the user is 18 or older, enforce
       it server-side, and preserve the acknowledgement with purchase evidence.
 - [ ] Protect Django Admin at `/admin/` with an edge allowlist, VPN, or SSO.
 - [ ] Require MFA for every staff/admin account.

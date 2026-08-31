@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.db.models.functions import Lower
 
@@ -31,6 +32,8 @@ class UserProfile(models.Model):
     paid_bidding_suspended = models.BooleanField(default=False)
     terms_version = models.CharField(max_length=50, blank=True)
     terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    age_acknowledgement_version = models.CharField(max_length=50, blank=True)
+    age_acknowledged_at = models.DateTimeField(null=True, blank=True)
     total_spend_cents = models.BigIntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -49,3 +52,11 @@ class UserProfile(models.Model):
 
     def __str__(self) -> str:
         return self.display_name or self.email
+
+    @property
+    def has_age_acknowledgement(self) -> bool:
+        return bool(
+            self.age_acknowledged_at
+            and self.age_acknowledgement_version
+            == settings.TAKEBOARD_AGE_ACKNOWLEDGEMENT_VERSION
+        )

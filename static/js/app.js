@@ -254,6 +254,17 @@ document.addEventListener("submit", function trackAnalyticsForm(event) {
   trackElementEvent(form);
 });
 
+document.addEventListener("change", function trackAgeAcknowledgement(event) {
+  const input = event.target.closest("input[data-age-acknowledgement]");
+  if (!input || !input.checked) {
+    return;
+  }
+  const form = input.closest("form");
+  window.takeTheBoard.trackEvent("age_acknowledgement_checked", Object.assign({}, analyticsParams(form), {
+    surface: form && form.dataset.analyticsSurface ? form.dataset.analyticsSurface : "bid_modal",
+  }));
+});
+
 function setModalStep(dialog, step) {
   if (dialog) {
     dialog.dataset.analyticsModalStep = step;

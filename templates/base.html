@@ -16,6 +16,7 @@
   <meta name="twitter:title" content="{% block twitter_title %}Take the Board | College football's public fan boards{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}Take control of a college football fan board and make your message the one everyone sees.{% endblock %}">
   {% block social_image_meta %}{% endblock %}
+  {% block extra_head %}{% endblock %}
   {% if google_analytics_measurement_id and analytics_consent == "accepted" %}
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_measurement_id }}"></script>
     <script>
@@ -38,9 +39,9 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-15">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-16">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-  <script src="{% static 'js/app.js' %}?v=20260831-2" defer></script>
+  <script src="{% static 'js/app.js' %}?v=20260831-3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -54,6 +55,7 @@
         <a href="{% url 'core:how_it_works' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="how_it_works">How it works</a>
         {% if auth_modal_enabled %}
           {% if auth_profile %}
+            <a href="{% url 'accounts:account_detail' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="account">My account</a>
             <form class="nav-auth-form" method="post" action="{% url 'accounts:logout' %}">
               {% csrf_token %}
               <button type="submit" data-analytics-event="sign_out" data-analytics-surface="header">Sign out</button>

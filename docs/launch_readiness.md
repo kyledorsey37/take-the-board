@@ -31,8 +31,8 @@ Use these labels when working remotely:
 
 These are good remote handoffs that do not need your credentials first:
 
-- Build the first-paid-bid 18+ checkbox, server-side enforcement, and purchase
-  evidence.
+- Review the implemented first-paid-bid 18+ checkbox, server-side enforcement,
+  and purchase evidence in staging.
 - Build the board-level X/Twitter button and its analytics markers.
 - Build the automatic takeover-posting workflow with an outbox/idempotency
   boundary, retry behavior, disable controls, and a mocked X provider.
@@ -96,8 +96,8 @@ refund/dispute/ledger services, and an idempotent weekly reset command.
 
 The primary launch gaps are production wiring and operations rather than missing
 core domain models: SQS FIFO finalization, EventBridge reset scheduling,
-Bedrock/Nova configuration, age acknowledgement for paid bidding, support and
-moderation operations, reconciliation/alerting, and the security gates listed in
+Bedrock/Nova configuration, support and moderation operations,
+reconciliation/alerting, and the security gates listed in
 `docs/security_todo.md`.
 
 ## Product and public surface
@@ -113,8 +113,8 @@ moderation operations, reconciliation/alerting, and the security gates listed in
 | Brand asset package | Build | Turn the existing basic logo into the approved SVG/PNG set, favicon and browser/app icons, social-card mark, light/dark variants if needed, and accessible alt text. Keep it independent from official school marks. |
 | SEO and branded social metadata | Verify/configure | Apply the logo and final brand name consistently to site metadata, Open Graph/X cards, default share images, favicon links, and any structured data; then verify previews on public board pages. |
 | Automatic takeover posts | Build | Connect the Take the Board X/Twitter account so a successfully captured and published takeover can generate one automatic public post. Trigger only from the server-side published outcome, make delivery idempotent, keep posting failures from blocking the game, and provide an operational retry/disable path. |
-| Post-purchase account history and support | Build | Add an authenticated account surface for active and historical takeovers, bid/payment status, safe receipt or transaction references, refund/dispute state, and failed, delayed, and outbid outcomes. The existing bidder-owned status endpoint is not a substitute for this history/support view. |
-| 18+ acknowledgement for paid bidding | Build | Add the first-paid-bid checkbox, enforce it server-side, and preserve the acknowledgement with purchase evidence. This is the one explicit paid-bidding launch blocker currently tracked in [security TODOs](security_todo.md). |
+| Post-purchase account history and support | Done | Authenticated `/account/` shows active and historical takeovers, bid/payment status, safe account references, refund/dispute state, and plain-language failed, delayed, and outbid outcomes. The bidder-owned status endpoint remains checkout polling only. |
+| 18+ acknowledgement for paid bidding | Done | The first paid-bid form collects a versioned 18+ acknowledgement, the confirmation and Checkout service boundaries enforce it, and captured purchase evidence preserves the timestamp and version. |
 
 ## Payments and money movement
 
@@ -172,7 +172,7 @@ moderation operations, reconciliation/alerting, and the security gates listed in
 still launch work unless the operator records a documented risk acceptance.
 The highest-priority items are:
 
-- first-paid-bid 18+ acknowledgement and server-side evidence;
+- staging verification of the first-paid-bid 18+ acknowledgement and server-side evidence;
 - Admin protection, MFA, login throttling, and audit coverage;
 - immutable payment/history records in Admin;
 - fail-closed production settings, secret handling, dependency scanning, and
@@ -190,8 +190,7 @@ production configuration evidence with the launch review.
 
 ## Release sequence
 
-1. Finish the 18+ paid-bid acknowledgement and update the public terms if the
-   behavior changes.
+1. Verify the 18+ paid-bid acknowledgement and updated public terms in staging.
 2. Create a dev/staging environment that exercises SQS FIFO, Bedrock/Nova,
    Stripe test mode, the reset command, reconciliation, and moderation purge.
 3. Configure schedules, alerts, support coverage, backups, WAF, Sentry, and

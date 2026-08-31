@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse, HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from django.utils import timezone
 from django.views.decorators.http import require_POST
 
 from apps.boards.models import Board
@@ -81,6 +82,11 @@ def take_board(request: HttpRequest) -> HttpResponse:
             and authenticated_profile
             and authenticated_profile.display_name
         ),
+        require_age_acknowledgement=bool(
+            settings.TAKEBOARD_STRIPE_ENABLED
+            and authenticated_profile
+            and not authenticated_profile.has_age_acknowledgement
+        ),
     )
     if not form.is_valid():
         return _error_response(request, form, error_kind="form")
@@ -133,6 +139,16 @@ def take_board(request: HttpRequest) -> HttpResponse:
                 )
             except ValidationBusy:
                 return _error_response(request, form, BUSY_REJECTION, error_kind="busy", status_code=503)
+            if not authenticated_profile.has_age_acknowledgement:
+                authenticated_profile.age_acknowledgement_version = settings.TAKEBOARD_AGE_ACKNOWLEDGEMENT_VERSION
+                authenticated_profile.age_acknowledged_at = timezone.now()
+                authenticated_profile.save(
+                    update_fields=[
+                        "age_acknowledgement_version",
+                        "age_acknowledged_at",
+                        "updated_at",
+                    ]
+                )
             confirmation, risk_decision = create_confirmation(
                 board_id=board.id,
                 profile_id=authenticated_profile.id,
@@ -216,6 +232,28 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
             ),
             decision.user_message,
         )
+    requires_age_acknowledgement = not profile.has_age_acknowledgement
+    if requires_age_acknowledgement:
+        if request.POST.get("age_acknowledged") != "on":
+            return render(
+                request,
+                "bidding/bid_confirmation.html",
+                {
+                    "confirmation": confirmation,
+                    "board": confirmation.board,
+                    "risk_decision": decision,
+                    "requires_age_acknowledgement": True,
+                    "age_error": "Please confirm that you are 18 or older to continue.",
+                    "requires_terms": False,
+                    "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
+                    "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
+                },
+                status=400,
+            )
+        profile.age_acknowledgement_version = settings.TAKEBOARD_AGE_ACKNOWLEDGEMENT_VERSION
+        profile.age_acknowledged_at = timezone.now()
+        profile.save(update_fields=["age_acknowledgement_version", "age_acknowledged_at", "updated_at"])
+        requires_age_acknowledgement = False
     requires_terms = decision.requires_typed_confirmation and (
         not profile.terms_accepted_at
         or profile.terms_version != settings.TAKEBOARD_BID_TERMS_VERSION
@@ -229,6 +267,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                     "confirmation": confirmation,
                     "board": confirmation.board,
                     "risk_decision": decision,
+                    "requires_age_acknowledgement": requires_age_acknowledgement,
                     "requires_terms": True,
                     "terms_error": "Please acknowledge this high-value payment to continue.",
                     "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
@@ -236,7 +275,6 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 },
                 status=400,
             )
-        from django.utils import timezone
         profile.terms_version = settings.TAKEBOARD_BID_TERMS_VERSION
         profile.terms_accepted_at = timezone.now()
         profile.save(update_fields=["terms_version", "terms_accepted_at", "updated_at"])
@@ -248,6 +286,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "confirmation": confirmation,
                 "board": confirmation.board,
                 "risk_decision": decision,
+                "requires_age_acknowledgement": requires_age_acknowledgement,
                 "requires_terms": requires_terms,
                 "typed_confirmation_error": f"Type CONFIRM {amount_text} to continue.",
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
@@ -281,6 +320,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "confirmation": confirmation,
                 "board": confirmation.board,
                 "risk_decision": decision,
+                "requires_age_acknowledgement": requires_age_acknowledgement,
                 "requires_terms": requires_terms,
                 "confirmation_error": str(error),
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,

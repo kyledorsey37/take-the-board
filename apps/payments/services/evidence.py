@@ -26,6 +26,8 @@ def record_purchase_evidence(*, bid: Bid, published_at: datetime, guaranteed_unt
         "request_id": confirmation.request_id if confirmation else "",
         "terms_version": profile.terms_version,
         "terms_accepted_at": profile.terms_accepted_at,
+        "age_acknowledgement_version": profile.age_acknowledgement_version,
+        "age_acknowledged_at": profile.age_acknowledged_at,
         "confirmation_version": confirmation.confirmation_version if confirmation else "",
         "risk_tier_at_purchase": profile.risk_tier,
         "published_at": published_at,

@@ -119,6 +119,16 @@ outbid bids need plain-language outcomes and a route to support. The existing
 bidder-owned status endpoint supports checkout polling but is not a replacement
 for an account history view. See `docs/launch_readiness.md`.
 
+Paid bidding also requires a one-time, versioned 18+ acknowledgement on the
+account. The first paid-bid form collects it before a Checkout Session is
+created; the confirmation and Checkout service boundaries recheck it. The
+acknowledgement timestamp and version are copied to `PurchaseEvidence` when a
+paid takeover is captured. Local free-play does not collect this acknowledgement.
+
+Captured bids in account history include a pre-addressed support email action.
+It includes only a safe Take the Board reference, board, amount, status, and date,
+so customers have a clear way to ask about a charge before considering a dispute.
+
 `charge.dispute.created` is processed asynchronously and idempotently: it stores the
 Stripe dispute ID on the bid, records a chargeback ledger entry, increments the user's
 dispute history, and suspends paid bidding while the dispute is open. Users may still browse.

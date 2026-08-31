@@ -93,6 +93,8 @@ def create_checkout(
         profile_id=profile_id,
         favorite_entity=represented_entity,
     )
+    if not player.has_age_acknowledgement:
+        raise TakeoverError("Confirm that you are 18 or older before placing a paid bid.")
     confirmation = None
     if confirmation_id is not None:
         try:

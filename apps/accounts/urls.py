@@ -14,5 +14,6 @@ urlpatterns = [
     path("signup/", views.hosted_login, {"screen": "signup"}, name="signup"),
     path("auth/callback/", views.oauth_callback, name="oauth_callback"),
     path("logout/", views.logout, name="logout"),
+    path("account/", views.account_detail, name="account_detail"),
     path("u/<str:display_name>/", views.profile_detail, name="profile_detail"),
 ]

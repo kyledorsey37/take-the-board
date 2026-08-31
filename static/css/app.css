@@ -1864,6 +1864,502 @@ h2 {
   }
 }
 
+/* Account surface: an editorial ledger with the same ink, paper, and school-board energy. */
+.account-page {
+  background: #f2eee6;
+}
+
+.account-hero {
+  border-bottom: 1px solid #393733;
+  border-top: 10px solid #ffb84d;
+  background:
+    radial-gradient(circle at 84% 12%, rgba(179, 38, 47, 0.24), transparent 30%),
+    linear-gradient(118deg, #151515 0%, #25231f 62%, #111 100%);
+  color: #fff;
+}
+
+.account-hero-inner,
+.account-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.account-hero-inner {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 2rem;
+  min-height: 300px;
+  padding: clamp(3rem, 7vw, 5.5rem) 0;
+}
+
+.account-hero .eyebrow {
+  color: #ffb84d;
+}
+
+.account-hero h1 {
+  max-width: 680px;
+  font-size: clamp(3rem, 7vw, 6.5rem);
+  letter-spacing: -0.05em;
+  line-height: 0.88;
+  text-transform: none;
+}
+
+.account-email {
+  margin: 1.25rem 0 0;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.account-hero-note {
+  display: flex;
+  align-items: start;
+  gap: 0.75rem;
+  max-width: 260px;
+  padding: 0.9rem 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 0.92rem;
+}
+
+.account-hero-note p {
+  margin: 0;
+}
+
+.account-hero-note strong {
+  color: #fff;
+}
+
+.account-hero-note-mark {
+  width: 0.7rem;
+  height: 0.7rem;
+  flex: 0 0 auto;
+  margin-top: 0.4rem;
+  background: #ffb84d;
+  box-shadow: 0.35rem 0.35rem 0 #b3262f;
+}
+
+.account-shell {
+  padding: clamp(2.5rem, 6vw, 5rem) 0 5rem;
+}
+
+.account-overview-heading,
+.account-history-heading {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.account-overview-heading h2,
+.account-history-heading h2 {
+  margin: 0;
+  font-size: clamp(1.8rem, 3.4vw, 3rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.account-member-since,
+.account-history-heading .text-link {
+  margin: 0 0 0.15rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.account-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 2rem 0;
+}
+
+.account-stat {
+  min-height: 140px;
+  border: 1px solid #cfc8bc;
+  border-top: 6px solid #262522;
+  padding: 1rem;
+  background: #fbfaf7;
+}
+
+.account-stat-accent {
+  border-top-color: var(--accent);
+}
+
+.account-stat span,
+.account-stat small {
+  display: block;
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.account-stat strong {
+  display: block;
+  margin: 1rem 0 0.2rem;
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.account-stat small {
+  font-size: 0.7rem;
+  font-weight: 500;
+  text-transform: none;
+}
+
+.account-history-heading {
+  margin-bottom: 1rem;
+}
+
+.account-history {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-bid-card {
+  border: 1px solid #cfc8bc;
+  border-left: 7px solid #7f7b73;
+  background: #fbfaf7;
+  box-shadow: 8px 8px 0 rgba(23, 23, 23, 0.08);
+}
+
+.account-bid-card-active {
+  border-left-color: #21613b;
+}
+
+.account-bid-card-pending {
+  border-left-color: #b7791f;
+}
+
+.account-bid-card-released,
+.account-bid-card-failed {
+  border-left-color: #8d8980;
+}
+
+.account-bid-card-refunded,
+.account-bid-card-disputed {
+  border-left-color: var(--accent);
+}
+
+.account-bid-header,
+.account-bid-body,
+.account-bid-outcome {
+  display: flex;
+  justify-content: space-between;
+  gap: 1.25rem;
+}
+
+.account-bid-header {
+  align-items: start;
+  border-bottom: 1px solid #ded9cf;
+  padding: 1.1rem 1.25rem 1rem;
+}
+
+.account-bid-date,
+.account-bid-message span,
+.account-bid-details dt {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.account-bid-header h3 {
+  margin: 0.25rem 0 0;
+  font-size: 1.35rem;
+}
+
+.account-bid-header h3 a {
+  text-decoration-thickness: 0.08em;
+  text-underline-offset: 0.15em;
+}
+
+.account-bid-header h3 a:hover,
+.account-bid-header h3 a:focus-visible {
+  color: var(--accent-dark);
+}
+
+.account-bid-status {
+  flex: 0 0 auto;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 0.3rem 0.65rem;
+  color: #21613b;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.account-bid-card-pending .account-bid-status { color: #8a5a00; }
+.account-bid-card-released .account-bid-status,
+.account-bid-card-failed .account-bid-status { color: #63615d; }
+.account-bid-card-refunded .account-bid-status,
+.account-bid-card-disputed .account-bid-status { color: var(--accent-dark); }
+
+.account-bid-body {
+  align-items: start;
+  padding: 1.15rem 1.25rem;
+}
+
+.account-bid-message {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.account-bid-message p {
+  margin: 0.4rem 0 0;
+  font-size: clamp(1.25rem, 2.4vw, 1.8rem);
+  font-weight: 900;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+.account-bid-details {
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  gap: 1rem;
+  margin: 0;
+}
+
+.account-bid-details div {
+  min-width: 6.5rem;
+}
+
+.account-bid-details dd {
+  margin: 0.3rem 0 0;
+  font-weight: 800;
+}
+
+.account-bid-outcome {
+  align-items: center;
+  border-top: 1px solid #ded9cf;
+  padding: 1rem 1.25rem;
+  background: #f2eee6;
+}
+
+.account-bid-outcome strong {
+  font-size: 0.92rem;
+}
+
+.account-bid-outcome p {
+  max-width: 700px;
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.account-charge {
+  flex: 0 0 auto;
+  text-align: right;
+}
+
+.account-charge span,
+.account-charge small {
+  display: block;
+  font-weight: 900;
+}
+
+.account-charge small {
+  margin-top: 0.15rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.account-bid-support-button {
+  min-height: 2.35rem;
+  margin-top: 0.65rem;
+  border-color: #b6afa3;
+  padding: 0.45rem 0.7rem;
+  background: #fbfaf7;
+  color: var(--accent-dark);
+  font-size: 0.76rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.account-bid-support-button:hover,
+.account-bid-support-button:focus-visible {
+  border-color: var(--accent);
+  background: #fff;
+  color: var(--accent-dark);
+}
+
+.account-bid-current {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.65rem 1.25rem;
+  background: #e8f5ec;
+  color: #18512f;
+  font-size: 0.78rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.account-bid-current span {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.account-bid-support,
+.account-history-note {
+  margin: 0;
+  padding: 0.75rem 1.25rem 1rem;
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.account-bid-support a,
+.account-history-note a {
+  color: var(--accent-dark);
+  font-weight: 800;
+}
+
+.account-empty-state {
+  border: 1px dashed #b6afa3;
+  padding: 3rem 1.5rem;
+  background: rgba(251, 250, 247, 0.6);
+  text-align: center;
+}
+
+.account-empty-state h3 {
+  margin: 0;
+  font-size: 1.8rem;
+}
+
+.account-empty-state p:not(.eyebrow) {
+  margin: 0.5rem 0 1.25rem;
+  color: var(--muted);
+}
+
+.age-acknowledgement {
+  display: grid;
+  gap: 0.55rem;
+  border: 1px solid #d6c19a;
+  border-left: 5px solid #b7791f;
+  padding: 0.9rem 1rem;
+  background: #fff8e7;
+}
+
+.custom-check-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.7rem;
+  cursor: pointer;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.custom-check-field input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.custom-check-box {
+  display: grid;
+  width: 1.45rem;
+  height: 1.45rem;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 2px solid #6b4b13;
+  background: #fffdf7;
+}
+
+.custom-check-box::after {
+  width: 0.42rem;
+  height: 0.72rem;
+  border-right: 3px solid #fff;
+  border-bottom: 3px solid #fff;
+  content: "";
+  opacity: 0;
+  transform: rotate(45deg) translate(-0.08rem, -0.08rem);
+}
+
+.custom-check-field input:checked + .custom-check-box {
+  border-color: #171717;
+  background: #171717;
+}
+
+.custom-check-field input:checked + .custom-check-box::after {
+  opacity: 1;
+}
+
+.custom-check-field input:focus-visible + .custom-check-box {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+@media (max-width: 760px) {
+  .account-hero-inner,
+  .account-bid-body,
+  .account-bid-outcome {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-hero-inner {
+    min-height: 0;
+  }
+
+  .account-hero-note {
+    padding-top: 0;
+  }
+
+  .account-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .account-bid-details {
+    width: 100%;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .account-charge {
+    text-align: left;
+  }
+}
+
+@media (max-width: 520px) {
+  .account-overview-heading,
+  .account-history-heading {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .account-stats {
+    gap: 0.5rem;
+  }
+
+  .account-stat {
+    min-height: 118px;
+    padding: 0.75rem;
+  }
+
+  .account-stat strong {
+    margin-top: 0.7rem;
+  }
+
+  .account-bid-header {
+    flex-direction: column;
+  }
+
+  .account-bid-details {
+    gap: 0.6rem;
+  }
+
+  .account-bid-details div {
+    min-width: 0;
+  }
+}
+
 .legal-page {
   min-height: calc(100vh - 10rem);
   background: #f7f3eb;

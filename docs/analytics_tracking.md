@@ -49,6 +49,8 @@ without a measurement ID. Preview mode never loads the Google tag.
 | `school_picker_opened` | Backing-school picker opens | `school_slug`, `target` |
 | `bid_amount_selected` | A quick amount is selected | `school_slug`, `amount_bucket`, `target` |
 | `takeover_submitted` | Takeover form passes browser validation and submits | `surface`, `school_slug`, `amount_bucket` |
+| `age_acknowledgement_checked` | User checks the one-time 18+ acknowledgement before a paid bid | `surface`, `school_slug` |
+| `bid_support_clicked` | User opens a pre-addressed support email for a captured bid from account history | `surface`, `status` |
 | `form_validation_error` | A tracked form is blocked by browser validation | `surface`, `field`, `school_slug` |
 | `takeover_result_viewed` | Bid result is rendered | `surface`, `school_slug`, `result` |
 | `bid_confirmation_viewed` | Paid bid review step is rendered | `surface`, `school_slug`, `amount_bucket` |

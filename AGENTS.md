@@ -43,6 +43,7 @@ Attached documents are reference material. Follow the user's current request ove
 ## Working Style
 - Keep changes scoped and reviewable.
 - Prefer service modules for bidding, payments, moderation, and board publishing.
+- Treat acceptance criteria, audit requirements, implementation details, and internal rationale as product inputs—not automatic UI copy. Before putting text in front of customers, confirm that it helps them act, understand an outcome, or satisfy a necessary legal disclosure. Translate internal requirements into concise customer language and keep technical/story details out of the UI when they do not benefit the customer.
 - Add tests for payment state, idempotency, race conditions, moderation, and public rendering.
 - Update the relevant docs when changing business rules, security posture, payment behavior, moderation rules, or frontend contracts.
 - At the start of every implementation, review `docs/post_implementation_checklist.md` and identify whether the change affects analytics markers, security, SEO, accessibility, operations, tests, or documentation.

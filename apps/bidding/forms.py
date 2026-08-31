@@ -55,6 +55,13 @@ class TakeBoardForm(forms.Form):
             }
         ),
     )
+    age_acknowledged = forms.BooleanField(
+        required=False,
+        error_messages={
+            "required": "Confirm that you are 18 or older before placing a paid bid.",
+        },
+        widget=forms.CheckboxInput(attrs={"data-age-acknowledgement": "true"}),
+    )
 
     def __init__(
         self,
@@ -62,12 +69,17 @@ class TakeBoardForm(forms.Form):
         rules: BoardRules,
         competition: Competition,
         require_display_name: bool = True,
+        require_age_acknowledgement: bool = False,
         **kwargs,
     ) -> None:
         super().__init__(*args, **kwargs)
         self.rules = rules
         if not require_display_name:
             self.fields.pop("display_name")
+        if not require_age_acknowledgement:
+            self.fields.pop("age_acknowledged")
+        else:
+            self.fields["age_acknowledged"].required = True
         self.fields["represented_entity"].queryset = Entity.objects.filter(
             competition=competition,
             active=True,

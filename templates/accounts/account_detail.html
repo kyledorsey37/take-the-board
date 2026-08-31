@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+
+{% block title %}My account | Take the Board{% endblock %}
+{% block meta_description %}Your Take the Board account history, takeover outcomes, and payment status.{% endblock %}
+{% block extra_head %}<meta name="robots" content="noindex, nofollow">{% endblock %}
+
+{% block content %}
+<div class="account-page">
+  <section class="account-hero">
+    <div class="account-hero-inner">
+      <div>
+        <p class="eyebrow">Your account</p>
+        <h1>{{ profile.display_name|default:"Your account" }}</h1>
+        <p class="account-email">{{ profile.email }}</p>
+      </div>
+      <div class="account-hero-note">
+        <span class="account-hero-note-mark" aria-hidden="true"></span>
+        <p><strong>Your moves, in one place.</strong><br>See what happened to every bid and payment.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="account-shell" aria-labelledby="account-overview-title">
+    <div class="account-overview-heading">
+      <div>
+        <p class="eyebrow">Account ledger</p>
+        <h2 id="account-overview-title">A clear record of the rivalry.</h2>
+      </div>
+      <p class="account-member-since">Member since {{ profile.created_at|date:"F Y" }}</p>
+    </div>
+
+    <div class="account-stats" aria-label="Account totals">
+      <div class="account-stat account-stat-accent">
+        <span>Moves</span>
+        <strong>{{ bid_count }}</strong>
+        <small>All bids placed</small>
+      </div>
+      <div class="account-stat">
+        <span>Active boards</span>
+        <strong>{{ active_takeovers_count }}</strong>
+        <small>Boards you control now</small>
+      </div>
+      <div class="account-stat">
+        <span>Captured</span>
+        <strong>${{ captured_total_dollars|floatformat:2 }}</strong>
+        <small>Successful charges</small>
+      </div>
+      <div class="account-stat">
+        <span>Refunded</span>
+        <strong>${{ refunded_total_dollars|floatformat:2 }}</strong>
+        <small>Returned to you</small>
+      </div>
+    </div>
+
+    <div class="account-history-heading">
+      <div>
+        <p class="eyebrow">Bid history</p>
+        <h2>Your moves</h2>
+      </div>
+      <a class="text-link" href="{% url 'boards:index' %}">Browse boards <span aria-hidden="true">&rarr;</span></a>
+    </div>
+
+    <div class="account-history">
+      {% for bid in bids %}
+        <article class="account-bid-card account-bid-card-{{ bid.status_class }}">
+          <header class="account-bid-header">
+            <div>
+              <p class="account-bid-date">{{ bid.created_at|date:"M j, Y · g:i A" }}</p>
+              <h3><a href="{{ bid.board_url }}">{{ bid.board.entity.name }} board</a></h3>
+            </div>
+            <span class="account-bid-status">{{ bid.status_title }}</span>
+          </header>
+
+          <div class="account-bid-body">
+            <div class="account-bid-message">
+              <span>Your message</span>
+              <p>{{ bid.message }}</p>
+            </div>
+            <dl class="account-bid-details">
+              <div><dt>Backing</dt><dd>{{ bid.represented_entity.name }}</dd></div>
+              <div><dt>Bid</dt><dd>${{ bid.amount_dollars|floatformat:2 }}</dd></div>
+              <div><dt>Reference</dt><dd>{{ bid.reference }}</dd></div>
+            </dl>
+          </div>
+
+          <div class="account-bid-outcome">
+            <div>
+              <strong>{{ bid.status_title }}</strong>
+              <p>{{ bid.status_description }}</p>
+            </div>
+            <div class="account-charge">
+              <span>{{ bid.charge_label }}</span>
+              {% if bid.has_refund %}<small>Refunded ${{ bid.refund_dollars|floatformat:2 }}</small>{% endif %}
+              {% if bid.has_chargeback %}<small>Chargeback ${{ bid.chargeback_dollars|floatformat:2 }}</small>{% endif %}
+              {% if bid.has_charge %}
+                <a class="button button-secondary account-bid-support-button"
+                   href="{{ bid.support_url }}"
+                   data-analytics-event="bid_support_clicked"
+                   data-analytics-surface="account"
+                   data-analytics-status="{{ bid.status }}"
+                   aria-label="Contact us about your {{ bid.board.entity.name }} bid">
+                  Contact us about this bid <span aria-hidden="true">↗</span>
+                </a>
+              {% endif %}
+            </div>
+          </div>
+
+          {% if bid.is_current %}
+            <div class="account-bid-current"><span aria-hidden="true"></span> Live on the board now</div>
+          {% endif %}
+          {% if not bid.has_charge and bid.status == "payment_failed" %}
+            <p class="account-bid-support">Need help with this outcome? <a href="{% url 'core:contact' %}">Contact support</a> and include reference {{ bid.reference }}.</p>
+          {% endif %}
+        </article>
+      {% empty %}
+        <div class="account-empty-state">
+          <p class="eyebrow">No moves yet</p>
+          <h3>Your first board is waiting.</h3>
+          <p>Pick a school, write your message, and make your move.</p>
+          <a class="button button-primary" href="{% url 'boards:index' %}">Browse boards</a>
+        </div>
+      {% endfor %}
+    </div>
+
+    <p class="account-history-note">Payment status is based on the server-side bid and ledger record. An authorization is a temporary card hold, not a captured charge.</p>
+  </section>
+</div>
+{% endblock %}

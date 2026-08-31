@@ -107,6 +107,8 @@ class PurchaseEvidence(models.Model):
     request_id = models.CharField(max_length=64, blank=True)
     terms_version = models.CharField(max_length=50, blank=True)
     terms_accepted_at = models.DateTimeField(null=True, blank=True)
+    age_acknowledgement_version = models.CharField(max_length=50, blank=True)
+    age_acknowledged_at = models.DateTimeField(null=True, blank=True)
     confirmation_version = models.CharField(max_length=50, blank=True)
     risk_tier_at_purchase = models.CharField(max_length=20)
     published_at = models.DateTimeField(null=True, blank=True)

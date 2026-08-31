@@ -38,6 +38,8 @@ def create_confirmation(
     board = Board.objects.select_for_update().select_related("entity__competition").get(pk=board_id)
     entity = Entity.objects.get(pk=represented_entity_id, competition=board.entity.competition, active=True)
     user = authenticated_player(profile_id=profile_id, favorite_entity=entity)
+    if not user.has_age_acknowledgement:
+        raise TakeoverError("Confirm that you are 18 or older before placing a paid bid.")
     if not board.bidding_enabled or not rules.bidding_enabled:
         raise TakeoverError("Takeovers are paused for this board.")
     if (

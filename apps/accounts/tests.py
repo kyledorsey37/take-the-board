@@ -4,6 +4,7 @@ from botocore.exceptions import ClientError
 from django.test import Client, TestCase, override_settings
 from django.core.cache import cache
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.accounts.models import UserProfile
 from apps.accounts.services.cognito import (
@@ -15,6 +16,10 @@ from apps.accounts.services.cognito import (
 )
 from apps.accounts.services.session import AUTH_SESSION_KEY, PENDING_AUTH_SESSION_KEY
 from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
+from apps.bidding.models import Bid
+from apps.boards.models import Board, BoardTakeover
+from apps.payments.models import LedgerEntry, PaymentCapture
+from apps.schools.models import Competition, Entity
 
 
 AUTH_SETTINGS = {
@@ -259,3 +264,112 @@ class EmailAuthenticationTests(TestCase):
 
         self.assertContains(response, 'id="auth-modal"')
         self.assertContains(response, reverse("accounts:email_start"))
+
+
+class AccountHistoryTests(TestCase):
+    def setUp(self) -> None:
+        self.competition = Competition.objects.get(
+            name="College Football", slug="college-football", sport="Football"
+        )
+        self.school = Entity.objects.create(
+            competition=self.competition,
+            name="Oklahoma",
+            slug="account-oklahoma",
+            short_name="Oklahoma",
+            group_name="SEC",
+            accent_color="#841617",
+        )
+        self.board = Board.objects.create(entity=self.school)
+        self.profile = UserProfile.objects.create(
+            cognito_sub="account-history-subject",
+            email="account-history@example.com",
+            display_name="AccountFan",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": self.profile.id,
+            "cognito_sub": self.profile.cognito_sub,
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+    def test_account_history_shows_private_bid_outcome_and_charge_rollup(self) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.school,
+            message="OU OWNS THIS BOARD",
+            amount_cents=1700,
+            status=Bid.Status.WON,
+            captured_at=timezone.now(),
+        )
+        self.board.current_bid = bid
+        self.board.current_controller = self.profile
+        self.board.current_amount_cents = bid.amount_cents
+        self.board.save(update_fields=["current_bid", "current_controller", "current_amount_cents"])
+        PaymentCapture.objects.create(
+            bid=bid,
+            stripe_payment_intent_id="pi_account_history",
+            gross_amount_cents=1700,
+            currency="usd",
+        )
+        LedgerEntry.objects.create(
+            type=LedgerEntry.Type.BID_CAPTURE,
+            amount_cents=1700,
+            user=self.profile,
+            entity=self.school,
+            bid=bid,
+        )
+        LedgerEntry.objects.create(
+            type=LedgerEntry.Type.REFUND,
+            amount_cents=-500,
+            user=self.profile,
+            entity=self.school,
+            bid=bid,
+        )
+
+        response = self.client.get(reverse("accounts:account_detail"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Your moves")
+        self.assertContains(response, "Active takeover")
+        self.assertContains(response, "OU OWNS THIS BOARD")
+        self.assertContains(response, "Captured $17.00")
+        self.assertContains(response, "Refunded $5.00")
+        self.assertContains(response, "TTB-")
+        self.assertContains(response, "Contact us about this bid")
+        self.assertContains(response, "mailto:support@taketheboard.com")
+        support_url = response.context["bids"][0].support_url
+        self.assertIn("%20", support_url)
+        self.assertIn("%0A", support_url)
+        self.assertNotIn("+", support_url)
+        self.assertNotContains(response, "Available for your next move")
+        self.assertNotContains(response, "18+ acknowledgement")
+
+    def test_account_history_does_not_expose_another_users_bid(self) -> None:
+        other_profile = UserProfile.objects.create(
+            cognito_sub="other-history-subject",
+            email="other-history@example.com",
+            display_name="OtherFan",
+        )
+        Bid.objects.create(
+            board=self.board,
+            bidder=other_profile,
+            represented_entity=self.school,
+            message="PRIVATE OTHER MESSAGE",
+            amount_cents=100,
+            status=Bid.Status.PAYMENT_FAILED,
+        )
+
+        response = self.client.get(reverse("accounts:account_detail"))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, "PRIVATE OTHER MESSAGE")
+
+    def test_account_history_requires_authentication(self) -> None:
+        self.client.session.flush()
+
+        response = self.client.get(reverse("accounts:account_detail"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/login/?next=%2Faccount%2F", response["Location"])

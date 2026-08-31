@@ -24,9 +24,10 @@ from apps.moderation.services.rate_limits import safe_key
 from apps.moderation.services.validators import validate_message_deterministically
 from apps.schools.models import Competition, Entity
 
-from .models import LedgerEntry, PaymentCapture, StripeEvent
+from .models import LedgerEntry, PaymentCapture, PurchaseEvidence, StripeEvent
 from .services.capture_payment import capture_payment
 from .services.create_checkout import create_checkout
+from .services.evidence import record_purchase_evidence
 from .services.process_webhooks import process_pending_stripe_events
 
 
@@ -149,6 +150,8 @@ class StripeBidFlowTests(TestCase):
             cognito_sub="stripe-test-subject",
             email="fan@example.com",
             display_name="StripeFan",
+            age_acknowledgement_version="18-plus-v1",
+            age_acknowledged_at=timezone.now(),
         )
 
     def approved_validation(self, message: str = "TAKE THE BOARD.") -> MessageValidation:
@@ -294,6 +297,95 @@ class StripeBidFlowTests(TestCase):
         self.assertEqual(bid.status, Bid.Status.CHECKOUT_CREATED)
         self.board.refresh_from_db()
         self.assertIsNone(self.board.current_bid_id)
+
+    def test_first_paid_bid_requires_18_plus_acknowledgement_once(self) -> None:
+        self.profile.age_acknowledgement_version = ""
+        self.profile.age_acknowledged_at = None
+        self.profile.save(update_fields=["age_acknowledgement_version", "age_acknowledged_at"])
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": self.profile.id,
+            "cognito_sub": self.profile.cognito_sub,
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+
+        self.assertContains(response, "I confirm that I am 18 or older")
+        self.assertNotContains(response, "You’ll only see this once")
+        self.assertNotContains(response, "purchase record")
+        with patch(
+            "apps.moderation.services.validation.classify_message",
+            return_value=__import__(
+                "apps.moderation.services.nova_classifier", fromlist=["Classification"]
+            ).Classification("allow", "safe", 0.99),
+        ):
+            response = self.client.post(
+                reverse("bidding:take"),
+                {
+                    "board_slug": "oklahoma",
+                    "represented_entity": self.represented_entity.id,
+                    "amount": "17.00",
+                    "message": "TAKE THE BOARD.",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "18 or older")
+        self.assertEqual(BidConfirmation.objects.count(), 0)
+
+        with patch(
+            "apps.moderation.services.validation.classify_message",
+            return_value=__import__(
+                "apps.moderation.services.nova_classifier", fromlist=["Classification"]
+            ).Classification("allow", "safe", 0.99),
+        ):
+            response = self.client.post(
+                reverse("bidding:take"),
+                {
+                    "board_slug": "oklahoma",
+                    "represented_entity": self.represented_entity.id,
+                    "amount": "17.00",
+                    "message": "TAKE THE BOARD.",
+                    "age_acknowledged": "on",
+                },
+                HTTP_HX_REQUEST="true",
+            )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Review your bid")
+        self.profile.refresh_from_db()
+        self.assertEqual(self.profile.age_acknowledgement_version, "18-plus-v1")
+        self.assertIsNotNone(self.profile.age_acknowledged_at)
+
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        self.assertNotContains(response, "I confirm that I am 18 or older")
+
+    def test_purchase_evidence_preserves_age_acknowledgement(self) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=1700,
+            status=Bid.Status.WON,
+            captured_at=timezone.now(),
+        )
+        published_at = timezone.now()
+        evidence = record_purchase_evidence(
+            bid=bid,
+            published_at=published_at,
+            guaranteed_until=published_at + timedelta(seconds=30),
+        )
+
+        self.assertEqual(
+            evidence.age_acknowledgement_version,
+            settings.TAKEBOARD_AGE_ACKNOWLEDGEMENT_VERSION,
+        )
+        self.assertEqual(evidence.age_acknowledged_at, self.profile.age_acknowledged_at)
+        self.assertIsInstance(evidence, PurchaseEvidence)
 
     def test_only_bids_over_100_require_high_value_acknowledgement(self) -> None:
         self.profile.successful_bid_count = 10

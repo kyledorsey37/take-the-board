@@ -239,6 +239,16 @@
           <p class="field-hint">Rivalry trash talk is welcome. No links, personal information, slurs, or threats.</p>
         </div>
 
+        {% if form.age_acknowledged %}
+          <div class="age-acknowledgement" data-age-acknowledgement-block>
+            <label class="custom-check-field">
+              {{ form.age_acknowledged }}
+              <span class="custom-check-box" aria-hidden="true"></span>
+              <span>I confirm that I am 18 or older and can make this paid bid.</span>
+            </label>
+          </div>
+        {% endif %}
+
         <button class="button button-primary bid-submit" type="submit">Take the board for $<span data-bid-submit-amount>{{ minimum_takeover_dollars|floatformat:2 }}</span></button>
         {% if demo_bidding_enabled and not stripe_enabled %}
           <p class="preview-notice">Local free-play mode. No card is charged.</p>

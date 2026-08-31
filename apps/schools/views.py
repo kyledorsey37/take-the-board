@@ -73,6 +73,11 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         require_display_name=not bool(
             settings.TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING and authenticated_player_ready
         ),
+        require_age_acknowledgement=bool(
+            settings.TAKEBOARD_STRIPE_ENABLED
+            and authenticated_profile
+            and not authenticated_profile.has_age_acknowledgement
+        ),
         initial={
             "board_slug": board.entity.slug,
             "amount": f"{minimum_takeover / 100:.2f}",

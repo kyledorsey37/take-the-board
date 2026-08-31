@@ -32,6 +32,16 @@
   {% endif %}
   <form method="post" action="{% url 'bidding:confirm' confirmation.public_id %}" hx-post="{% url 'bidding:confirm' confirmation.public_id %}" hx-target="#takeover-result" hx-swap="innerHTML" data-analytics-event="bid_confirmation_submitted" data-analytics-surface="bid_modal" data-analytics-school-slug="{{ confirmation.board.entity.slug }}" data-analytics-amount-bucket="{{ amount_bucket }}">
     {% csrf_token %}
+    {% if requires_age_acknowledgement %}
+      <div class="age-acknowledgement">
+        <label class="custom-check-field">
+          <input type="checkbox" name="age_acknowledged" value="on" required data-age-acknowledgement>
+          <span class="custom-check-box" aria-hidden="true"></span>
+          <span>I confirm that I am 18 or older and can make this paid bid.</span>
+        </label>
+        {% if age_error %}<p class="form-error" role="alert">{{ age_error }}</p>{% endif %}
+      </div>
+    {% endif %}
     {% if requires_terms %}
       <label class="checkbox-field"><input type="checkbox" name="terms_accepted" required> I understand that a successful ${{ confirmation.amount_dollars|floatformat:2 }} bid is a payment.</label>
       {% if terms_error %}<p class="form-error" role="alert">{{ terms_error }}</p>{% endif %}
