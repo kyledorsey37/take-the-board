@@ -16,6 +16,75 @@ Last reviewed: 2026-08-31
 - **Deferred** — reasonable post-launch work only if the product owner accepts
   the risk.
 
+## Who needs to act
+
+Use these labels when working remotely:
+
+- **Codex can start** — Codex can implement, test, document, and wire the
+  feature using placeholders or mocks. No account access is required to begin.
+- **You provide/decide** — Codex cannot safely invent the account, credential,
+  brand choice, recipient, policy decision, or risk acceptance.
+- **Joint** — Codex can do the application work, but you must create or approve
+  the external service configuration and help with production verification.
+
+### Codex can start independently
+
+These are good remote handoffs that do not need your credentials first:
+
+- Build the first-paid-bid 18+ checkbox, server-side enforcement, and purchase
+  evidence.
+- Build the board-level X/Twitter button and its analytics markers.
+- Build the automatic takeover-posting workflow with an outbox/idempotency
+  boundary, retry behavior, disable controls, and a mocked X provider.
+- Build Resend email templates and the refund/message-removal notification
+  service behind an environment-based provider interface.
+- Build the board reset countdown from the server-provided reset timestamp and
+  add the public weekly-reset explanation.
+- Add logo/favicons/social-card integration once the chosen asset is supplied;
+  prepare SEO metadata and verification checks.
+- Add Sentry filtering, PII scrubbing, structured operational metrics, and
+  CloudWatch/SNS integration points using placeholders.
+- Write runbooks, tests, staging checks, and documentation for any of the above.
+
+### You provide or decide
+
+These require an account, a secret, an external approval, or a product decision
+from you:
+
+- The final logo/brand assets, preferred brand treatment, and production domain.
+- The X/Twitter account, X developer/app access, API credentials, tweet copy,
+  posting frequency, and whether every successful takeover should be posted.
+- The Resend account/API key, verified sender domain, sender address, and email
+  copy. Later, decide whether to stay on Resend or move to SES.
+- The Sentry project/DSN, alert recipients, free-tier volume budget, and which
+  expected errors should be filtered versus retained.
+- The AWS account/permissions, SNS email recipients, and thresholds for signup,
+  successful-bid, payment, worker, reset, moderation, and reconciliation alerts.
+- The support mailbox owner, moderation operator, response expectations, and
+  the practical MVP privacy/deletion process.
+- Production Stripe, Cognito, Bedrock, SQS, EventBridge, WAF, backup, and
+  hosting-account access, plus any explicit risk acceptance for deferred items.
+
+### Joint completion
+
+Codex can implement the application side, tests, and deployment instructions;
+you then complete or approve the external setup and production verification:
+
+- Resend/SES domain authentication and deliverability testing.
+- Sentry DSN wiring, alert rules, error-volume review, and free-tier tuning.
+- X/Twitter credentials, account authorization, post preview, rate-limit test,
+  and operational retry/disable verification.
+- SQS FIFO queues, dead-letter handling, worker deployment, and staging smoke
+  tests.
+- EventBridge reset scheduling, IAM permissions, manual reset test, and failure
+  alerts.
+- Bedrock/Nova IAM/model enablement and provider outage/quality tests.
+- Stripe live-mode configuration and refund/dispute/reconciliation drills.
+- CloudWatch metrics, SNS subscriptions, WAF, backups/restore, and external
+  smoke tests.
+- Manual SEO, accessibility, responsive, support, and moderation-operations
+  review.
+
 ## Current summary
 
 The MVP has public policy pages, lightweight analytics consent, Cognito-based
