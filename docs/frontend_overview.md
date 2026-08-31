@@ -105,8 +105,8 @@ Escape user-generated board messages and display names everywhere, including pag
 
 Analytics loads only in production when `GOOGLE_ANALYTICS_MEASUREMENT_ID` contains a valid GA4 measurement ID (`G-...`). The standard Google tag sits in the shared document head, so GA4 receives page views for all server-rendered public pages. It is deliberately absent in local and staging settings.
 
-The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. The current events are `hero_viewed`, `navigation_click`, `board_opened`, `takeover_cta_clicked`, and `rivalry_opened`; each is limited to the documented parameters below.
+The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. Event attributes cover public navigation and discovery, board shares, modal open/close behavior, authentication steps, backing and amount choices, bid validation, paid checkout, takeover outcomes, reporting, FAQs, and leaderboard/rivalry periods. The complete event catalog and GA4 setup checklist live in `docs/analytics_tracking.md`.
 
-Do not send board messages, moderation text, payment identifiers, emails, or full display names to analytics. Prefer low-cardinality parameters such as `school_slug`, `surface`, `status`, `result`, `amount_bucket`, `auth_state`, `hero_variant`, and `cta`.
+Do not send board messages, moderation text, payment identifiers, emails, or full display names to analytics. Prefer low-cardinality parameters such as `school_slug`, `surface`, `status`, `result`, `amount_bucket`, `hero_variant`, and `cta`.
 
 Before enabling production collection, create the GA4 web data stream for the production domain, add its measurement ID to the production environment, and ensure the public privacy notice and consent approach meet the jurisdictions in which the product is offered. GA4's optional Enhanced Measurement can supply scroll and outbound-link measurements without adding new application event payloads.

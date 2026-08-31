@@ -1,4 +1,4 @@
-<section class="preview-result preview-result-error" aria-labelledby="takeover-error-title">
+<section class="preview-result preview-result-error" aria-labelledby="takeover-error-title" data-analytics-event="takeover_result_viewed" data-analytics-track="page swap" data-analytics-surface="bid_modal" data-analytics-school-slug="{{ form.board_slug.value|default:'' }}" data-analytics-result="{{ takeover_error_kind|default:'error' }}">
   {% if takeover_error_kind == "price_changed" %}
     <p class="eyebrow">Takeover price changed</p>
     <h3 id="takeover-error-title">That amount is no longer enough.</h3>

@@ -5,14 +5,14 @@
 {% block content %}
 <section class="rivalry-hero rivalry-detail-hero">
   <div class="rivalry-hero-inner">
-    <a class="back-link" href="{% url 'rivalries:index' %}"><span aria-hidden="true">&larr;</span> All rivalries</a>
+    <a class="back-link" href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="rivalry_scoreboard" data-analytics-destination="rivalries" data-analytics-rivalry-slug="{{ rivalry.slug }}"><span aria-hidden="true">&larr;</span> All rivalries</a>
     <p class="eyebrow">{{ rivalry.name }}</p>
     <h1>{{ entity_a.entity.name }} <span class="rivalry-vs">vs.</span> {{ entity_b.entity.name }}</h1>
     <p>{{ lead_text }} Successful takeovers are credited to the school being backed.</p>
     <div class="rivalry-periods" aria-label="Rivalry period">
-      <a class="period-link {% if period == 'all' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}">All time</a>
+      <a class="period-link {% if period == 'all' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}" data-analytics-event="rivalry_period_changed" data-analytics-surface="rivalry_scoreboard" data-analytics-rivalry-slug="{{ rivalry.slug }}" data-analytics-period="all">All time</a>
       {% if active_week %}
-        <a class="period-link {% if period == 'week' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}?period=week">This week</a>
+        <a class="period-link {% if period == 'week' %}is-active{% endif %}" href="{% url 'rivalries:detail' slug=rivalry.slug %}?period=week" data-analytics-event="rivalry_period_changed" data-analytics-surface="rivalry_scoreboard" data-analytics-rivalry-slug="{{ rivalry.slug }}" data-analytics-period="week">This week</a>
       {% endif %}
     </div>
   </div>
@@ -80,7 +80,7 @@
           {% else %}
             <p class="muted">No one controls it yet.</p>
           {% endif %}
-          <a class="text-link" href="{% if board.entity.id == entity_a.entity.id %}{% url 'schools:detail' slug=board.entity.slug %}?backing={{ entity_b.entity.slug }}{% else %}{% url 'schools:detail' slug=board.entity.slug %}?backing={{ entity_a.entity.slug }}{% endif %}">Take {{ board.entity.short_name }}'s board <span aria-hidden="true">&rarr;</span></a>
+          <a class="text-link" href="{% if board.entity.id == entity_a.entity.id %}{% url 'schools:detail' slug=board.entity.slug %}?backing={{ entity_b.entity.slug }}{% else %}{% url 'schools:detail' slug=board.entity.slug %}?backing={{ entity_a.entity.slug }}{% endif %}" data-analytics-event="board_opened" data-analytics-surface="rivalry_boards" data-analytics-rivalry-slug="{{ rivalry.slug }}" data-analytics-school-slug="{{ board.entity.slug }}">Take {{ board.entity.short_name }}'s board <span aria-hidden="true">&rarr;</span></a>
         </article>
       {% empty %}
         <p class="muted">The boards for this rivalry are not active yet.</p>

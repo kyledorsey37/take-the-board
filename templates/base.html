@@ -40,7 +40,7 @@
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="site-nav" aria-label="Main navigation">
-      <a class="brand" href="{% url 'core:home' %}">Take the Board</a>
+        <a class="brand" href="{% url 'core:home' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="home">Take the Board</a>
       <div class="nav-links">
         <a href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="boards">Boards</a>
         <a href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="rivalries">Rivalries</a>
@@ -50,10 +50,10 @@
           {% if auth_profile %}
             <form class="nav-auth-form" method="post" action="{% url 'accounts:logout' %}">
               {% csrf_token %}
-              <button type="submit">Sign out</button>
+              <button type="submit" data-analytics-event="sign_out" data-analytics-surface="header">Sign out</button>
             </form>
           {% else %}
-            <button class="nav-auth-button" type="button" data-open-dialog="auth-modal">Sign in</button>
+            <button class="nav-auth-button" type="button" data-open-dialog="auth-modal" data-analytics-event="auth_modal_opened" data-analytics-surface="header" data-analytics-modal-id="auth" data-analytics-auth-context="header">Sign in</button>
           {% endif %}
         {% endif %}
       </div>
@@ -70,7 +70,7 @@
     </p>
   </footer>
   {% if auth_modal_enabled and not auth_profile %}
-    <dialog class="bid-dialog auth-dialog" id="auth-modal" aria-labelledby="auth-modal-title" data-auth-preview="{{ auth_modal_preview|yesno:'true,false' }}" data-auth-default-title="Sign in to take the board." data-auth-default-intro="Enter your email and we will send a one-time code.">
+    <dialog class="bid-dialog auth-dialog" id="auth-modal" aria-labelledby="auth-modal-title" data-auth-preview="{{ auth_modal_preview|yesno:'true,false' }}" data-auth-default-title="Sign in to take the board." data-auth-default-intro="Enter your email and we will send a one-time code." data-analytics-modal-id="auth" data-analytics-surface="auth_modal">
       <div class="bid-dialog-shell">
         <div class="bid-dialog-header">
           <div>
@@ -120,7 +120,7 @@
     </dialog>
   {% endif %}
   {% if auth_profile and not auth_profile.display_name %}
-    <dialog class="bid-dialog auth-dialog" id="profile-setup-modal" aria-labelledby="profile-setup-modal-title">
+    <dialog class="bid-dialog auth-dialog" id="profile-setup-modal" aria-labelledby="profile-setup-modal-title" data-analytics-modal-id="profile_setup" data-analytics-surface="profile_setup_modal">
       <div class="bid-dialog-shell">
         <div class="bid-dialog-header">
           <div>

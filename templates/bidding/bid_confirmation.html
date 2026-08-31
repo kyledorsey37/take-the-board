@@ -1,11 +1,11 @@
-<section class="bid-confirmation bid-confirmation-step" aria-labelledby="bid-confirmation-title">
+<section class="bid-confirmation bid-confirmation-step" aria-labelledby="bid-confirmation-title" data-analytics-event="bid_confirmation_viewed" data-analytics-track="swap" data-analytics-surface="bid_modal" data-analytics-school-slug="{{ confirmation.board.entity.slug }}" data-analytics-modal-id="bid" data-analytics-modal-step="confirmation">
   <header class="bid-confirmation-header">
     <div>
       <p class="eyebrow">Review your bid</p>
       <h3 id="bid-confirmation-title">Take the {{ board.entity.name }} board.</h3>
     </div>
     <div class="bid-confirmation-header-actions">
-      <button class="text-button" type="button" data-bid-confirmation-back>Edit bid</button>
+      <button class="text-button" type="button" data-bid-confirmation-back data-analytics-event="bid_confirmation_back_clicked" data-analytics-surface="bid_modal" data-analytics-school-slug="{{ confirmation.board.entity.slug }}">Edit bid</button>
       <form method="dialog">
         <button class="icon-button" type="submit" aria-label="Close bid dialog">&times;</button>
       </form>
@@ -30,7 +30,7 @@
       <strong>This bid is over $100.</strong> Confirm the payment amount below before continuing.
     </aside>
   {% endif %}
-  <form method="post" action="{% url 'bidding:confirm' confirmation.public_id %}" hx-post="{% url 'bidding:confirm' confirmation.public_id %}" hx-target="#takeover-result" hx-swap="innerHTML">
+  <form method="post" action="{% url 'bidding:confirm' confirmation.public_id %}" hx-post="{% url 'bidding:confirm' confirmation.public_id %}" hx-target="#takeover-result" hx-swap="innerHTML" data-analytics-event="bid_confirmation_submitted" data-analytics-surface="bid_modal" data-analytics-school-slug="{{ confirmation.board.entity.slug }}" data-analytics-amount-bucket="{{ amount_bucket }}">
     {% csrf_token %}
     {% if requires_terms %}
       <label class="checkbox-field"><input type="checkbox" name="terms_accepted" required> I understand that a successful ${{ confirmation.amount_dollars|floatformat:2 }} bid is a payment.</label>

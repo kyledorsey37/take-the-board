@@ -29,6 +29,20 @@ from .services.risk import validate_bid_risk
 from .services.rules import current_board_rules
 
 
+def analytics_amount_bucket(amount_cents: int) -> str:
+    """Return a coarse, non-sensitive amount range for browser analytics."""
+    dollars = amount_cents / 100
+    if dollars >= 100:
+        return "100_plus"
+    if dollars >= 25:
+        return "25_to_99"
+    if dollars >= 10:
+        return "10_to_24"
+    if dollars >= 5:
+        return "5_to_9"
+    return "1_to_4"
+
+
 def _error_response(
     request: HttpRequest,
     form: TakeBoardForm,
@@ -147,6 +161,7 @@ def take_board(request: HttpRequest) -> HttpResponse:
                         )
                     ),
                     "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
+                    "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
                 },
             )
 
@@ -217,6 +232,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                     "requires_terms": True,
                     "terms_error": "Please acknowledge this high-value payment to continue.",
                     "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
+                    "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
                 },
                 status=400,
             )
@@ -235,6 +251,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "requires_terms": requires_terms,
                 "typed_confirmation_error": f"Type CONFIRM {amount_text} to continue.",
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
+                "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
             },
             status=400,
         )
@@ -267,6 +284,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
                 "requires_terms": requires_terms,
                 "confirmation_error": str(error),
                 "terms_version": settings.TAKEBOARD_BID_TERMS_VERSION,
+                "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
             },
             status=409,
         )
@@ -276,5 +294,7 @@ def confirm_bid(request: HttpRequest, public_id) -> HttpResponse:
         {
             "checkout_client_secret": checkout.client_secret,
             "bid_status_url": reverse("payments:bid_status", kwargs={"public_id": checkout.bid_public_id}),
+            "board": confirmation.board,
+            "amount_bucket": analytics_amount_bucket(confirmation.amount_cents),
         },
     )

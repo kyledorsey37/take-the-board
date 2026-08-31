@@ -10,7 +10,7 @@
       <h1>Find a board.</h1>
       <p class="muted">Every board below is live in the local free-play game.</p>
     </div>
-    <a class="button button-secondary" href="{% url 'leaderboard:index' %}">View standings</a>
+    <a class="button button-secondary" href="{% url 'leaderboard:index' %}" data-analytics-event="navigation_click" data-analytics-surface="board_directory" data-analytics-destination="leaderboard">View standings</a>
   </div>
   <div class="placeholder-grid">
     {% for board in boards %}

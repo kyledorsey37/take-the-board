@@ -1,3 +1,3 @@
-<div class="message-report-result{% if not message_report_accepted %} is-error{% endif %}" role="status"{% if message_report_accepted %} data-report-accepted="true"{% endif %}>
+<div class="message-report-result{% if not message_report_accepted %} is-error{% endif %}" role="status" data-analytics-event="report_result_viewed" data-analytics-track="swap" data-analytics-surface="message" data-analytics-result="{% if message_report_accepted %}accepted{% else %}rejected{% endif %}"{% if message_report_accepted %} data-report-accepted="true"{% endif %}>
   {{ message_report_result }}
 </div>

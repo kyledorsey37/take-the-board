@@ -7,6 +7,75 @@ window.takeTheBoard.trackEvent = function trackEvent(name, params) {
   window.gtag("event", name, params || {});
 };
 
+const ANALYTICS_PARAM_KEYS = [
+  "surface",
+  "destination",
+  "schoolSlug",
+  "backingSchoolSlug",
+  "rivalrySlug",
+  "heroVariant",
+  "cta",
+  "target",
+  "modalId",
+  "modalStep",
+  "closeMethod",
+  "authContext",
+  "result",
+  "status",
+  "amountBucket",
+  "shareMethod",
+  "category",
+  "faqId",
+  "period",
+  "field",
+];
+
+function analyticsParamName(key) {
+  return key.replace(/[A-Z]/g, function (letter) {
+    return "_" + letter.toLowerCase();
+  });
+}
+
+function analyticsParams(element) {
+  const dataset = element && element.dataset ? element.dataset : {};
+  const params = {};
+
+  ANALYTICS_PARAM_KEYS.forEach(function (key) {
+    const datasetKey = "analytics" + key.charAt(0).toUpperCase() + key.slice(1);
+    if (dataset[datasetKey]) {
+      params[analyticsParamName(key)] = dataset[datasetKey];
+    }
+  });
+
+  return params;
+}
+
+function trackElementEvent(element, extraParams) {
+  if (!element || !element.dataset.analyticsEvent) {
+    return;
+  }
+  window.takeTheBoard.trackEvent(
+    element.dataset.analyticsEvent,
+    Object.assign({}, analyticsParams(element), extraParams || {}),
+  );
+}
+
+function amountBucket(value) {
+  const numericAmount = Number(value);
+  if (!Number.isFinite(numericAmount)) {
+    return "unknown";
+  }
+  return numericAmount >= 100
+    ? "100_plus"
+    : numericAmount >= 25
+      ? "25_to_99"
+      : numericAmount >= 10
+        ? "10_to_24"
+        : numericAmount >= 5
+          ? "5_to_9"
+          : "1_to_4";
+}
+
 document.addEventListener("DOMContentLoaded", function trackHeroExposure() {
   const hero = document.querySelector("[data-analytics-hero-exposure]");
 
@@ -17,6 +86,12 @@ document.addEventListener("DOMContentLoaded", function trackHeroExposure() {
   window.takeTheBoard.trackEvent("hero_viewed", analyticsParams(hero));
 });
 
+document.addEventListener("DOMContentLoaded", function trackPageAnalytics() {
+  document.querySelectorAll("[data-analytics-track~='page']").forEach(function (element) {
+    trackElementEvent(element);
+  });
+});
+
 document.addEventListener("click", function trackAnalyticsClick(event) {
   const target = event.target.closest("[data-analytics-event]");
 
@@ -24,18 +99,14 @@ document.addEventListener("click", function trackAnalyticsClick(event) {
     return;
   }
 
-  const dataset = target.dataset;
-  const params = {};
+  // Form submissions are tracked from the submit event below. A click on a
+  // submit button also bubbles through the form, so do not count that intent
+  // twice.
+  if (target.matches("form")) {
+    return;
+  }
 
-  ["surface", "destination", "schoolSlug", "rivalrySlug", "heroVariant", "cta", "target"].forEach(function (key) {
-    if (dataset["analytics" + key.charAt(0).toUpperCase() + key.slice(1)]) {
-      params[key.replace(/[A-Z]/g, function (letter) {
-        return "_" + letter.toLowerCase();
-      })] = dataset["analytics" + key.charAt(0).toUpperCase() + key.slice(1)];
-    }
-  });
-
-  window.takeTheBoard.trackEvent(dataset.analyticsEvent, params);
+  trackElementEvent(target);
 });
 
 async function copyTextToClipboard(text) {
@@ -76,11 +147,19 @@ document.addEventListener("click", async function handleBoardShare(event) {
   try {
     if (typeof navigator.share === "function") {
       await navigator.share({ title: title, text: text, url: url });
+      window.takeTheBoard.trackEvent("board_share_result", Object.assign({}, analyticsParams(button), {
+        result: "shared",
+        share_method: "native",
+      }));
       if (status) {
         status.textContent = "Share sheet opened.";
         status.hidden = false;
       }
     } else if (await copyTextToClipboard(url)) {
+      window.takeTheBoard.trackEvent("board_share_result", Object.assign({}, analyticsParams(button), {
+        result: "copied",
+        share_method: "clipboard",
+      }));
       if (label) {
         label.textContent = "Copied";
       }
@@ -96,12 +175,22 @@ document.addEventListener("click", async function handleBoardShare(event) {
           status.hidden = true;
         }
       }, 2400);
-    } else if (status) {
-      status.textContent = "Copy the board URL from your browser to share it.";
-      status.hidden = false;
+    } else {
+      window.takeTheBoard.trackEvent("board_share_result", Object.assign({}, analyticsParams(button), {
+        result: "unavailable",
+        share_method: "clipboard",
+      }));
+      if (status) {
+        status.textContent = "Copy the board URL from your browser to share it.";
+        status.hidden = false;
+      }
     }
   } catch (error) {
     // A dismissed native share sheet is not an error the user needs to see.
+    window.takeTheBoard.trackEvent("board_share_result", Object.assign({}, analyticsParams(button), {
+      result: error.name === "AbortError" ? "dismissed" : "error",
+      share_method: typeof navigator.share === "function" ? "native" : "clipboard",
+    }));
     if (error.name !== "AbortError" && status) {
       status.textContent = "We could not open sharing. Try copying the board URL.";
       status.hidden = false;
@@ -110,22 +199,6 @@ document.addEventListener("click", async function handleBoardShare(event) {
     button.dataset.busy = "false";
   }
 });
-
-function analyticsParams(element) {
-  const dataset = element.dataset;
-  const params = {};
-
-  ["surface", "destination", "schoolSlug", "rivalrySlug", "amountBucket", "heroVariant", "cta", "target"].forEach(function (key) {
-    const datasetKey = "analytics" + key.charAt(0).toUpperCase() + key.slice(1);
-    if (dataset[datasetKey]) {
-      params[key.replace(/[A-Z]/g, function (letter) {
-        return "_" + letter.toLowerCase();
-      })] = dataset[datasetKey];
-    }
-  });
-
-  return params;
-}
 
 document.addEventListener("submit", function trackAnalyticsForm(event) {
   const form = event.target.closest("[data-analytics-event]");
@@ -136,12 +209,49 @@ document.addEventListener("submit", function trackAnalyticsForm(event) {
 
   const amount = form.querySelector("[data-bid-amount]");
   if (amount) {
-    const numericAmount = Number(amount.value);
-    form.dataset.analyticsAmountBucket = numericAmount >= 25 ? "25_plus" : numericAmount >= 10 ? "10_to_24" : numericAmount >= 5 ? "5_to_9" : "1_to_4";
+    form.dataset.analyticsAmountBucket = amountBucket(amount.value);
+  }
+  const selectedCategory = form.querySelector("input[name='category']:checked");
+  if (selectedCategory) {
+    form.dataset.analyticsCategory = selectedCategory.value;
   }
 
-  window.takeTheBoard.trackEvent(form.dataset.analyticsEvent, analyticsParams(form));
+  trackElementEvent(form);
 });
+
+function setModalStep(dialog, step) {
+  if (dialog) {
+    dialog.dataset.analyticsModalStep = step;
+  }
+}
+
+document.addEventListener("cancel", function trackDialogEscape(event) {
+  const dialog = event.target.closest("dialog");
+  if (dialog) {
+    dialog.dataset.analyticsCloseMethod = "escape";
+  }
+}, true);
+
+document.addEventListener("click", function trackDialogCloseButton(event) {
+  const button = event.target.closest("form[method='dialog'] button");
+  const dialog = button && button.closest("dialog");
+  if (dialog) {
+    dialog.dataset.analyticsCloseMethod = "button";
+  }
+}, true);
+
+document.addEventListener("close", function trackDialogClose(event) {
+  const dialog = event.target.closest("dialog");
+  if (!dialog) {
+    return;
+  }
+  window.takeTheBoard.trackEvent("modal_closed", Object.assign({}, analyticsParams(dialog), {
+    modal_id: dialog.dataset.analyticsModalId || dialog.id,
+    close_method: dialog.dataset.analyticsCloseMethod || "programmatic",
+    modal_step: dialog.dataset.analyticsModalStep || "initial",
+  }));
+  dialog.dataset.analyticsCloseMethod = "";
+}, true);
 
 document.addEventListener("click", function handleBidDialogClick(event) {
   const opener = event.target.closest("[data-open-dialog]");
@@ -157,12 +267,29 @@ document.addEventListener("click", function handleBidDialogClick(event) {
   if (dialog.id === "auth-modal") {
     configureAuthDialog(dialog, opener);
   }
+  ANALYTICS_PARAM_KEYS.forEach(function (key) {
+    const datasetKey = "analytics" + key.charAt(0).toUpperCase() + key.slice(1);
+    dialog.dataset[datasetKey] = opener.dataset[datasetKey] || "";
+  });
+  dialog.dataset.analyticsCloseMethod = "";
+  setModalStep(dialog, dialog.id === "auth-modal" ? "email" : "form");
   dialog.showModal();
   const amountInput = dialog.querySelector("[data-bid-amount]");
   if (amountInput) {
     amountInput.focus();
   }
 });
+
+document.addEventListener("toggle", function trackFaqOpen(event) {
+  const details = event.target.closest("details[data-faq-id]");
+  if (!details || !details.open) {
+    return;
+  }
+  window.takeTheBoard.trackEvent("faq_opened", {
+    surface: "how_it_works",
+    faq_id: details.dataset.faqId,
+  });
+}, true);
 
 function closeSchoolPicker(picker, returnFocus) {
   const trigger = picker.querySelector("[data-school-picker-trigger]");
@@ -194,6 +321,9 @@ document.addEventListener("click", function handleSchoolPicker(event) {
       closeSchoolPicker(picker, false);
     } else {
       openSchoolPicker(picker);
+      window.takeTheBoard.trackEvent("school_picker_opened", Object.assign({}, analyticsParams(picker.closest("dialog")), {
+        target: "backing_school",
+      }));
     }
     return;
   }
@@ -208,6 +338,9 @@ document.addEventListener("click", function handleSchoolPicker(event) {
     picker.querySelectorAll("[data-school-picker-option]").forEach(function (item) {
       item.setAttribute("aria-selected", item === option ? "true" : "false");
     });
+    window.takeTheBoard.trackEvent("school_backing_selected", Object.assign({}, analyticsParams(picker.closest("dialog")), {
+      backing_school_slug: option.dataset.schoolSlug || "unknown",
+    }));
     closeSchoolPicker(picker, true);
     return;
   }
@@ -278,6 +411,10 @@ document.addEventListener("click", function setQuickBid(event) {
   if (amountInput) {
     amountInput.value = quickBid.dataset.setBid;
     amountInput.dispatchEvent(new Event("input", { bubbles: true }));
+    window.takeTheBoard.trackEvent("bid_amount_selected", Object.assign({}, analyticsParams(dialog), {
+      amount_bucket: amountBucket(quickBid.dataset.setBid),
+      target: "quick_bid",
+    }));
   }
 });
 
@@ -358,6 +495,22 @@ document.addEventListener("invalid", function explainBidAmountValidation(event) 
   amountInput.setCustomValidity("Enter a whole dollar amount, such as 8 or 8.00.");
 }, true);
 
+document.addEventListener("invalid", function trackFormValidationError(event) {
+  const field = event.target;
+  const form = field && field.closest && field.closest("form");
+  if (!form || form.dataset.analyticsValidationTracked === "true") {
+    return;
+  }
+  const surface = form.dataset.analyticsSurface || (form.closest("dialog") && "modal");
+  if (!surface) {
+    return;
+  }
+  form.dataset.analyticsValidationTracked = "true";
+  window.takeTheBoard.trackEvent("form_validation_error", Object.assign({}, analyticsParams(form), {
+    field: field.name || field.id || "unknown",
+  }));
+}, true);
+
 function wait(milliseconds) {
   return new Promise(function (resolve) {
     window.setTimeout(resolve, milliseconds);
@@ -396,7 +549,21 @@ function showCheckoutStatus(container, heading, message, isError) {
   mountPoint.appendChild(status);
 }
 
+function checkoutAnalyticsParams(container) {
+  return Object.assign({}, analyticsParams(container), {
+    modal_id: "bid",
+    modal_step: "checkout",
+  });
+}
+
+function trackTakeoverStatus(container, status) {
+  window.takeTheBoard.trackEvent("takeover_status", Object.assign({}, checkoutAnalyticsParams(container), {
+    status: status,
+  }));
+}
+
 function showTakeoverSuccess(container, payload) {
+  setModalStep(container.closest("dialog"), "success");
   const boardName = payload.board_name || "this board";
   const message = payload.message || "";
   const representedEntityName = payload.represented_entity_name || "Your team";
@@ -446,6 +613,7 @@ function showTakeoverSuccess(container, payload) {
 async function waitForBidStatus(container) {
   const statusUrl = container.dataset.statusUrl;
   if (!statusUrl) {
+    trackTakeoverStatus(container, "processing");
     showCheckoutStatus(
       container,
       "Payment successful.",
@@ -468,10 +636,13 @@ async function waitForBidStatus(container) {
         latestStatus = payload.status || latestStatus;
 
         if (latestStatus === "won") {
+          trackTakeoverStatus(container, "won");
+          window.takeTheBoard.trackEvent("takeover_won", checkoutAnalyticsParams(container));
           showTakeoverSuccess(container, payload);
           return;
         }
         if (terminalFailures.includes(latestStatus)) {
+          trackTakeoverStatus(container, latestStatus);
           showCheckoutStatus(
             container,
             "Payment not completed.",
@@ -496,6 +667,7 @@ async function waitForBidStatus(container) {
       : "Your payment was accepted and your takeover is still processing.",
     false,
   );
+  trackTakeoverStatus(container, "processing_timeout");
 }
 
 async function mountEmbeddedCheckout(event) {
@@ -510,7 +682,13 @@ async function mountEmbeddedCheckout(event) {
   }
 
   const mountPoint = container.querySelector("[data-stripe-checkout-mount]");
-  if (!mountPoint || typeof window.Stripe !== "function" || !window.takeTheBoardStripePublishableKey) {
+  if (!mountPoint) {
+    return;
+  }
+  if (typeof window.Stripe !== "function" || !window.takeTheBoardStripePublishableKey) {
+    window.takeTheBoard.trackEvent("checkout_error", Object.assign({}, checkoutAnalyticsParams(container), {
+      result: "unavailable",
+    }));
     mountPoint.textContent = "Secure checkout is unavailable right now. Please try again.";
     return;
   }
@@ -526,6 +704,7 @@ async function mountEmbeddedCheckout(event) {
     let checkout;
     const handleComplete = async function handleComplete() {
       checkout.destroy();
+      window.takeTheBoard.trackEvent("checkout_completed", checkoutAnalyticsParams(container));
       showCheckoutStatus(
         container,
         "Payment received.",
@@ -543,12 +722,39 @@ async function mountEmbeddedCheckout(event) {
     });
     checkout.mount(mountPoint);
     container.dataset.mounted = "true";
+    setModalStep(container.closest("dialog"), "checkout");
+    window.takeTheBoard.trackEvent("checkout_loaded", checkoutAnalyticsParams(container));
   } catch (error) {
+    window.takeTheBoard.trackEvent("checkout_error", Object.assign({}, checkoutAnalyticsParams(container), {
+      result: "load_failed",
+    }));
     mountPoint.textContent = "Secure checkout could not load. Please close this window and try again.";
   }
 }
 
 document.addEventListener("htmx:afterSwap", mountEmbeddedCheckout);
+
+document.addEventListener("htmx:afterSwap", function trackAnalyticsSwap(event) {
+  const target = event.target;
+  if (!target || typeof target.querySelectorAll !== "function") {
+    return;
+  }
+  const elements = [];
+  if (target.matches && target.matches("[data-analytics-track~='swap']")) {
+    elements.push(target);
+  }
+  target.querySelectorAll("[data-analytics-track~='swap']").forEach(function (element) {
+    elements.push(element);
+  });
+  elements.forEach(function (element) {
+    if (element.dataset.analyticsTracked === "true") {
+      return;
+    }
+    element.dataset.analyticsTracked = "true";
+    trackElementEvent(element);
+    setModalStep(element.closest("dialog"), element.dataset.analyticsModalStep || element.dataset.analyticsResult || "result");
+  });
+});
 
 document.addEventListener("click", function returnToBidForm(event) {
   const button = event.target.closest("[data-bid-confirmation-back]");
@@ -564,6 +770,7 @@ document.addEventListener("click", function returnToBidForm(event) {
   const bidForm = dialog && dialog.querySelector("[data-bid-form]");
   if (bidForm) {
     bidForm.hidden = false;
+    setModalStep(dialog, "form");
     bidForm.querySelector("input[name='amount']")?.focus();
   }
 });
@@ -646,6 +853,7 @@ function showAuthCodeStep(dialog, email, message) {
   emailLabel.textContent = email;
   title.textContent = "Enter your code.";
   verifyForm.querySelector("[name=code]").focus();
+  setModalStep(dialog, "code");
   setAuthStatus(dialog, message, false);
 }
 
@@ -670,6 +878,7 @@ function showAuthEmailStep(dialog) {
   setAuthStatus(dialog, "", false);
   emailInput.focus();
   emailInput.select();
+  setModalStep(dialog, "email");
 }
 
 function configureAuthDialog(dialog, opener) {
@@ -697,6 +906,13 @@ function showAuthNameStep(dialog) {
   title.textContent = "Choose your board name.";
   setAuthStatus(dialog, "", false);
   nameForm.querySelector("[name=display_name]").focus();
+  setModalStep(dialog, "name");
+}
+
+function authAnalyticsParams(dialog, result) {
+  return Object.assign({}, analyticsParams(dialog), {
+    result: result,
+  });
 }
 
 document.addEventListener("submit", async function handleAuthStart(event) {
@@ -708,6 +924,7 @@ document.addEventListener("submit", async function handleAuthStart(event) {
   const dialog = form.closest("dialog");
 
   if (dialog.dataset.authPreview === "true") {
+    window.takeTheBoard.trackEvent("auth_code_requested", authAnalyticsParams(dialog, "preview"));
     showAuthCodeStep(dialog, form.elements.email.value, "Preview only: no email was sent.");
     return;
   }
@@ -715,11 +932,14 @@ document.addEventListener("submit", async function handleAuthStart(event) {
   try {
     const result = await submitAuthForm(form);
     if (!result.ok) {
+      window.takeTheBoard.trackEvent("auth_code_requested", authAnalyticsParams(dialog, "error"));
       setAuthStatus(dialog, result.payload.error || "We could not send a code.", true);
       return;
     }
+    window.takeTheBoard.trackEvent("auth_code_requested", authAnalyticsParams(dialog, "success"));
     showAuthCodeStep(dialog, form.elements.email.value, result.payload.message);
   } catch (error) {
+    window.takeTheBoard.trackEvent("auth_code_requested", authAnalyticsParams(dialog, "error"));
     setAuthStatus(dialog, "We could not send a code. Please try again.", true);
   }
 });
@@ -733,6 +953,7 @@ document.addEventListener("submit", async function handleAuthVerify(event) {
   const dialog = form.closest("dialog");
 
   if (dialog.dataset.authPreview === "true") {
+    window.takeTheBoard.trackEvent("auth_code_verified", authAnalyticsParams(dialog, "preview"));
     setAuthStatus(dialog, "Preview complete. Cognito will verify this code once it is connected.", false);
     return;
   }
@@ -740,9 +961,11 @@ document.addEventListener("submit", async function handleAuthVerify(event) {
   try {
     const result = await submitAuthForm(form);
     if (!result.ok) {
+      window.takeTheBoard.trackEvent("auth_code_verified", authAnalyticsParams(dialog, "error"));
       setAuthStatus(dialog, result.payload.error || "That code could not be verified.", true);
       return;
     }
+    window.takeTheBoard.trackEvent("auth_code_verified", authAnalyticsParams(dialog, result.payload.signed_in ? "success" : "retry"));
     if (result.payload.signed_in) {
       if (result.payload.needs_display_name) {
         showAuthNameStep(dialog);
@@ -755,6 +978,7 @@ document.addEventListener("submit", async function handleAuthVerify(event) {
     form.querySelector("[name=code]").focus();
     setAuthStatus(dialog, result.payload.message, false);
   } catch (error) {
+    window.takeTheBoard.trackEvent("auth_code_verified", authAnalyticsParams(dialog, "error"));
     setAuthStatus(dialog, "That code could not be verified. Please try again.", true);
   }
 });
@@ -771,6 +995,7 @@ document.addEventListener("click", async function handleAuthResend(event) {
   }
 
   if (dialog.dataset.authPreview === "true") {
+    window.takeTheBoard.trackEvent("auth_code_resent", authAnalyticsParams(dialog, "preview"));
     setAuthStatus(dialog, "Preview only: no new email was sent.", false);
     return;
   }
@@ -785,8 +1010,10 @@ document.addEventListener("click", async function handleAuthResend(event) {
       }
     });
     const payload = await response.json();
+    window.takeTheBoard.trackEvent("auth_code_resent", authAnalyticsParams(dialog, response.ok && payload.ok ? "success" : "error"));
     setAuthStatus(dialog, payload.message || payload.error, !response.ok || !payload.ok);
   } catch (error) {
+    window.takeTheBoard.trackEvent("auth_code_resent", authAnalyticsParams(dialog, "error"));
     setAuthStatus(dialog, "We could not resend the code. Please try again.", true);
   }
 });
@@ -798,6 +1025,7 @@ document.addEventListener("click", function handleAuthChangeEmail(event) {
   }
   const dialog = button.closest("dialog");
   if (dialog) {
+    window.takeTheBoard.trackEvent("auth_email_changed", analyticsParams(dialog));
     showAuthEmailStep(dialog);
   }
 });
@@ -813,11 +1041,14 @@ document.addEventListener("submit", async function handleAuthName(event) {
   try {
     const result = await submitAuthForm(form);
     if (!result.ok) {
+      window.takeTheBoard.trackEvent("display_name_submitted", authAnalyticsParams(dialog, "error"));
       setAuthStatus(dialog, result.payload.error || "We could not save that board name.", true);
       return;
     }
+    window.takeTheBoard.trackEvent("display_name_submitted", authAnalyticsParams(dialog, "success"));
     window.location.reload();
   } catch (error) {
+    window.takeTheBoard.trackEvent("display_name_submitted", authAnalyticsParams(dialog, "error"));
     setAuthStatus(dialog, "We could not save that board name. Please try again.", true);
   }
 });

@@ -1,4 +1,4 @@
-<dialog class="bid-dialog report-dialog" id="{{ dialog_prefix }}{{ takeover.public_id }}" aria-labelledby="report-title-{{ takeover.public_id }}">
+<dialog class="bid-dialog report-dialog" id="{{ dialog_prefix }}{{ takeover.public_id }}" aria-labelledby="report-title-{{ takeover.public_id }}" data-analytics-modal-id="report" data-analytics-surface="message" data-analytics-school-slug="{{ school_slug }}">
   <div class="bid-dialog-shell">
     <div class="bid-dialog-header">
       <div>
@@ -12,7 +12,7 @@
       <form method="dialog"><button class="button button-primary" type="submit">Close</button></form>
     {% else %}
       <p>Reports are reviewed by our team. Choose the category that best fits.</p>
-      <form method="post" action="{% url 'boards:report_takeover' takeover.public_id %}" hx-post="{% url 'boards:report_takeover' takeover.public_id %}" hx-target="#report-result-{{ takeover.public_id }}" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']">
+      <form method="post" action="{% url 'boards:report_takeover' takeover.public_id %}" hx-post="{% url 'boards:report_takeover' takeover.public_id %}" hx-target="#report-result-{{ takeover.public_id }}" hx-swap="innerHTML" hx-disabled-elt="find button[type='submit']" data-analytics-event="report_submitted" data-analytics-surface="message" data-analytics-school-slug="{{ school_slug }}" data-analytics-modal-id="report">
         {% csrf_token %}
         <fieldset class="report-categories">
           <legend>Reason for report</legend>

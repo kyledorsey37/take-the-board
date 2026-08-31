@@ -5,6 +5,6 @@
 {% block content %}
 <section class="section preview-page">
   {% include "components/takeover_result.html" %}
-  <p><a class="button button-secondary" href="{% url 'boards:index' %}">Back to boards</a></p>
+  <p><a class="button button-secondary" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="takeover_error" data-analytics-destination="boards">Back to boards</a></p>
 </section>
 {% endblock %}

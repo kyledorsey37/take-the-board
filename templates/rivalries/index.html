@@ -11,7 +11,7 @@
         <h1>Pick a side.</h1>
         <p>Every successful move on either board shifts the scoreboard. See who is showing up and make the next move count.</p>
       </div>
-      <a class="button button-light" href="{% url 'boards:index' %}">Explore boards <span aria-hidden="true">&rarr;</span></a>
+      <a class="button button-light" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="rivalry_directory" data-analytics-destination="boards">Explore boards <span aria-hidden="true">&rarr;</span></a>
     </div>
   </div>
 </section>

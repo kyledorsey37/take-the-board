@@ -1,9 +1,9 @@
 {% if takeover.report_status != "removed" %}
   {% if auth_profile %}
-    <button class="text-button message-report-button" type="button" data-open-dialog="{{ dialog_prefix }}{{ takeover.public_id }}">Report message</button>
+    <button class="text-button message-report-button" type="button" data-open-dialog="{{ dialog_prefix }}{{ takeover.public_id }}" data-analytics-event="report_modal_opened" data-analytics-surface="message" data-analytics-school-slug="{{ school_slug }}" data-analytics-modal-id="report">Report message</button>
   {% elif auth_modal_enabled %}
-    <button class="text-button message-report-button" type="button" data-open-dialog="auth-modal" data-auth-title="Sign in to report this message." data-auth-intro="You need to be signed in to report a public board message.">Report message</button>
+    <button class="text-button message-report-button" type="button" data-open-dialog="auth-modal" data-auth-title="Sign in to report this message." data-auth-intro="You need to be signed in to report a public board message." data-analytics-event="auth_modal_opened" data-analytics-surface="message" data-analytics-school-slug="{{ school_slug }}" data-analytics-modal-id="auth" data-analytics-auth-context="report">Report message</button>
   {% else %}
-    <a class="text-button message-report-button" href="{% url 'accounts:login' %}">Report message</a>
+    <a class="text-button message-report-button" href="{% url 'accounts:login' %}" data-analytics-event="navigation_click" data-analytics-surface="message" data-analytics-destination="login" data-analytics-school-slug="{{ school_slug }}">Report message</a>
   {% endif %}
 {% endif %}

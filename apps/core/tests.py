@@ -17,6 +17,7 @@ from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
 from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
 from apps.rivalries.models import Rivalry
+from apps.leaderboard.models import CompetitionPeriod
 import uuid
 from apps.core.error_views import (
     bad_request,
@@ -202,6 +203,7 @@ class PublicNavigationTests(BoardTestCase):
 
         self.assertContains(response, 'data-share-board')
         self.assertContains(response, 'data-analytics-event="board_share_clicked"')
+        self.assertContains(response, 'data-analytics-modal-id="bid"')
         self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
         self.assertContains(response, 'property="og:title" content="Oklahoma board: “THIS BOARD IS OPEN.” | Take the Board"')
         self.assertContains(response, 'property="og:image:width" content="1200"')
@@ -227,6 +229,26 @@ class PublicNavigationTests(BoardTestCase):
 
         self.assertContains(response, "googletagmanager.com/gtag/js?id=G-TEST123")
         self.assertContains(response, 'gtag("config", "G-TEST123")')
+
+    def test_public_pages_expose_discovery_and_modal_funnel_events(self) -> None:
+        boards = self.client.get(reverse("boards:index"))
+        how_it_works = self.client.get(reverse("core:how_it_works"))
+        now = timezone.now()
+        CompetitionPeriod.objects.create(
+            competition=self.competition,
+            year=2026,
+            week_number=1,
+            starts_at=now - timedelta(days=1),
+            ends_at=now + timedelta(days=6),
+            active=True,
+        )
+        leaderboard = self.client.get(reverse("leaderboard:index"))
+        rivalry = self.client.get(reverse("rivalries:detail", kwargs={"slug": "red-river"}))
+
+        self.assertContains(boards, 'data-analytics-event="board_opened"')
+        self.assertContains(how_it_works, 'data-faq-id="display_duration"')
+        self.assertContains(leaderboard, 'data-analytics-event="standings_period_changed"')
+        self.assertContains(rivalry, 'data-analytics-event="rivalry_period_changed"')
 
     @override_settings(DEBUG=False)
     def test_public_error_pages_are_branded_and_do_not_expose_debug_details(self) -> None:

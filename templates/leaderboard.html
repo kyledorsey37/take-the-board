@@ -13,8 +13,8 @@
       </div>
       {% if active_week %}
         <div class="standings-periods" aria-label="Standings period">
-          <a class="period-link{% if period == 'week' %} is-active{% endif %}" href="?period=week">This week</a>
-          <a class="period-link{% if period == 'all' %} is-active{% endif %}" href="?period=all">All time</a>
+          <a class="period-link{% if period == 'week' %} is-active{% endif %}" href="?period=week" data-analytics-event="standings_period_changed" data-analytics-surface="standings" data-analytics-period="week">This week</a>
+          <a class="period-link{% if period == 'all' %} is-active{% endif %}" href="?period=all" data-analytics-event="standings_period_changed" data-analytics-surface="standings" data-analytics-period="all">All time</a>
         </div>
       {% endif %}
     </div>
@@ -55,7 +55,7 @@
           <span>Rank</span><span>Entity</span><span>Takeovers</span><span>Backing</span>
         </div>
         {% for row in fanbase_rows %}
-          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}">
+          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}" data-analytics-event="board_opened" data-analytics-surface="standings_fanbase" data-analytics-school-slug="{{ row.school_slug }}">
             <span class="standing-rank">{{ row.rank }}</span>
             <span class="standing-name"><strong>{{ row.school_name }}</strong><small>{{ row.conference }}</small></span>
             <span>{{ row.takeovers }}</span>
@@ -127,7 +127,7 @@
           <span>Rank</span><span>Board</span><span>Takeovers</span><span>Total</span>
         </div>
         {% for row in attacked_rows %}
-          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}">
+          <a class="standings-row" role="row" href="{% url 'schools:detail' slug=row.school_slug %}" data-analytics-event="board_opened" data-analytics-surface="standings_attacked_boards" data-analytics-school-slug="{{ row.school_slug }}">
             <span class="standing-rank">{{ row.rank }}</span>
             <span class="standing-name"><strong>{{ row.school_name }}</strong><small>Target board</small></span>
             <span>{{ row.takeovers }}</span>
