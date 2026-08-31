@@ -80,6 +80,17 @@ If the database schema is behind the code after pulling changes, apply pending m
 docker compose exec web python manage.py migrate --noinput
 ```
 
+To iterate on the social-card artwork without starting a web server or doing a
+deployment, render a sample PNG directly:
+
+```bash
+python manage.py render_social_card --sample --output /tmp/alabama-card.png
+```
+
+Use `--message`, `--school`, `--owner`, `--amount`, and `--accent` to try
+different card states. Omit `--sample` to render the current board from the
+local database.
+
 The local settings use `DATABASE_URL` when provided. The canonical LAN and Docker
 development paths both use PostgreSQL; SQLite is retained only as a fallback for
 isolated framework checks when no database service is available.

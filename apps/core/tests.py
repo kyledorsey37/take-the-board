@@ -24,8 +24,11 @@ from apps.core.error_views import (
     permission_denied,
     server_error,
 )
-from django.test import RequestFactory
+from io import BytesIO
 from unittest.mock import patch
+
+from django.test import RequestFactory
+from PIL import Image
 
 from apps.moderation.services.nova_classifier import Classification
 
@@ -70,6 +73,7 @@ class PublicNavigationTests(BoardTestCase):
 
         self.assertContains(response, reverse("boards:index"))
         self.assertContains(response, reverse("rivalries:index"))
+        self.assertContains(response, reverse("core:how_it_works"))
         self.assertContains(response, "Oklahoma")
         self.assertNotContains(response, 'href="/admin/"')
 
@@ -174,12 +178,45 @@ class PublicNavigationTests(BoardTestCase):
             ("boards:index", {}),
             ("rivalries:index", {}),
             ("leaderboard:index", {}),
+            ("core:how_it_works", {}),
             ("schools:detail", {"slug": "oklahoma"}),
             ("rivalries:detail", {"slug": "red-river"}),
         ):
             with self.subTest(url_name=url_name):
                 response = self.client.get(reverse(url_name, kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
+
+    def test_how_it_works_page_explains_the_public_takeover_loop(self) -> None:
+        response = self.client.get(reverse("core:how_it_works"))
+
+        self.assertContains(response, "Highest bid. Loudest message.")
+        self.assertContains(response, "Find. Bid. Take the board.")
+        self.assertContains(response, "The board moves when the payment settles.")
+        self.assertContains(response, "Rivalry is the point. Crossing the line is not.")
+        self.assertContains(response, "guaranteed to stay on the board for at least 30 seconds")
+        self.assertNotContains(response, "There is no guaranteed display duration.")
+        self.assertContains(response, reverse("boards:index"))
+
+    def test_school_board_has_share_button_and_social_card_metadata(self) -> None:
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+
+        self.assertContains(response, 'data-share-board')
+        self.assertContains(response, 'data-analytics-event="board_share_clicked"')
+        self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
+        self.assertContains(response, 'property="og:title" content="Oklahoma board: “THIS BOARD IS OPEN.” | Take the Board"')
+        self.assertContains(response, 'property="og:image:width" content="1200"')
+        self.assertContains(
+            response,
+            reverse("boards:social_image", kwargs={"slug": "oklahoma"}) + "?v=0",
+        )
+
+    def test_board_social_image_is_a_large_png(self) -> None:
+        response = self.client.get(reverse("boards:social_image", kwargs={"slug": "oklahoma"}))
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "image/png")
+        with Image.open(BytesIO(response.content)) as image:
+            self.assertEqual(image.size, (1200, 630))
 
     def test_google_tag_is_rendered_only_when_configured(self) -> None:
         response = self.client.get(reverse("core:home"))

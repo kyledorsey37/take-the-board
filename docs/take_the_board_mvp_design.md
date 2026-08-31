@@ -2571,7 +2571,7 @@ board, the board resets, or Take the Board removes the content under
 its rules.
 ```
 
-There is no guaranteed display duration.
+Every successful takeover receives at least 30 seconds of guaranteed display time.
 
 A message may remain visible for:
 
@@ -2582,7 +2582,7 @@ minutes
 seconds
 ```
 
-The transaction is not payment for time.
+The transaction is not payment for a fixed amount of time beyond the guaranteed 30-second display window.
 
 ---
 

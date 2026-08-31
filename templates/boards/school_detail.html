@@ -1,6 +1,24 @@
 {% extends "base.html" %}
 
 {% block title %}{{ board.entity.name }} | Take the Board{% endblock %}
+{% block meta_description %}{{ social_description }}{% endblock %}
+{% block og_type %}website{% endblock %}
+{% block og_title %}{{ social_title }}{% endblock %}
+{% block og_description %}{{ social_description }}{% endblock %}
+{% block og_url %}{{ board_url }}{% endblock %}
+{% block twitter_card %}summary_large_image{% endblock %}
+{% block twitter_title %}{{ social_title }}{% endblock %}
+{% block twitter_description %}{{ social_description }}{% endblock %}
+{% block social_image_meta %}
+  <meta property="og:image" content="{{ social_image_url }}">
+  {% if request.is_secure %}<meta property="og:image:secure_url" content="{{ social_image_url }}">{% endif %}
+  <meta property="og:image:type" content="image/png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="{{ board.entity.name }} board showing: {{ board.current_message }}">
+  <meta name="twitter:image" content="{{ social_image_url }}">
+  <meta name="twitter:image:alt" content="{{ board.entity.name }} board showing: {{ board.current_message }}">
+{% endblock %}
 
 {% block content %}
 <div class="school-board-page" style="--school-accent: {{ entity_accent }};">
@@ -12,7 +30,26 @@
         <p class="eyebrow">{{ board.entity.name }} board</p>
         <h1>{{ board.entity.name }}</h1>
       </div>
-      <a class="text-link" href="{% url 'rivalries:index' %}">Rivalry watch</a>
+      <div class="board-heading-actions">
+        <a class="text-link" href="{% url 'rivalries:index' %}">Rivalry watch</a>
+        <button
+          class="share-button"
+          type="button"
+          data-share-board
+          data-share-url="{{ board_url }}"
+          data-share-title="{{ social_title }}"
+          data-share-text="See the {{ board.entity.name }} board: {{ board.current_message }}"
+          data-analytics-event="board_share_clicked"
+          data-analytics-surface="entity_board"
+          data-analytics-school-slug="{{ board.entity.slug }}"
+        >
+          <svg class="share-button-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+            <path d="M18 8a3 3 0 1 0-2.83-4A3 3 0 0 0 15 5.17l-6.22 3.1a3 3 0 1 0 0 7.46L15 18.83A3 3 0 1 0 16 17l-6.22-3.1a3.1 3.1 0 0 0 0-3.8L16 7a3 3 0 0 0 2 1Z" />
+          </svg>
+          <span data-share-label>Share</span>
+        </button>
+        <span class="share-status" data-share-status role="status" aria-live="polite" hidden></span>
+      </div>
     </div>
 
     {% if move_result == "live" %}

@@ -48,5 +48,9 @@ def home(request: HttpRequest) -> HttpResponse:
     )
 
 
+def how_it_works(request: HttpRequest) -> HttpResponse:
+    return render(request, "how_it_works.html")
+
+
 def healthz(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})

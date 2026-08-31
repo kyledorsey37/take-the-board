@@ -38,6 +38,79 @@ document.addEventListener("click", function trackAnalyticsClick(event) {
   window.takeTheBoard.trackEvent(dataset.analyticsEvent, params);
 });
 
+async function copyTextToClipboard(text) {
+  if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+    await navigator.clipboard.writeText(text);
+    return true;
+  }
+
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "");
+  input.style.position = "fixed";
+  input.style.opacity = "0";
+  document.body.appendChild(input);
+  input.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    input.remove();
+  }
+  return copied;
+}
+
+document.addEventListener("click", async function handleBoardShare(event) {
+  const button = event.target.closest("[data-share-board]");
+  if (!button || button.dataset.busy === "true") {
+    return;
+  }
+
+  const url = button.dataset.shareUrl || window.location.href;
+  const title = button.dataset.shareTitle || document.title;
+  const text = button.dataset.shareText || title;
+  const status = button.parentElement.querySelector("[data-share-status]");
+  const label = button.querySelector("[data-share-label]");
+  button.dataset.busy = "true";
+
+  try {
+    if (typeof navigator.share === "function") {
+      await navigator.share({ title: title, text: text, url: url });
+      if (status) {
+        status.textContent = "Share sheet opened.";
+        status.hidden = false;
+      }
+    } else if (await copyTextToClipboard(url)) {
+      if (label) {
+        label.textContent = "Copied";
+      }
+      if (status) {
+        status.textContent = "Board link copied.";
+        status.hidden = false;
+      }
+      window.setTimeout(function resetShareLabel() {
+        if (label) {
+          label.textContent = "Share";
+        }
+        if (status) {
+          status.hidden = true;
+        }
+      }, 2400);
+    } else if (status) {
+      status.textContent = "Copy the board URL from your browser to share it.";
+      status.hidden = false;
+    }
+  } catch (error) {
+    // A dismissed native share sheet is not an error the user needs to see.
+    if (error.name !== "AbortError" && status) {
+      status.textContent = "We could not open sharing. Try copying the board URL.";
+      status.hidden = false;
+    }
+  } finally {
+    button.dataset.busy = "false";
+  }
+});
+
 function analyticsParams(element) {
   const dataset = element.dataset;
   const params = {};
