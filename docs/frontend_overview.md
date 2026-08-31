@@ -6,6 +6,7 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 
 - `templates/base.html`: global layout, metadata, navigation, legal disclaimer, static includes.
 - `templates/home.html`: public entry point with a takeover-focused featured board and board discovery links.
+- `templates/how_it_works.html`: public, plain-language explainer for the takeover loop, settlement, moderation boundaries, and weekly reset.
 - `templates/boards/`: school board pages.
 - `templates/rivalries/`: rivalry discovery and detail pages.
 - `templates/accounts/`: future account/profile templates.
@@ -18,9 +19,23 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 
 The visual system should be independent from official school brands. Use plain school names and generic accent colors. Do not use official logos, mascot art, seals, athletics typography, or university lockups.
 
+## Board Sharing and Social Previews
+
+Each school board has one canonical public URL and a Share button. Browsers with the
+Web Share API open the native share sheet; desktop browsers copy the canonical URL
+to the clipboard. The page does not render a separate share-preview component.
+
+Board pages emit Open Graph and X/Twitter Card metadata. Their `summary_large_image`
+card points to the versioned `social/boards/<slug>/card.png` endpoint, which renders
+the school name as the primary identity, the current public message as the emotional
+hook, a takeover CTA with the next price, and generic product branding. The board
+version is included in the image URL so a newly published or reset board gets a fresh
+social-image cache key. Social-card text follows the same public, escaped-content
+rules as the board page and must not include official school logos or lockups.
+
 ## Pre-Launch Navigation
 
-The public header links to Boards, Rivalries, and Leaderboard. Django Admin remains available only at its direct operational URL and must not be linked in fan-facing navigation.
+The public header links to Boards, Rivalries, Leaderboard, and How it works. Django Admin remains available only at its direct operational URL and must not be linked in fan-facing navigation.
 
 The current board and rivalry content is public, while the local environment can also run the authenticated Stripe sandbox takeover flow.
 

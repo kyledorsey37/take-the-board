@@ -252,6 +252,10 @@ permission and the selected model has been enabled in the dev account. Until
 then the moderation gate intentionally fails closed with a temporary validation
 response; it never creates Checkout Sessions without a matching approval.
 
+When the four `TAKEBOARD_BEDROCK_*` settings are present in the local `.env`,
+`deploy/dev/deploy_dev.sh` synchronizes those settings to `/opt/ttb/.env` during
+deployment. It does not copy the local secrets file to the host.
+
 ## EC2 File Layout
 
 Recommended layout:

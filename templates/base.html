@@ -6,6 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{% block meta_description %}Take the Board is an independent fan-made college football rivalry game.{% endblock %}">
   <title>{% block title %}Take the Board{% endblock %}</title>
+  <meta property="og:site_name" content="Take the Board">
+  <meta property="og:locale" content="en_US">
+  <meta property="og:type" content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title" content="{% block og_title %}Take the Board | College football's public fan boards{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Take control of a college football fan board and make your message the one everyone sees.{% endblock %}">
+  <meta property="og:url" content="{% block og_url %}{{ request.build_absolute_uri }}{% endblock %}">
+  <meta name="twitter:card" content="{% block twitter_card %}summary{% endblock %}">
+  <meta name="twitter:title" content="{% block twitter_title %}Take the Board | College football's public fan boards{% endblock %}">
+  <meta name="twitter:description" content="{% block twitter_description %}Take control of a college football fan board and make your message the one everyone sees.{% endblock %}">
+  {% block social_image_meta %}{% endblock %}
   {% if google_analytics_measurement_id %}
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_measurement_id }}"></script>
     <script>
@@ -22,7 +32,7 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-13">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script src="{% static 'js/app.js' %}" defer></script>
 </head>
@@ -35,6 +45,7 @@
         <a href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="boards">Boards</a>
         <a href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="rivalries">Rivalries</a>
         <a href="{% url 'leaderboard:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="leaderboard">Leaderboard</a>
+        <a href="{% url 'core:how_it_works' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="how_it_works">How it works</a>
         {% if auth_modal_enabled %}
           {% if auth_profile %}
             <form class="nav-auth-form" method="post" action="{% url 'accounts:logout' %}">

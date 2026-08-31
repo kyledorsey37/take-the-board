@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %}How it works | Take the Board{% endblock %}
+{% block meta_description %}See how Take the Board works: choose a school, write the next message, and take temporary control of the public fan board.{% endblock %}
+{% block og_title %}How it works | Take the Board{% endblock %}
+{% block og_description %}Choose a school, write the next message, and take temporary control of the public fan board.{% endblock %}
+{% block twitter_title %}How it works | Take the Board{% endblock %}
+{% block twitter_description %}Choose a school, write the next message, and take temporary control of the public fan board.{% endblock %}
+
+{% block content %}
+<div class="how-it-works-page">
+  <section class="how-compact-hero" aria-labelledby="how-it-works-title">
+    <div class="how-shell how-compact-hero-grid">
+      <div class="how-compact-hero-copy">
+        <p class="eyebrow">How Take the Board works</p>
+        <h1 id="how-it-works-title">Highest bid. Loudest message.</h1>
+        <p>Choose a school board, write your take, and make the highest successful bid. Your message stays live until another fan takes the board.</p>
+        <div class="how-hero-actions">
+          <a class="button how-button-light" href="{% url 'boards:index' %}">Find a board <span aria-hidden="true">&rarr;</span></a>
+          <a class="how-text-link" href="#the-loop">See how it works <span aria-hidden="true">&darr;</span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-compact-section how-loop-section" id="the-loop" aria-labelledby="the-loop-title">
+    <div class="how-shell">
+      <div class="how-compact-heading">
+        <div><p class="eyebrow">The whole game</p><h2 id="the-loop-title">Find. Bid. Take the board.</h2></div>
+        <p>Every board has one public message. Fans decide what it says next by showing up with a better move.</p>
+      </div>
+      <div class="how-steps">
+        <article class="how-step"><div class="how-step-number">01</div><div><h3>Find a board</h3><p>Pick the school you want to talk about and see what is happening right now.</p><a class="how-inline-link" href="{% url 'boards:index' %}">Browse boards <span aria-hidden="true">&rarr;</span></a></div></article>
+        <article class="how-step"><div class="how-step-number">02</div><div><h3>Make your move</h3><p>Write an allowed piece of rivalry talk and place your bid. Your move backs the school you choose.</p></div></article>
+        <article class="how-step"><div class="how-step-number">03</div><div><h3>Take the moment</h3><p>When your payment settles, your message goes live. Put your name on it and share the board.</p></div></article>
+      </div>
+    </div>
+  </section>
+
+  <section class="how-compact-section how-board-section" aria-labelledby="board-title">
+    <div class="how-shell how-compact-split">
+      <div class="how-compact-copy"><p class="eyebrow">The board</p><h2 id="board-title">One board. One message. One controller.</h2><p>The fan with the highest successful bid controls the message everyone sees on that school’s board. Your turn can last for days, hours, or only a few minutes—until another fan makes the next move.</p><p>That is what a live board looks like: one public message, one current controller, and one obvious way to answer it.</p></div>
+      <article class="landing-featured-card how-example-card" style="--board-accent: var(--accent);" aria-label="Example current school board">
+        <div class="landing-card-topline"><p class="landing-card-kicker">A live board</p><span class="landing-card-status">Live</span></div>
+        <div class="landing-card-heading"><div><h2>Oklahoma</h2><p>Held by the current controller</p></div><p class="landing-card-price"><span>Board status</span><strong>Live</strong></p></div>
+        <div class="landing-card-message-wrap"><span class="landing-card-message-label">The message right now</span><p class="landing-card-message">BOOMER<br>SOONER.</p></div>
+        <a class="button button-primary landing-card-cta" href="{% url 'boards:index' %}">Take over this board <span aria-hidden="true">&rarr;</span></a>
+        <p class="landing-card-hint">Change the message. Start the next fight.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="how-compact-section how-settlement-section" aria-labelledby="settlement-title">
+    <div class="how-shell how-compact-split how-settlement-split">
+      <div class="how-checkout-card" aria-label="How a takeover settles"><div class="how-card-label">What happens after you bid</div><div class="how-checkout-step"><span>01</span><div><strong>Message checked</strong><small>Your take follows the community guidelines.</small></div></div><div class="how-checkout-step"><span>02</span><div><strong>Payment confirmed</strong><small>Your bid is processed securely.</small></div></div><div class="how-checkout-step"><span>03</span><div><strong>Board updated</strong><small>The winning message becomes the live one.</small></div></div></div>
+      <div class="how-compact-copy"><p class="eyebrow">Fair play, built in</p><h2 id="settlement-title">The board moves when the payment settles.</h2><p>We check the board again when a move is ready to settle. If another fan got there first, your move does not take the board—and you are not charged for a takeover you did not win.</p><div class="how-coming-back"><p class="eyebrow">When someone challenges you</p><strong>The rivalry keeps going.</strong><p>Their message replaces yours, your move stays in the takeover history, and you can always come back to make another move.</p></div></div>
+    </div>
+  </section>
+
+  <section class="how-compact-section how-guardrails-section" aria-labelledby="guardrails-title">
+    <div class="how-shell how-guardrails-grid">
+      <article class="how-guardrail-card how-safety-card"><p class="eyebrow">Keep it fierce. Keep it in bounds.</p><h2 id="guardrails-title">Rivalry is the point. Crossing the line is not.</h2><p>Trash talk and school pride belong here. Threats, slurs, personal information, targeted harassment, and links do not. Messages are checked before they go live.</p></article>
+      <article class="how-guardrail-card how-meaning-card"><p class="eyebrow">What control means</p><h2>A spot on the board—not a stake in a school.</h2><p>Take the Board control is a status inside the game. It does not mean you own a university, represent a team, or are affiliated with any school.</p></article>
+    </div>
+  </section>
+
+  <section class="how-compact-cta" aria-labelledby="ready-title"><div class="how-shell how-cta-inner"><div><p class="eyebrow">Ready?</p><h2 id="ready-title">Say something your rival can’t ignore.</h2></div><a class="button button-primary" href="{% url 'boards:index' %}">Explore boards <span aria-hidden="true">&rarr;</span></a></div></section>
+
+  <section class="how-compact-section how-faq-section" aria-labelledby="how-faq-title"><div class="how-shell"><div class="how-compact-heading"><div><p class="eyebrow">Straight answers</p><h2 id="how-faq-title">The fine print, without the fog.</h2></div></div><div class="how-faq-list"><details><summary>How long does my message stay up?</summary><p>Every successful takeover is guaranteed to stay on the board for at least 30 seconds. After that, it remains live until another successful bid takes the board, the message is removed for breaking the guidelines, or the current game week ends.</p></details><details><summary>What am I paying for?</summary><p>You are paying for temporary control of a public message in an independent fan rivalry game, including a guaranteed 30-second display window—not school ownership, investment, sponsorship, or a fixed amount of time beyond that window.</p></details><details><summary>What happens at the end of the week?</summary><p>The boards reset for a fresh round of rivalry. Your takeover history remains part of the game’s record, and every fan gets a new chance to start the next fight.</p></details><details><summary>Is Take the Board affiliated with a school?</summary><p>No. Take the Board is independent fan entertainment and is not affiliated with, endorsed by, or sponsored by any university, athletic department, conference, or the NCAA.</p></details></div></div></section>
+</div>
+{% endblock %}

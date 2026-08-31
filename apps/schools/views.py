@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse
 
 from apps.bidding.forms import TakeBoardForm
 from apps.bidding.services.finalize_bid import finalize_due_board
@@ -107,6 +108,17 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         (settings.TAKEBOARD_DEMO_BIDDING_ENABLED or settings.TAKEBOARD_STRIPE_ENABLED)
         and board.bidding_enabled
     )
+    board_url = request.build_absolute_uri(
+        reverse("schools:detail", kwargs={"slug": board.entity.slug})
+    )
+    social_image_url = request.build_absolute_uri(
+        reverse("boards:social_image", kwargs={"slug": board.entity.slug})
+    ) + f"?v={board.version}"
+    social_title = f'{board.entity.name} board: “{board.current_message}” | Take the Board'
+    social_description = (
+        f"{board.entity.name}'s live fan board. See the current message and take it over "
+        "with your next move."
+    )
     return render(
         request,
         "boards/school_detail.html",
@@ -135,5 +147,9 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             ),
             "move_result": request.GET.get("move"),
             "selected_represented_entity": selected_represented_entity,
+            "board_url": board_url,
+            "social_image_url": social_image_url,
+            "social_title": social_title,
+            "social_description": social_description,
         },
     )

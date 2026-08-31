@@ -238,6 +238,19 @@ h2 {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.landing-how-link {
+  color: rgba(255, 255, 255, 0.78);
+  font-weight: 800;
+  text-decoration: none;
+  text-underline-offset: 0.2em;
+}
+
+.landing-how-link:hover,
+.landing-how-link:focus-visible {
+  color: #ffb84d;
+  text-decoration: underline;
+}
+
 .landing-featured-card {
   position: relative;
   display: flex;
@@ -584,6 +597,53 @@ h2 {
 
 .board-heading .text-link {
   color: #fff;
+}
+
+.board-heading-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.share-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  min-height: 2.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.44);
+  border-radius: 4px;
+  padding: 0.45rem 0.75rem;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.share-button:hover,
+.share-button:focus-visible {
+  border-color: #fff;
+  background: #fff;
+  color: var(--ink);
+  outline: none;
+}
+
+.share-button-icon {
+  width: 1.1rem;
+  height: 1.1rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.share-status {
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 0.8rem;
 }
 
 .live-board {
@@ -2564,6 +2624,10 @@ a.standings-row:focus-visible {
     flex-direction: column;
   }
 
+  .board-heading-actions {
+    justify-content: flex-start;
+  }
+
   .price-lockup {
     text-align: left;
   }
@@ -2715,6 +2779,796 @@ a.standings-row:focus-visible {
   .move-row > strong {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+}
+
+/* How it works: an editorial game manual for the rules fans actually need. */
+.how-it-works-page {
+  --how-black: #171717;
+  --how-paper: #f5f1e9;
+  --how-paper-dark: #e7e1d7;
+  --how-red: #b3262f;
+  --how-yellow: #ffb84d;
+  --how-blue: #b9d8d6;
+  background: var(--how-paper);
+  color: var(--how-black);
+}
+
+.how-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.how-hero {
+  overflow: hidden;
+  border-bottom: 1px solid #302f2b;
+  background:
+    radial-gradient(circle at 74% 10%, rgba(179, 38, 47, 0.35), transparent 27%),
+    linear-gradient(120deg, #141414 0%, #25231f 64%, #171717 100%);
+  color: #fff;
+}
+
+.how-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.92fr) minmax(360px, 1.08fr);
+  align-items: center;
+  gap: clamp(2rem, 7vw, 7rem);
+  min-height: 680px;
+  padding: clamp(4rem, 8vw, 7rem) 0;
+}
+
+.how-hero-copy {
+  max-width: 560px;
+}
+
+.how-hero-copy .eyebrow,
+.how-section-intro .eyebrow,
+.how-cta-section .eyebrow {
+  margin-bottom: 1rem;
+  color: var(--how-red);
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.how-hero-copy .eyebrow {
+  color: var(--how-yellow);
+}
+
+.how-hero h1,
+.how-section h2,
+.how-cta-section h2,
+.how-step h3,
+.how-faq-section summary {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.how-hero h1 {
+  max-width: 600px;
+  font-size: clamp(3.5rem, 7vw, 7rem);
+  letter-spacing: -0.065em;
+  line-height: 0.88;
+  text-transform: none;
+}
+
+.how-hero-intro {
+  max-width: 31rem;
+  margin: 1.75rem 0 0;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: clamp(1rem, 1.5vw, 1.25rem);
+  line-height: 1.45;
+}
+
+.how-hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  margin-top: 2.25rem;
+}
+
+.how-button-light {
+  gap: 0.7rem;
+  border-color: #fff;
+  background: #fff;
+  color: var(--how-black);
+}
+
+.how-button-light:hover,
+.how-button-light:focus-visible {
+  border-color: var(--how-yellow);
+  background: var(--how-yellow);
+}
+
+.how-text-link,
+.how-inline-link {
+  font-weight: 800;
+  text-underline-offset: 0.22em;
+}
+
+.how-text-link {
+  color: rgba(255, 255, 255, 0.8);
+  text-decoration: none;
+}
+
+.how-text-link:hover,
+.how-text-link:focus-visible {
+  color: #fff;
+  text-decoration: underline;
+}
+
+.how-hero-board {
+  position: relative;
+  min-height: 410px;
+  border: 1px solid var(--how-yellow);
+  border-top: 12px solid var(--how-yellow);
+  padding: clamp(1.25rem, 3vw, 2rem);
+  background: var(--how-paper);
+  color: var(--how-black);
+  box-shadow: 18px 20px 0 rgba(0, 0, 0, 0.26);
+  transform: rotate(1.2deg);
+}
+
+.how-ticket-stamp {
+  position: absolute;
+  top: 1.2rem;
+  right: 1.5rem;
+  display: grid;
+  width: 4.9rem;
+  height: 4.9rem;
+  place-content: center;
+  border: 2px solid var(--how-red);
+  border-radius: 50%;
+  color: var(--how-red);
+  font-size: 0.75rem;
+  font-weight: 900;
+  line-height: 1.05;
+  text-align: center;
+  transform: rotate(10deg);
+}
+
+.how-hero-board-topline,
+.how-hero-board-bottom {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  color: #67635c;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.how-hero-board-topline {
+  padding-right: 6rem;
+}
+
+.how-hero-board-message {
+  margin: clamp(5rem, 12vw, 8rem) 0 clamp(3rem, 7vw, 5rem);
+  color: var(--how-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(4rem, 9vw, 8.5rem);
+  font-weight: 900;
+  letter-spacing: -0.09em;
+  line-height: 0.78;
+}
+
+.how-hero-board-rule {
+  height: 1px;
+  margin-bottom: 1rem;
+  background: #c9c1b5;
+}
+
+.how-live-dot {
+  color: #21613b;
+  font-size: 1rem;
+  line-height: 0.5;
+}
+
+.how-section {
+  padding: clamp(4.5rem, 9vw, 8rem) 0;
+}
+
+.how-section-intro {
+  max-width: 30rem;
+}
+
+.how-section h2,
+.how-cta-section h2 {
+  margin: 0;
+  font-size: clamp(2.5rem, 4.8vw, 5rem);
+  letter-spacing: -0.06em;
+  line-height: 0.9;
+}
+
+.how-section-intro > p:last-child,
+.how-copy-stack p,
+.how-settlement-copy > p {
+  color: #5e5a53;
+  font-size: 1.08rem;
+  line-height: 1.55;
+}
+
+.how-loop-section {
+  background: var(--how-paper);
+}
+
+.how-loop-section .how-section-intro {
+  display: grid;
+  grid-template-columns: minmax(10rem, 0.6fr) minmax(0, 1.4fr);
+  align-items: end;
+  gap: 2rem;
+  max-width: 52rem;
+}
+
+.how-loop-section .how-section-intro .eyebrow {
+  grid-column: 1;
+  align-self: start;
+}
+
+.how-loop-section .how-section-intro h2,
+.how-loop-section .how-section-intro > p:last-child {
+  grid-column: 2;
+}
+
+.how-loop-section .how-section-intro > p:last-child {
+  margin: 1.25rem 0 0;
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 4rem;
+  border-top: 1px solid #bab2a7;
+}
+
+.how-step {
+  display: grid;
+  grid-template-columns: 2.7rem minmax(0, 1fr);
+  gap: 1rem;
+  min-height: 265px;
+  border-right: 1px solid #bab2a7;
+  padding: 1.25rem 1.5rem 1.5rem 0;
+}
+
+.how-step + .how-step {
+  padding-left: 1.5rem;
+}
+
+.how-step:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.how-step-number {
+  color: var(--how-red);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.how-step h3 {
+  margin: -0.2rem 0 0;
+  font-size: clamp(1.65rem, 2.5vw, 2.5rem);
+  letter-spacing: -0.05em;
+  line-height: 0.95;
+}
+
+.how-step p {
+  margin: 1rem 0 0;
+  color: #5e5a53;
+  font-size: 0.98rem;
+}
+
+.how-inline-link {
+  display: inline-block;
+  margin-top: 1.25rem;
+  color: var(--how-red);
+  font-size: 0.86rem;
+  text-decoration: none;
+}
+
+.how-inline-link:hover,
+.how-inline-link:focus-visible {
+  text-decoration: underline;
+}
+
+.how-dark-section {
+  background: var(--how-black);
+  color: #fff;
+}
+
+.how-split-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  gap: clamp(3rem, 9vw, 9rem);
+  align-items: start;
+}
+
+.how-dark-section .how-section-intro .eyebrow,
+.how-dark-section .how-copy-stack p,
+.how-dark-section .how-section-intro > p:last-child {
+  color: var(--how-yellow);
+}
+
+.how-dark-section .how-copy-stack p {
+  color: rgba(255, 255, 255, 0.73);
+}
+
+.how-copy-stack {
+  max-width: 34rem;
+  padding-top: 0.4rem;
+}
+
+.how-copy-stack p {
+  margin: 0;
+}
+
+.how-copy-stack p + p {
+  margin-top: 1.35rem;
+}
+
+.how-challenge-section {
+  background: var(--how-blue);
+}
+
+.how-challenge-grid,
+.how-safety-grid {
+  display: grid;
+  grid-template-columns: minmax(250px, 0.9fr) minmax(0, 1.1fr);
+  align-items: center;
+  gap: clamp(3rem, 9vw, 9rem);
+}
+
+.how-challenge-card {
+  min-height: 330px;
+  border: 1px solid var(--how-black);
+  border-top: 10px solid var(--how-red);
+  padding: 1.35rem;
+  background: var(--how-paper);
+  box-shadow: 13px 15px 0 rgba(23, 23, 23, 0.22);
+  transform: rotate(-2deg);
+}
+
+.how-challenge-card-label {
+  color: #6d6860;
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.how-challenge-card-message {
+  margin: 5rem 0 4rem;
+  color: var(--how-red);
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.8rem, 6vw, 5.5rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 0.82;
+}
+
+.how-challenge-card-footer {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid #bdb6aa;
+  padding-top: 0.85rem;
+  color: #6d6860;
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.how-challenge-card-footer strong {
+  color: #21613b;
+}
+
+.how-challenge-section .how-section-intro > p:last-child {
+  margin-top: 1.5rem;
+}
+
+.how-settlement-section {
+  background: var(--how-paper-dark);
+}
+
+.how-split-reverse .how-settlement-copy {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.how-split-reverse .how-section-intro {
+  grid-column: 2;
+}
+
+.how-settlement-copy {
+  max-width: 36rem;
+}
+
+.how-settlement-list {
+  margin-top: 2rem;
+  border-top: 1px solid #b7afa3;
+}
+
+.how-settlement-list div {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.25rem 0.8rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #b7afa3;
+}
+
+.how-settlement-list span {
+  grid-row: span 2;
+  color: var(--how-red);
+  font-size: 0.74rem;
+  font-weight: 900;
+}
+
+.how-settlement-list strong {
+  font-size: 1.05rem;
+}
+
+.how-settlement-list small {
+  color: #69645c;
+  font-size: 0.86rem;
+}
+
+.how-safety-section {
+  background: #fffdf8;
+}
+
+.how-safety-mark {
+  display: grid;
+  min-height: 250px;
+  place-content: center;
+  border: 1px solid var(--how-black);
+  background: var(--how-red);
+  color: #fff;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: clamp(2.5rem, 5vw, 5rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+  line-height: 0.82;
+  text-align: center;
+  transform: rotate(2deg);
+}
+
+.how-safety-section .how-section-intro > p:last-child {
+  margin-top: 1.5rem;
+}
+
+.how-meaning-section {
+  background: var(--how-paper);
+}
+
+.how-cta-section {
+  background: var(--how-yellow);
+}
+
+.how-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: clamp(3rem, 6vw, 5rem) 0;
+}
+
+.how-cta-section .eyebrow {
+  color: var(--how-red);
+}
+
+.how-cta-section h2 {
+  max-width: 42rem;
+}
+
+.how-cta-section .button {
+  flex: 0 0 auto;
+  min-height: 3.4rem;
+  border-color: var(--how-black);
+  background: var(--how-black);
+  color: #fff;
+}
+
+.how-cta-section .button:hover,
+.how-cta-section .button:focus-visible {
+  background: var(--how-red);
+}
+
+.how-faq-section {
+  background: var(--how-paper);
+}
+
+.how-section-heading-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #b7afa3;
+  padding-bottom: 2rem;
+}
+
+.how-faq-section h2 {
+  max-width: 38rem;
+}
+
+.how-faq-list {
+  max-width: 900px;
+  margin-left: auto;
+}
+
+.how-faq-list details {
+  border-bottom: 1px solid #b7afa3;
+}
+
+.how-faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.35rem 0;
+  cursor: pointer;
+  font-size: clamp(1.25rem, 2vw, 1.7rem);
+  font-weight: 700;
+  list-style: none;
+}
+
+.how-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.how-faq-list summary::after {
+  color: var(--how-red);
+  content: "+";
+  font-family: ui-sans-serif, system-ui, sans-serif;
+  font-size: 1.8rem;
+  font-weight: 400;
+}
+
+.how-faq-list details[open] summary::after {
+  content: "−";
+}
+
+.how-faq-list summary:focus-visible {
+  outline: 3px solid var(--how-red);
+  outline-offset: 4px;
+}
+
+.how-faq-list details p {
+  max-width: 700px;
+  margin: -0.35rem 3rem 1.5rem 0;
+  color: #5e5a53;
+  font-size: 1rem;
+}
+
+@media (max-width: 900px) {
+  .how-hero-grid,
+  .how-split-section,
+  .how-challenge-grid,
+  .how-safety-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .how-hero-grid {
+    min-height: 0;
+    gap: 3.5rem;
+  }
+
+  .how-hero-copy,
+  .how-hero-board {
+    width: min(100%, 640px);
+    margin: 0 auto;
+  }
+
+  .how-split-reverse .how-settlement-copy,
+  .how-split-reverse .how-section-intro {
+    grid-column: auto;
+    grid-row: auto;
+  }
+
+  .how-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .how-step,
+  .how-step + .how-step,
+  .how-step:last-child {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid #bab2a7;
+    padding: 1.5rem 0;
+  }
+
+  .how-step:last-child {
+    border-bottom: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .how-shell {
+    width: min(100% - 1.25rem, 640px);
+  }
+
+  .how-hero-grid {
+    gap: 2.5rem;
+    padding: 3.25rem 0 4rem;
+  }
+
+  .how-hero h1 {
+    font-size: clamp(3.15rem, 15vw, 5rem);
+  }
+
+  .how-hero-intro {
+    margin-top: 1.25rem;
+  }
+
+  .how-hero-board {
+    min-height: 315px;
+    border-top-width: 8px;
+    padding: 1rem;
+    box-shadow: 10px 12px 0 rgba(0, 0, 0, 0.26);
+  }
+
+  .how-hero-board-topline {
+    padding-right: 4.5rem;
+    font-size: 0.62rem;
+  }
+
+  .how-ticket-stamp {
+    top: 0.8rem;
+    right: 0.8rem;
+    width: 3.7rem;
+    height: 3.7rem;
+    font-size: 0.58rem;
+  }
+
+  .how-hero-board-message {
+    margin: 5rem 0 3.25rem;
+    font-size: clamp(3.5rem, 18vw, 6rem);
+  }
+
+  .how-hero-board-bottom {
+    font-size: 0.62rem;
+  }
+
+  .how-loop-section .how-section-intro {
+    display: block;
+  }
+
+  .how-loop-section .how-section-intro > p:last-child {
+    margin-top: 1rem;
+  }
+
+  .how-steps {
+    margin-top: 2.5rem;
+  }
+
+  .how-section {
+    padding: 4rem 0;
+  }
+
+  .how-section h2,
+  .how-cta-section h2 {
+    font-size: clamp(2.45rem, 13vw, 4.2rem);
+  }
+
+  .how-challenge-card {
+    min-height: 285px;
+  }
+
+  .how-challenge-card-message {
+    margin: 4.5rem 0 3.25rem;
+  }
+
+  .how-cta-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .how-cta-inner .button {
+    width: 100%;
+  }
+
+  .how-faq-list summary {
+    padding: 1.1rem 0;
+    font-size: 1.23rem;
+  }
+
+  .how-faq-list details p {
+    margin-right: 0;
+  }
+}
+
+/* Keep how-it-works cards in the same family as the landing-page board card. */
+.how-live-card,
+.how-example-card,
+.how-checkout-card,
+.how-guardrail-card {
+  --how-card-accent: var(--how-accent);
+  border-color: var(--how-card-accent);
+  border-top: 9px solid var(--how-card-accent);
+  border-radius: 14px;
+  background: #f7f3eb;
+  box-shadow: 18px 22px 0 rgba(0, 0, 0, 0.2);
+}
+
+.how-live-card {
+  --how-card-accent: var(--how-yellow);
+}
+
+.how-live-card.landing-featured-card {
+  min-height: 470px;
+  max-width: 550px;
+  margin-left: auto;
+  padding: clamp(1.25rem, 3vw, 2rem);
+}
+
+.how-example-card,
+.how-safety-card {
+  --how-card-accent: var(--how-accent);
+}
+
+.how-checkout-card,
+.how-meaning-card {
+  --how-card-accent: var(--how-yellow);
+}
+
+.how-card-label {
+  color: var(--how-card-accent);
+}
+
+.how-live-card-message,
+.how-example-message {
+  border-left: 8px solid var(--how-card-accent);
+  padding: 1rem 1.1rem 1.2rem;
+  background: #171717;
+  color: #fff;
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.how-live-card-message {
+  margin: 4.5rem 0 2rem;
+}
+
+.how-example-message {
+  margin: 3rem 0 2rem;
+}
+
+.how-card-meta,
+.how-example-row {
+  border-color: #c9c2b7;
+}
+
+.how-checkout-card,
+.how-guardrail-card {
+  border-color: var(--how-card-accent);
+}
+
+.how-guardrail-card {
+  box-shadow: 10px 13px 0 rgba(0, 0, 0, 0.16);
+}
+
+@media (max-width: 640px) {
+  .how-live-card,
+  .how-example-card,
+  .how-checkout-card,
+  .how-guardrail-card {
+    box-shadow: 10px 13px 0 rgba(0, 0, 0, 0.16);
+  }
+
+  .how-live-card.landing-featured-card {
+    min-height: 0;
+    max-width: none;
+    margin-left: 0;
+    padding: 0.9rem;
+  }
+
+  .how-live-card-message {
+    margin: 4rem 0 1.5rem;
+  }
+
+  .how-example-message {
+    margin: 3rem 0 1.5rem;
   }
 }
 
@@ -2903,5 +3757,694 @@ a.standings-row:focus-visible {
     grid-template-columns: minmax(0, 1fr) 5rem;
     padding-left: 1rem;
     padding-right: 1rem;
+  }
+}
+
+/* Condensed how-it-works layout: compact split sections and example cards. */
+.how-it-works-page {
+  --how-black: #151a22;
+  --how-muted: #5c6675;
+  --how-paper: #f2f4f6;
+  --how-card: #ffffff;
+  --how-line: #dce1e7;
+  --how-accent: #b3262f;
+  --how-accent-dark: #841923;
+  --how-yellow: #ffb84d;
+  --how-hero: #16191f;
+  --how-loop-paper: #f7f3eb;
+  --how-loop-line: #d6cec2;
+  background: var(--how-paper);
+  color: var(--how-black);
+}
+
+.how-it-works-page .how-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+}
+
+.how-compact-hero {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
+  background:
+    radial-gradient(circle at 86% -30%, rgba(255, 184, 77, 0.18), transparent 44%),
+    linear-gradient(120deg, #11151c 0%, var(--how-hero) 62%, #28191b 100%);
+  color: #fff;
+}
+
+.how-compact-hero-grid {
+  padding: clamp(3.5rem, 6vw, 5.25rem) 0 clamp(3rem, 5vw, 4.5rem);
+}
+
+.how-compact-hero-copy {
+  max-width: 46rem;
+}
+
+.how-compact-hero-copy .eyebrow,
+.how-it-works-page .eyebrow {
+  margin-bottom: 0.85rem;
+  color: var(--how-accent);
+  font-size: 0.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.how-compact-hero-copy .eyebrow {
+  color: var(--how-yellow);
+}
+
+.how-compact-hero h1,
+.how-it-works-page h2,
+.how-it-works-page h3,
+.how-faq-section summary {
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.how-compact-hero h1 {
+  max-width: 46rem;
+  margin: 0;
+  font-size: clamp(3rem, 5.5vw, 5.5rem);
+  letter-spacing: -0.075em;
+  line-height: 0.91;
+  text-transform: none;
+  color: #fff;
+}
+
+.how-compact-hero-copy > p:not(.eyebrow) {
+  max-width: 35rem;
+  margin: 1.1rem 0 0;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: clamp(1.05rem, 1.5vw, 1.22rem);
+  line-height: 1.45;
+}
+
+.how-hero-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1.1rem;
+  margin-top: 1.5rem;
+}
+
+.how-button-light {
+  gap: 0.6rem;
+  border-color: var(--how-accent);
+  background: var(--how-accent);
+  color: #fff;
+}
+
+.how-button-light:hover,
+.how-button-light:focus-visible {
+  border-color: var(--how-accent-dark);
+  background: var(--how-accent-dark);
+}
+
+.how-text-link,
+.how-inline-link {
+  font-weight: 800;
+  text-underline-offset: 0.2em;
+}
+
+.how-text-link {
+  color: rgba(255, 255, 255, 0.78);
+  text-decoration: none;
+}
+
+.how-text-link:hover,
+.how-text-link:focus-visible {
+  color: var(--how-yellow);
+  text-decoration: underline;
+}
+
+.how-live-card,
+.how-example-card,
+.how-checkout-card,
+.how-guardrail-card {
+  border: 1px solid var(--how-line);
+  border-radius: 18px;
+  background: var(--how-card);
+  box-shadow: 0 18px 42px rgba(36, 47, 61, 0.1);
+}
+
+.how-live-card {
+  min-height: 330px;
+  padding: clamp(1.35rem, 3vw, 2rem);
+}
+
+.how-card-label {
+  color: var(--how-muted);
+  font-size: 0.77rem;
+  font-weight: 900;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.how-live-card-message,
+.how-example-message {
+  color: var(--how-accent);
+  font-size: clamp(3.5rem, 7vw, 6.5rem);
+  font-weight: 900;
+  letter-spacing: -0.09em;
+  line-height: 0.8;
+}
+
+.how-live-card-message {
+  margin: 5rem 0 4rem;
+}
+
+.how-card-meta,
+.how-example-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--how-line);
+  padding: 0.8rem 0;
+  color: var(--how-muted);
+  font-size: 0.87rem;
+}
+
+.how-card-meta strong,
+.how-example-row strong {
+  color: var(--how-black);
+  text-align: right;
+}
+
+.how-compact-section,
+.how-compact-cta {
+  padding: clamp(4rem, 7vw, 6rem) 0;
+}
+
+.how-loop-section,
+.how-board-section,
+.how-faq-section {
+  background: var(--how-paper);
+}
+
+.how-loop-section {
+  background: var(--how-loop-paper);
+}
+
+.how-compact-heading,
+.how-compact-split,
+.how-guardrails-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.92fr);
+  align-items: start;
+  gap: clamp(3rem, 8vw, 8rem);
+}
+
+.how-compact-heading {
+  max-width: 970px;
+}
+
+.how-it-works-page h2 {
+  margin: 0;
+  font-size: clamp(2.25rem, 4vw, 4.2rem);
+  letter-spacing: -0.07em;
+  line-height: 0.94;
+}
+
+.how-compact-heading > p,
+.how-compact-copy > p:not(.eyebrow),
+.how-guardrail-card > p:not(.eyebrow),
+.how-coming-back > p:not(.eyebrow) {
+  margin: 0;
+  color: var(--how-muted);
+  font-size: 1.05rem;
+  line-height: 1.55;
+}
+
+.how-compact-heading > p {
+  padding-top: 1.95rem;
+}
+
+.how-steps {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 3.25rem;
+  border-top: 1px solid var(--how-loop-line);
+}
+
+.how-step {
+  display: grid;
+  grid-template-columns: 2.3rem minmax(0, 1fr);
+  gap: 0.8rem;
+  min-height: 200px;
+  border-right: 1px solid var(--how-loop-line);
+  padding: 1.1rem 1.35rem 0 0;
+}
+
+.how-step + .how-step {
+  padding-left: 1.35rem;
+}
+
+.how-step:last-child {
+  border-right: 0;
+  padding-right: 0;
+}
+
+.how-step-number {
+  color: var(--how-accent);
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.how-step h3 {
+  margin: 0;
+  font-size: clamp(1.35rem, 2vw, 2rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+}
+
+.how-step p {
+  margin: 0.85rem 0 0;
+  color: var(--how-muted);
+  font-size: 0.94rem;
+  line-height: 1.45;
+}
+
+.how-inline-link {
+  display: inline-block;
+  margin-top: 1rem;
+  color: var(--how-accent-dark);
+  font-size: 0.84rem;
+  text-decoration: none;
+}
+
+.how-inline-link:hover,
+.how-inline-link:focus-visible {
+  text-decoration: underline;
+}
+
+.how-board-section {
+  border-top: 1px solid var(--how-line);
+}
+
+.how-compact-copy {
+  max-width: 35rem;
+}
+
+.how-compact-copy > p:not(.eyebrow) + p:not(.eyebrow) {
+  margin-top: 1rem;
+}
+
+.how-example-card {
+  padding: 1.6rem;
+}
+
+.how-example-message {
+  margin: 4rem 0 3rem;
+  font-size: clamp(3rem, 6vw, 5.5rem);
+}
+
+.how-status-live {
+  color: #1c7442 !important;
+}
+
+.how-settlement-section {
+  background: #e7edf2;
+}
+
+.how-settlement-split {
+  align-items: center;
+}
+
+.how-checkout-card {
+  padding: 1.6rem;
+}
+
+.how-checkout-step {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  gap: 0.8rem;
+  border-top: 1px solid var(--how-line);
+  margin-top: 1.1rem;
+  padding-top: 1.1rem;
+}
+
+.how-checkout-step > span {
+  display: grid;
+  width: 1.7rem;
+  height: 1.7rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7edff;
+  color: #285fe3;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.how-checkout-step strong,
+.how-checkout-step small {
+  display: block;
+}
+
+.how-checkout-step strong {
+  font-size: 1rem;
+}
+
+.how-checkout-step small {
+  margin-top: 0.2rem;
+  color: var(--how-muted);
+  font-size: 0.86rem;
+}
+
+.how-coming-back {
+  margin-top: 1.6rem;
+  border-left: 4px solid var(--how-accent);
+  padding-left: 1rem;
+}
+
+.how-coming-back .eyebrow {
+  margin-bottom: 0.3rem;
+}
+
+.how-coming-back > strong {
+  display: block;
+  margin-bottom: 0.35rem;
+  font-size: 1.2rem;
+}
+
+.how-coming-back > p:last-child {
+  font-size: 0.95rem;
+}
+
+.how-guardrails-section {
+  background: #fff;
+}
+
+.how-guardrails-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.25rem;
+}
+
+.how-guardrail-card {
+  min-height: 255px;
+  padding: clamp(1.4rem, 3vw, 2rem);
+  box-shadow: 0 12px 28px rgba(36, 47, 61, 0.07);
+}
+
+.how-guardrail-card h2 {
+  max-width: 28rem;
+  font-size: clamp(2rem, 3.5vw, 3.4rem);
+}
+
+.how-guardrail-card > p:last-child {
+  margin: 1.1rem 0 0;
+}
+
+.how-safety-card {
+  border-top: 6px solid var(--how-accent);
+}
+
+.how-meaning-card {
+  border-top: 6px solid var(--how-yellow);
+}
+
+.how-compact-cta {
+  background: var(--how-yellow);
+}
+
+.how-cta-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 2rem;
+}
+
+.how-compact-cta .eyebrow {
+  color: var(--how-accent-dark);
+}
+
+.how-compact-cta h2 {
+  max-width: 42rem;
+}
+
+.how-compact-cta .button {
+  flex: 0 0 auto;
+  min-height: 3.2rem;
+  border-color: var(--how-black);
+  background: var(--how-black);
+  color: #fff;
+}
+
+.how-compact-cta .button:hover,
+.how-compact-cta .button:focus-visible {
+  background: var(--how-accent-dark);
+}
+
+.how-faq-section {
+  border-top: 1px solid var(--how-line);
+}
+
+.how-faq-section .how-compact-heading {
+  display: block;
+}
+
+.how-faq-section .how-compact-heading > div {
+  max-width: 42rem;
+}
+
+.how-faq-list {
+  max-width: 900px;
+  margin: 3rem 0 0 auto;
+}
+
+.how-faq-list details {
+  border-bottom: 1px solid #c5ccd4;
+}
+
+.how-faq-list summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  cursor: pointer;
+  font-size: clamp(1.1rem, 1.8vw, 1.45rem);
+  font-weight: 700;
+  list-style: none;
+}
+
+.how-faq-list summary::-webkit-details-marker {
+  display: none;
+}
+
+.how-faq-list summary::after {
+  color: var(--how-accent);
+  content: "+";
+  font-size: 1.7rem;
+  font-weight: 400;
+}
+
+.how-faq-list details[open] summary::after {
+  content: "−";
+}
+
+.how-faq-list summary:focus-visible {
+  outline: 3px solid var(--how-accent);
+  outline-offset: 4px;
+}
+
+.how-faq-list details p {
+  max-width: 720px;
+  margin: -0.15rem 3rem 1.25rem 0;
+  color: var(--how-muted);
+  font-size: 0.97rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 900px) {
+  .how-compact-hero-grid,
+  .how-compact-heading,
+  .how-compact-split {
+    grid-template-columns: 1fr;
+  }
+
+  .how-compact-hero-grid {
+    padding: clamp(2.75rem, 7vw, 4rem) 0;
+  }
+
+  .how-compact-hero-copy,
+  .how-live-card,
+  .how-compact-copy,
+  .how-checkout-card {
+    width: min(100%, 640px);
+    margin: 0 auto;
+  }
+
+  .how-compact-heading > p {
+    padding-top: 0;
+  }
+
+  .how-guardrails-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .how-guardrail-card {
+    min-height: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .how-it-works-page .how-shell {
+    width: min(100% - 1.25rem, 640px);
+  }
+
+  .how-compact-hero-grid {
+    padding: 1.1rem 0 1.75rem;
+  }
+
+  .how-compact-hero-copy .eyebrow {
+    margin-bottom: 0.15rem;
+    font-size: 0.68rem;
+  }
+
+  .how-compact-hero h1 {
+    font-size: clamp(2rem, 9vw, 2.65rem);
+    line-height: 0.94;
+  }
+
+  .how-compact-hero-copy > p:not(.eyebrow) {
+    margin-top: 0.55rem;
+    font-size: 0.9rem;
+    line-height: 1.35;
+  }
+
+  .how-live-card-message {
+    margin: 4.5rem 0 3.3rem;
+    font-size: clamp(3.4rem, 18vw, 5.4rem);
+  }
+
+  .how-compact-section,
+  .how-compact-cta {
+    padding: 3.5rem 0;
+  }
+
+  .how-steps {
+    grid-template-columns: 1fr;
+    margin-top: 2.5rem;
+  }
+
+  .how-step,
+  .how-step + .how-step,
+  .how-step:last-child {
+    min-height: 0;
+    border-right: 0;
+    border-bottom: 1px solid var(--how-loop-line);
+    padding: 1.25rem 0;
+  }
+
+  .how-step:last-child {
+    border-bottom: 0;
+  }
+
+  .how-example-card,
+  .how-checkout-card,
+  .how-guardrail-card {
+    padding: 1.2rem;
+  }
+
+  .how-example-message {
+    margin: 3.5rem 0 2.5rem;
+  }
+
+  .how-cta-inner {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .how-compact-cta .button {
+    width: 100%;
+  }
+
+  .how-faq-list {
+    margin-top: 2.25rem;
+  }
+
+  .how-faq-list details p {
+    margin-right: 0;
+  }
+}
+
+/* Match the existing landing-page featured card treatment. */
+.how-live-card,
+.how-example-card,
+.how-checkout-card,
+.how-guardrail-card {
+  --how-card-accent: var(--how-accent);
+  border-color: var(--how-card-accent);
+  border-top: 9px solid var(--how-card-accent);
+  border-radius: 14px;
+  background: #f7f3eb;
+  box-shadow: 18px 22px 0 rgba(0, 0, 0, 0.2);
+}
+
+.how-live-card {
+  --how-card-accent: var(--how-yellow);
+}
+
+.how-example-card,
+.how-safety-card {
+  --how-card-accent: var(--how-accent);
+}
+
+.how-checkout-card,
+.how-meaning-card {
+  --how-card-accent: var(--how-yellow);
+}
+
+.how-card-label {
+  color: var(--how-card-accent);
+}
+
+.how-live-card-message,
+.how-example-message {
+  border-left: 8px solid var(--how-card-accent);
+  padding: 1rem 1.1rem 1.2rem;
+  background: #171717;
+  color: #fff;
+  font-size: clamp(2.8rem, 5.5vw, 5rem);
+  line-height: 0.88;
+  text-transform: uppercase;
+}
+
+.how-live-card-message {
+  margin: 4.5rem 0 2rem;
+}
+
+.how-example-message {
+  margin: 3rem 0 2rem;
+}
+
+.how-card-meta,
+.how-example-row {
+  border-color: #c9c2b7;
+}
+
+.how-checkout-card,
+.how-guardrail-card {
+  border-color: var(--how-card-accent);
+}
+
+.how-guardrail-card {
+  box-shadow: 10px 13px 0 rgba(0, 0, 0, 0.16);
+}
+
+@media (max-width: 640px) {
+  .how-live-card,
+  .how-example-card,
+  .how-checkout-card,
+  .how-guardrail-card {
+    box-shadow: 10px 13px 0 rgba(0, 0, 0, 0.16);
+  }
+
+  .how-live-card-message {
+    margin: 4rem 0 1.5rem;
+  }
+
+  .how-example-message {
+    margin: 3rem 0 1.5rem;
   }
 }
