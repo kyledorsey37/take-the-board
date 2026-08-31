@@ -1,0 +1,42 @@
+{% extends "legal/policy_layout.html" %}
+
+{% block title %}Privacy Policy | Take the Board{% endblock %}
+{% block meta_description %}Privacy Policy for Take the Board and its fan boards, accounts, payments, moderation, and analytics.{% endblock %}
+{% block policy_title %}Privacy Policy{% endblock %}
+
+{% block policy_content %}
+<p class="legal-lede">This policy describes the information Take the Board may collect, why it is used, and the choices available to you.</p>
+
+<h2>1. Information we receive</h2>
+<ul>
+  <li><strong>Account information:</strong> your email address, an internal account identifier used to recognize your account, sign-in activity, and public board name.</li>
+  <li><strong>Game activity:</strong> boards visited, messages and names submitted, bids, takeovers, reports, moderation decisions, and related timestamps.</li>
+  <li><strong>Payment and risk information:</strong> payment-provider identifiers, amounts, currencies, authorization and capture status, refunds, disputes, and fraud-prevention signals. Stripe handles card details.</li>
+  <li><strong>Technical information:</strong> IP address, user agent, request identifiers, cookies, device/browser information, and security logs.</li>
+  <li><strong>Optional analytics:</strong> aggregate product interactions through Google Analytics 4 when production analytics is enabled. Analytics events do not include board messages, emails, payment identifiers, or authentication tokens.</li>
+</ul>
+
+<h2>2. Public information</h2>
+<p>Board messages, approved public board names, takeover history, school backing, and certain spending or leaderboard totals may be visible to anyone. Do not submit personal information, contact details, secrets, or anything you do not want publicly displayed.</p>
+
+<h2>3. How we use information</h2>
+<p>We use information to provide the boards, authenticate accounts, process and reconcile payments, prevent fraud and abuse, moderate public content, respond to support requests, maintain security, measure product performance where permitted, and comply with legal obligations.</p>
+
+<h2>4. Service providers</h2>
+<p>Depending on configuration, Take the Board uses providers such as Amazon Cognito for authentication, Stripe for payments, AWS services for hosting and moderation, Sentry for error monitoring, and Google Analytics 4 for permitted product analytics. Those providers process information under their own terms and privacy notices.</p>
+
+<h2>5. Analytics cookies</h2>
+<p>If you accept optional analytics, Google Analytics 4 may set first-party cookies named <code>_ga</code> and <code>_ga_&lt;measurement-id&gt;</code> to distinguish browsers, users, and sessions for aggregate product measurement. We do not load Google Analytics until you accept. You can change your choice at any time using the Cookie settings link in the footer.</p>
+
+<h2>6. Retention and deletion</h2>
+<p>We keep information only as long as reasonably necessary to operate the service, process payments, prevent fraud and abuse, provide support, maintain accounting records, resolve disputes, and comply with legal obligations. Public board messages, board names, and takeover history may remain part of the public game record. We limit short-lived moderation content and technical records to the period needed for those purposes.</p>
+
+<h2>7. Your choices and requests</h2>
+<p>Depending on where you live, you may have rights to access, correct, delete, or restrict certain personal information. Some financial, fraud-prevention, moderation, and audit records may need to be retained. To ask about your information or request deletion, contact us through the <a href="{% url 'core:contact' %}">Contact page</a>.</p>
+
+<h2>8. Security and changes</h2>
+<p>We use administrative, technical, and organizational safeguards appropriate to the information we handle. No service is completely secure. We may update this policy when the service or legal requirements change and will publish the new version on this page.</p>
+
+<h2>9. Contact</h2>
+<p>For privacy questions or requests, visit our <a href="{% url 'core:contact' %}">Contact page</a>.</p>
+{% endblock %}

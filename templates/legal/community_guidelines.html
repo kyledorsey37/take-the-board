@@ -1,0 +1,36 @@
+{% extends "legal/policy_layout.html" %}
+
+{% block title %}Community Guidelines | Take the Board{% endblock %}
+{% block meta_description %}Community Guidelines for Take the Board: keep the rivalry loud, creative, and within bounds.{% endblock %}
+{% block policy_title %}Community Guidelines{% endblock %}
+
+{% block policy_content %}
+<p class="legal-lede">Rivalry is the point. Keep the trash talk aimed at teams and fanbases—not at people's safety, identity, or private lives.</p>
+
+<h2>What is generally allowed</h2>
+<ul>
+  <li>Team and fanbase insults</li>
+  <li>Rivalry arguments and sports opinions</li>
+  <li>Ordinary profanity</li>
+  <li>Creative, short-form competitive banter</li>
+</ul>
+
+<h2>What is not allowed</h2>
+<ul>
+  <li>Slurs, hate speech, or attacks based on protected characteristics</li>
+  <li>Credible threats, encouragement of violence, or illegal content</li>
+  <li>Doxxing, personal information, phone numbers, addresses, email addresses, or direct contact requests</li>
+  <li>Targeted sexual harassment or severe harassment of private individuals</li>
+  <li>Spam, advertising, URLs, scams, or attempts to manipulate payments or reports</li>
+  <li>Impersonation of Take the Board, support, administrators, schools, teams, coaches, athletes, or other notable people</li>
+</ul>
+
+<h2>Review and enforcement</h2>
+<p>Messages and public board names may be checked before publication. Automated checks and human review may be used. A message may be rejected, removed, redacted, or replaced with a safe board state. We do not promise that every message will remain visible for a particular duration if it violates these guidelines or creates a safety, legal, or operational concern.</p>
+
+<h2>Reporting a message</h2>
+<p>Authenticated fans can use the <strong>Report message</strong> control on a public takeover. Reports are reviewed; a report alone does not automatically remove a message. Do not use reports to brigade a rival or submit false reports. Accounts may lose access to reporting or bidding for abuse of these controls.</p>
+
+<h2>Questions and appeals</h2>
+<p>If your message was rejected or removed and you need help understanding what happened, use our <a href="{% url 'core:contact' %}">Contact page</a>. Do not include personal information or payment credentials in a message.</p>
+{% endblock %}

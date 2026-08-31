@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Contact | Take the Board{% endblock %}
+{% block meta_description %}Contact Take the Board about account access, payments, refunds, moderation, privacy, or general support.{% endblock %}
+
+{% block content %}
+<div class="legal-page contact-page" aria-labelledby="contact-title">
+  <div class="legal-shell">
+    <header class="legal-header">
+      <p class="eyebrow">Take the Board support</p>
+      <h1 id="contact-title">Contact us</h1>
+      <p class="legal-lede">Need help with a board, account, payment, refund, moderation decision, or privacy request? Send us a note and include enough context for us to find the issue.</p>
+    </header>
+    <article class="legal-content">
+      <h2>Support email</h2>
+      <p><a class="contact-email" href="mailto:{{ support_email }}">{{ support_email }}</a></p>
+      <p>For payment questions, include the board name, approximate date and time, and the email on your account. Do not send a full card number, security code, password, authentication token, or one-time sign-in code.</p>
+
+      <h2>Choose the right path</h2>
+      <ul>
+        <li><strong>Message issue:</strong> use the Report message control beside the public message when possible.</li>
+        <li><strong>Payment or refund:</strong> contact support before opening a payment dispute when practical so we can investigate the transaction.</li>
+        <li><strong>Privacy request:</strong> identify the request as a privacy matter and use the email associated with your account.</li>
+        <li><strong>Urgent safety concern:</strong> Take the Board is not an emergency service. Contact local emergency services for an immediate threat.</li>
+      </ul>
+
+      <p class="contact-note">Support availability and response times will be published before live payments launch.</p>
+    </article>
+  </div>
+</div>
+{% endblock %}

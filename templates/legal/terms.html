@@ -1,0 +1,39 @@
+{% extends "legal/policy_layout.html" %}
+
+{% block title %}Terms of Service | Take the Board{% endblock %}
+{% block meta_description %}Terms of Service for Take the Board, an independent fan-made college football rivalry game.{% endblock %}
+{% block policy_title %}Terms of Service{% endblock %}
+
+{% block policy_content %}
+<p class="legal-lede">These terms explain the rules for using Take the Board and purchasing temporary control of a public fan message.</p>
+
+<h2>1. The service</h2>
+<p>Take the Board is an independent fan entertainment platform. A successful purchase gives you temporary control of the message displayed on a Take the Board board. It does not give you ownership of a school, team, trademark, board, website, advertising placement, or any other intellectual property.</p>
+<p>Take the Board is not affiliated with, endorsed by, sponsored by, or otherwise associated with any university, athletic department, conference, or the NCAA.</p>
+
+<h2>2. Eligibility and accounts</h2>
+<p>You must be 18 or older to place bids and legally able to make purchases where you live. You are responsible for keeping your sign-in access secure and for activity performed through your account.</p>
+
+<h2>3. How a takeover works</h2>
+<p>You choose a board, submit a message, and place a bid. Messages are checked against the <a href="{% url 'core:community_guidelines' %}">Community Guidelines</a> before payment. Stripe may authorize a payment before the bid is finalized; an authorization is not the same as a captured charge.</p>
+<p>Only a bid that is still valid and winning when finalized is captured and published. Every successfully captured takeover receives a guaranteed display window of at least 30 seconds. After that window, the message may remain live until another successful takeover, an approved moderation removal, or the end of the game week.</p>
+
+<h2>4. Prices and payments</h2>
+<p>Prices are shown in U.S. dollars before you confirm. The minimum next bid is based on the current captured amount and any pending challenger. You authorize Take the Board to charge the payment method through Stripe for a bid that is successfully finalized. Take the Board does not store full card numbers.</p>
+<p>Payment timing, failed authorizations, cancellations, refunds, and disputes are described in the <a href="{% url 'core:refunds' %}">Refund and Payment Policy</a>.</p>
+
+<h2>5. Your content</h2>
+<p>You are responsible for the message and public board name you submit. You give Take the Board the permission needed to host, display, moderate, format, and share that content as part of the service. Do not submit content you do not have the right to use or content that violates the Community Guidelines.</p>
+
+<h2>6. Moderation and removal</h2>
+<p>Take the Board may reject, remove, redact, or restrict content that violates the Community Guidelines or creates legal, safety, fraud, or operational risk. A message may be reported by another user and reviewed by an administrator. We may suspend or close accounts that abuse the service, payment system, reporting system, or other users.</p>
+
+<h2>7. Changes and availability</h2>
+<p>The service, boards, game weeks, prices, rules, and availability may change. We may pause bidding, reset boards at the end of a game period, correct errors, or take the service offline for maintenance or safety reasons.</p>
+
+<h2>8. Service availability</h2>
+<p>Take the Board is provided as an independent fan entertainment service. We work to keep the service available and accurate, but boards, bids, and features may be changed, paused, or unavailable from time to time. Nothing on Take the Board creates an affiliation with or endorsement by a school, conference, athletic department, or the NCAA.</p>
+
+<h2>9. Contact</h2>
+<p>Questions about these terms can be sent through our <a href="{% url 'core:contact' %}">Contact page</a>.</p>
+{% endblock %}

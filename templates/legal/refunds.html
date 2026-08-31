@@ -1,0 +1,27 @@
+{% extends "legal/policy_layout.html" %}
+
+{% block title %}Refunds and Payment Policy | Take the Board{% endblock %}
+{% block meta_description %}Refunds and payment policy for Take the Board bids, authorizations, captures, cancellations, and disputes.{% endblock %}
+{% block policy_title %}Refunds and Payment Policy{% endblock %}
+
+{% block policy_content %}
+<p class="legal-lede">Take the Board uses Stripe to authorize and capture payments. The important distinction is that an authorization is not necessarily a charge.</p>
+
+<h2>1. Authorization before finalization</h2>
+<p>When you submit a paid bid, Stripe may place an authorization on your payment method. While a board's guaranteed display window is active, a higher bid may replace yours as the pending challenger. A superseded or unsuccessful authorization is canceled and is not captured by Take the Board.</p>
+
+<h2>2. When you are charged</h2>
+<p>Your bid is charged only if it remains valid and winning when the platform finalizes it and Stripe successfully captures the payment. A successful capture publishes the message and starts the guaranteed display window described in the <a href="{% url 'core:terms' %}">Terms</a>.</p>
+
+<h2>3. Capture failures and delays</h2>
+<p>If capture fails, the pending takeover does not publish and the current board message remains live. Webhook or processing delays may temporarily leave a bid showing as pending. The browser's success page is not the source of truth for whether a payment was captured or a takeover was published.</p>
+
+<h2>4. Moderation removals</h2>
+<p>Messages that violate the Community Guidelines may be removed. For a captured paid takeover removed through the moderation process, the refund is the captured amount less the actual Stripe processing fee when that fee is available. An authorized but uncaptured bid is canceled rather than refunded.</p>
+
+<h2>5. Errors and disputes</h2>
+<p>If you believe you were charged incorrectly, contact us promptly with the board name, approximate date, and the email on your account. Never send a full card number, security code, password, or one-time sign-in code. We will investigate payment records and coordinate with Stripe where appropriate.</p>
+
+<h2>6. Taxes and local rights</h2>
+<p>Tax treatment, cancellation rights, digital-service rules, and consumer protections may vary by location. Any rights that apply to you under local law continue to apply.</p>
+{% endblock %}

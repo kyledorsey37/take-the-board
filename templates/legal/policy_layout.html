@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="legal-page" aria-labelledby="policy-title">
+  <div class="legal-shell">
+    <header class="legal-header">
+      <p class="eyebrow">Take the Board policies</p>
+      <h1 id="policy-title">{% block policy_title %}{% endblock %}</h1>
+      <p class="legal-meta">Last updated {{ policy_last_updated }}</p>
+    </header>
+    <article class="legal-content">
+      {% block policy_content %}{% endblock %}
+    </article>
+  </div>
+</div>
+{% endblock %}

@@ -4,7 +4,8 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 
 ## Template Structure
 
-- `templates/base.html`: global layout, metadata, navigation, legal disclaimer, static includes.
+- `templates/base.html`: global layout, metadata, navigation, legal/support links, affiliation disclaimer, and static includes.
+- `templates/legal/` and `templates/contact.html`: public policy and support pages. Keep policy copy aligned with live payment, moderation, privacy, and support behavior.
 - `templates/home.html`: public entry point with a takeover-focused featured board and board discovery links.
 - `templates/how_it_works.html`: public, plain-language explainer for the takeover loop, settlement, moderation boundaries, and weekly reset.
 - `templates/boards/`: school board pages.
@@ -23,7 +24,10 @@ The visual system should be independent from official school brands. Use plain s
 
 Each school board has one canonical public URL and a Share button. Browsers with the
 Web Share API open the native share sheet; desktop browsers copy the canonical URL
-to the clipboard. The page does not render a separate share-preview component.
+to the clipboard. A separate board-level X/Twitter intent button is planned in
+addition to that generic share control; the post-takeover success state already
+offers an X/Twitter share link. Both paths must use canonical URLs and escaped,
+low-risk share text.
 
 Board pages emit Open Graph and X/Twitter Card metadata. Their `summary_large_image`
 card points to the versioned `social/boards/<slug>/card.png` endpoint, which renders
@@ -103,7 +107,7 @@ Escape user-generated board messages and display names everywhere, including pag
 
 ## Analytics
 
-Analytics loads only in production when `GOOGLE_ANALYTICS_MEASUREMENT_ID` contains a valid GA4 measurement ID (`G-...`). The standard Google tag sits in the shared document head, so GA4 receives page views for all server-rendered public pages. It is deliberately absent in local and staging settings.
+Analytics loads only in production when `GOOGLE_ANALYTICS_MEASUREMENT_ID` contains a valid GA4 measurement ID (`G-...`) and the visitor has accepted optional analytics. The standard Google tag sits in the shared document head, so GA4 receives page views for public pages after consent. A first-party `ttb_analytics_consent` cookie stores only the accepted/declined choice; it is not tied to an account or database record. It is deliberately absent in local and staging settings.
 
 The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. Event attributes cover public navigation and discovery, board shares, modal open/close behavior, authentication steps, backing and amount choices, bid validation, paid checkout, takeover outcomes, reporting, FAQs, and leaderboard/rivalry periods. The complete event catalog and GA4 setup checklist live in `docs/analytics_tracking.md`.
 

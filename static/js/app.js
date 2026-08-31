@@ -1,5 +1,40 @@
 window.takeTheBoard = window.takeTheBoard || {};
 
+const ANALYTICS_CONSENT_COOKIE = "ttb_analytics_consent";
+const ANALYTICS_CONSENT_MAX_AGE = 60 * 60 * 24 * 365;
+
+function setAnalyticsConsent(value) {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ANALYTICS_CONSENT_COOKIE}=${value}; Max-Age=${ANALYTICS_CONSENT_MAX_AGE}; Path=/; SameSite=Lax${secure}`;
+}
+
+function clearAnalyticsConsent() {
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `${ANALYTICS_CONSENT_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
+}
+
+document.addEventListener("click", function handleAnalyticsConsent(event) {
+  const choiceButton = event.target.closest("[data-analytics-consent-choice]");
+  const settingsButton = event.target.closest("[data-open-cookie-settings]");
+  const banner = document.getElementById("analytics-consent-banner");
+
+  if (!banner) {
+    return;
+  }
+
+  if (choiceButton) {
+    setAnalyticsConsent(choiceButton.dataset.analyticsConsentChoice);
+    window.location.reload();
+    return;
+  }
+
+  if (settingsButton) {
+    clearAnalyticsConsent();
+    banner.hidden = false;
+    banner.focus();
+  }
+});
+
 window.takeTheBoard.trackEvent = function trackEvent(name, params) {
   if (typeof window.gtag !== "function") {
     return;

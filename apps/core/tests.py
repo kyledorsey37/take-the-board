@@ -187,6 +187,39 @@ class PublicNavigationTests(BoardTestCase):
                 response = self.client.get(reverse(url_name, kwargs=kwargs))
                 self.assertEqual(response.status_code, 200)
 
+    def test_public_policy_and_support_pages_render_and_are_linked(self) -> None:
+        pages = (
+            ("core:privacy", "Privacy Policy"),
+            ("core:terms", "Terms of Service"),
+            ("core:refunds", "Refunds and Payment Policy"),
+            ("core:community_guidelines", "Community Guidelines"),
+            ("core:contact", "Contact us"),
+        )
+
+        for url_name, heading in pages:
+            with self.subTest(url_name=url_name):
+                response = self.client.get(reverse(url_name))
+                self.assertEqual(response.status_code, 200)
+                self.assertContains(response, heading)
+                self.assertNotContains(response, "Draft for legal review")
+                self.assertNotContains(response, "counsel")
+
+        terms = self.client.get(reverse("core:terms"))
+        self.assertContains(terms, "You must be 18 or older to place bids")
+
+        privacy = self.client.get(reverse("core:privacy"))
+        self.assertContains(privacy, "an internal account identifier used to recognize your account")
+        self.assertNotContains(privacy, "Cognito account identifier")
+        self.assertContains(privacy, "Public board messages, board names, and takeover history may remain part of the public game record.")
+        self.assertNotContains(privacy, "operator's documented retention schedule")
+
+        home = self.client.get(reverse("core:home"))
+        self.assertContains(home, reverse("core:privacy"))
+        self.assertContains(home, reverse("core:terms"))
+        self.assertContains(home, reverse("core:refunds"))
+        self.assertContains(home, reverse("core:community_guidelines"))
+        self.assertContains(home, reverse("core:contact"))
+
     def test_how_it_works_page_explains_the_public_takeover_loop(self) -> None:
         response = self.client.get(reverse("core:how_it_works"))
 
@@ -220,15 +253,46 @@ class PublicNavigationTests(BoardTestCase):
         with Image.open(BytesIO(response.content)) as image:
             self.assertEqual(image.size, (1200, 630))
 
+    @override_settings(TAKEBOARD_ANALYTICS_CONSENT_PREVIEW=False)
     def test_google_tag_is_rendered_only_when_configured(self) -> None:
         response = self.client.get(reverse("core:home"))
         self.assertNotContains(response, "googletagmanager.com/gtag/js")
+        self.assertNotContains(response, 'data-analytics-consent-choice="accepted"')
+        self.assertNotContains(response, "Cookie settings")
 
         with override_settings(GOOGLE_ANALYTICS_MEASUREMENT_ID="G-TEST123"):
+            response = self.client.get(reverse("core:home"))
+            self.assertNotContains(response, "googletagmanager.com/gtag/js")
+            self.assertContains(response, 'data-analytics-consent-choice="accepted"')
+            self.assertContains(response, 'data-analytics-consent-choice="declined"')
+            self.assertContains(response, "Cookie settings")
+
+            self.client.cookies["ttb_analytics_consent"] = "accepted"
             response = self.client.get(reverse("core:home"))
 
         self.assertContains(response, "googletagmanager.com/gtag/js?id=G-TEST123")
         self.assertContains(response, 'gtag("config", "G-TEST123")')
+        self.assertContains(response, 'analytics_storage": "granted"')
+        self.assertContains(response, 'id="analytics-consent-banner"')
+        self.assertEqual(response.context["analytics_consent"], "accepted")
+
+    def test_declined_analytics_hides_banner_without_loading_tag(self) -> None:
+        self.client.cookies["ttb_analytics_consent"] = "declined"
+
+        with override_settings(GOOGLE_ANALYTICS_MEASUREMENT_ID="G-TEST123"):
+            response = self.client.get(reverse("core:home"))
+
+        self.assertNotContains(response, "googletagmanager.com/gtag/js")
+        self.assertContains(response, 'id="analytics-consent-banner"')
+        self.assertEqual(response.context["analytics_consent"], "declined")
+
+    @override_settings(TAKEBOARD_ANALYTICS_CONSENT_PREVIEW=True)
+    def test_analytics_consent_can_be_previewed_without_a_measurement_id(self) -> None:
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, 'id="analytics-consent-banner"')
+        self.assertContains(response, 'data-analytics-consent-choice="accepted"')
+        self.assertNotContains(response, "googletagmanager.com/gtag/js")
 
     def test_public_pages_expose_discovery_and_modal_funnel_events(self) -> None:
         boards = self.client.get(reverse("boards:index"))

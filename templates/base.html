@@ -16,13 +16,19 @@
   <meta name="twitter:title" content="{% block twitter_title %}Take the Board | College football's public fan boards{% endblock %}">
   <meta name="twitter:description" content="{% block twitter_description %}Take control of a college football fan board and make your message the one everyone sees.{% endblock %}">
   {% block social_image_meta %}{% endblock %}
-  {% if google_analytics_measurement_id %}
+  {% if google_analytics_measurement_id and analytics_consent == "accepted" %}
     <script async src="https://www.googletagmanager.com/gtag/js?id={{ google_analytics_measurement_id }}"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       window.gtag = gtag;
       gtag("js", new Date());
+      gtag("consent", "default", {
+        "ad_storage": "denied",
+        "ad_user_data": "denied",
+        "ad_personalization": "denied",
+        "analytics_storage": "granted"
+      });
       gtag("config", "{{ google_analytics_measurement_id }}");
     </script>
   {% endif %}
@@ -32,9 +38,9 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-13">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-15">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-  <script src="{% static 'js/app.js' %}" defer></script>
+  <script src="{% static 'js/app.js' %}?v=20260831-2" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -63,11 +69,24 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="site-footer">
-    <p>
-      Take the Board is an independent fan-made entertainment platform. It is not affiliated with,
-      endorsed by, sponsored by, or otherwise associated with any university, athletic department,
-      conference, or the NCAA.
-    </p>
+    <div class="site-footer-inner">
+      <p>
+        Take the Board is an independent fan-made entertainment platform. It is not affiliated with,
+        endorsed by, sponsored by, or otherwise associated with any university, athletic department,
+        conference, or the NCAA.
+      </p>
+      <nav class="site-footer-links" aria-label="Legal and support">
+        <a href="{% url 'core:how_it_works' %}">How it works</a>
+        <a href="{% url 'core:community_guidelines' %}">Community guidelines</a>
+        <a href="{% url 'core:terms' %}">Terms</a>
+        <a href="{% url 'core:privacy' %}">Privacy</a>
+        <a href="{% url 'core:refunds' %}">Refunds</a>
+        <a href="{% url 'core:contact' %}">Contact</a>
+        {% if analytics_consent_banner_enabled %}
+          <button class="site-footer-button" type="button" data-open-cookie-settings>Cookie settings</button>
+        {% endif %}
+      </nav>
+    </div>
   </footer>
   {% if auth_modal_enabled and not auth_profile %}
     <dialog class="bid-dialog auth-dialog" id="auth-modal" aria-labelledby="auth-modal-title" data-auth-preview="{{ auth_modal_preview|yesno:'true,false' }}" data-auth-default-title="Sign in to take the board." data-auth-default-intro="Enter your email and we will send a one-time code." data-analytics-modal-id="auth" data-analytics-surface="auth_modal">
@@ -143,6 +162,27 @@
         <p class="auth-status" data-auth-status aria-live="polite"></p>
       </div>
     </dialog>
+  {% endif %}
+  {% if analytics_consent_banner_enabled %}
+    <aside
+      id="analytics-consent-banner"
+      class="analytics-consent"
+      aria-labelledby="analytics-consent-title"
+      tabindex="-1"
+      {% if analytics_consent %}hidden{% endif %}
+    >
+      <div class="analytics-consent-inner">
+        <div>
+          <p class="analytics-consent-label">Optional analytics</p>
+          <h2 id="analytics-consent-title">Help us understand what is useful.</h2>
+          <p>We use Google Analytics to measure aggregate site usage. It is off unless you accept. Read our <a href="{% url 'core:privacy' %}">Privacy Policy</a>.</p>
+        </div>
+        <div class="analytics-consent-actions">
+          <button class="button button-primary" type="button" data-analytics-consent-choice="accepted">Accept</button>
+          <button class="button button-secondary" type="button" data-analytics-consent-choice="declined">Decline</button>
+        </div>
+      </div>
+    </aside>
   {% endif %}
 </body>
 </html>

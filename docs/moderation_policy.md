@@ -4,9 +4,10 @@ Implementation detail and rollout order are defined in
 `docs/moderation_and_abuse_controls_design.md`.
 
 Moderation is implemented as a deterministic validation, Redis-cost-control, and
-Bedrock/Nova classifier gate. Bedrock remains fail-closed until its dev IAM and
-model configuration are enabled. This document defines the intended posture for
-public user-generated board messages.
+optional Bedrock/Nova classifier gate. The Bedrock adapter is isolated to one
+service, stores only a normalized decision, and fails closed when the provider is
+disabled, unavailable, or returns a malformed response. This document defines
+the intended posture for public user-generated board messages.
 
 ## Philosophy
 
@@ -36,7 +37,10 @@ Blocked:
 
 Deterministic checks run before any Bedrock/Nova call. Reject empty messages, messages longer than the configured limit, control characters, excessive Unicode abuse, URLs, email addresses, phone numbers, and obvious personal information.
 
-Only after deterministic checks pass should the future Nova classifier run.
+Only after deterministic checks pass should the configured Nova classifier run.
+When Bedrock is disabled or unconfigured, validation returns a temporary busy
+outcome and the message cannot proceed to payment. This keeps the application
+from accepting unclassified paid content.
 
 ## User-Facing Rejection
 
@@ -49,8 +53,33 @@ Rivalry insults and profanity are fine, but slurs, threats, personal attacks, an
 
 ## Records And Retention
 
-Successful moderation creates a short-lived `MessageValidation` record that belongs to the same user, board, represented school, and exact message submitted to checkout. Retention for raw text, model outputs, admin review notes, and blocked attempts must be defined before public launch.
+Each validation creates a `MessageValidation` or `DisplayNameValidation` record
+with the user, policy version, classifier version, normalized decision, and
+expiration time. The expiration controls whether the approval can be reused for
+checkout; it is not a general database-deletion timer.
+
+Blocked and review candidates receive a `content_retention_until` timestamp
+(currently 30 days). The `purge_moderation_content` management command clears
+their stored raw message or display-name text after that timestamp while
+retaining decision metadata. Allowed validation records remain linked to the
+checkout and publication audit trail; historical public messages are preserved
+as part of takeover evidence. The MVP still needs an owned production schedule
+and monitoring for the purge command, plus a documented account-deletion/privacy
+request procedure.
+
+Raw Bedrock responses are not persisted or logged. Application logs should use
+validation type, user ID, decision, and timing/error metadata only; they must not
+include candidate text, prompts, or provider payloads.
 
 ## Admin Operations
 
-Django Admin should support reviewing validation records, removing current messages, disabling bidding on a board, banning users, and preserving an audit trail of who acted and when.
+Django Admin supports reviewing validation and report records, removing current
+messages, resolving reports, disabling bidding on a board, banning users, and
+preserving an audit trail of who acted and when. Captured paid-message removals
+create retryable, idempotent cancellation/refund actions; refunds use the
+recorded Stripe fee rather than estimating one.
+
+Before launch, the operator still needs to configure the moderation provider in
+dev/staging, run provider failure and allowed/blocked smoke tests, define who
+reviews reports, and monitor the purge and moderation-failure paths. See
+`docs/launch_readiness.md` for the consolidated launch status.

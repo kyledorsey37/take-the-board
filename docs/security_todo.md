@@ -1,9 +1,13 @@
 # Security To-Do List
 
 Use this checklist before opening Take the Board to significant public traffic or real-money users.
+For the consolidated status of product, payment, moderation, infrastructure,
+release-validation, and security work, see [launch readiness](launch_readiness.md).
 
 ## Critical before public launch
 
+- [ ] Add a first-paid-bid acknowledgement that the user is 18 or older, enforce
+      it server-side, and preserve the acknowledgement with purchase evidence.
 - [ ] Protect Django Admin at `/admin/` with an edge allowlist, VPN, or SSO.
 - [ ] Require MFA for every staff/admin account.
 - [ ] Add admin login throttling and alerting for repeated failures.

@@ -73,6 +73,23 @@ leaderboard, reset operation, or moderation name reservation.
 
 Complex business logic should live in service modules rather than views, models, or signals. Payment authorization, capture, cancellation, checkout creation, bid finalization, moderation validation, board publication, and weekly resets have explicit service boundaries.
 
+## Automatic social publishing
+
+Automatic posts to the Take the Board X/Twitter account are a separate outbound
+side effect of a successful takeover. The trigger must run only after the server
+has captured payment and published the `BoardTakeover`; an authorization,
+pending challenger, browser redirect, or failed capture must never create a
+post. The post should use the canonical public board URL and already-public,
+escaped board data, with no email, payment identifier, bid identifier, or
+moderation details.
+
+Social publishing must be retryable and idempotent so a worker retry cannot post
+the same takeover repeatedly. X API credentials belong in the production secret
+store, and rate limits, provider errors, a manual retry/disable control, and
+operator visibility into failed posts must be handled without changing board or
+payment state. This integration is not wired yet; see
+`docs/launch_readiness.md`.
+
 ## Local Free-Play Loop
 
 `python manage.py seed_demo_data` creates the College Football competition if it is
@@ -83,11 +100,15 @@ source of truth after seeding.
 
 When `TAKEBOARD_DEMO_BIDDING_ENABLED` is on in local settings, the bid service implements the protected-board state machine without calling Stripe. A published local bid receives a 30-second `guaranteed_until` window. During that period, only one higher `authorized` bid may be pending; a still-higher bid transactionally replaces it and records the prior authorization as canceled. The minimum uses the maximum of the current captured amount and pending amount.
 
-When `TAKEBOARD_STRIPE_ENABLED` is on, authenticated bids create Stripe Embedded Checkout Sessions with manual capture. Stripe webhooks are signature-verified and stored in `StripeEvent`; the local `run_bid_worker` processes authorization and payment events, cancels superseded authorizations, and captures a valid pending bid when its guarantee is due. The worker still polls Postgres locally; SQS FIFO delivery is a production follow-up.
+When `TAKEBOARD_STRIPE_ENABLED` is on, authenticated bids create Stripe Embedded Checkout Sessions with manual capture. Stripe webhooks are signature-verified and stored in `StripeEvent`; the local `run_bid_worker` processes authorization and payment events, cancels superseded authorizations, and captures a valid pending bid when its guarantee is due. The worker currently polls Postgres. SQS FIFO is the intended production delivery mechanism, but it is not wired into the application yet.
 
 The local `run_bid_worker` command polls Stripe events and due boards. On a successful capture it publishes the pending bid, writes takeover history, and starts a new guarantee. Its callback boundary also models a failed capture: the pending bid becomes `payment_failed`, is cleared, and the current controller remains live. The Compose `demo-finalizer` service runs this command in either local free-play or Stripe sandbox mode, based on the feature flags.
 
-This remains a local integration slice: moderation approval, ledger entries, SQS FIFO delivery, refunds, and disputes are not yet implemented.
+The local integration slice includes moderation approval records, ledger entries,
+refund handling, and dispute handling. Those paths have service boundaries and
+automated tests. It still differs from the intended production topology because
+the worker polls Postgres instead of consuming SQS FIFO messages, and the
+Bedrock/Nova provider is fail-closed until its AWS configuration is enabled.
 
 ## Public Standings
 
@@ -123,9 +144,13 @@ Each `SeasonWeek` is identified by its year and week number. The year is the ISO
 week-year, so Week 1 in a new year is distinct from Week 1 in the prior year even
 though yearly rollup statistics are not required.
 
-## Future Workers
+## Finalization Worker and Queue
 
-SQS FIFO should be used only for bid finalization ordering. Messages should be grouped by board ID so bids for the same board finalize sequentially while unrelated boards can process independently.
+SQS FIFO is not used by the current local worker. The production queue should be
+used only for bid finalization ordering, with messages grouped by board ID so
+bids for the same board finalize sequentially while unrelated boards can process
+independently. The queue consumer must retain the existing board-row lock and
+one-pending-challenger invariant, and must be safe to retry.
 
 The production worker command will be:
 
@@ -133,7 +158,11 @@ The production worker command will be:
 python manage.py run_bid_worker
 ```
 
-Production finalization must retain the same board-row lock and one-pending-challenger invariant, but use SQS FIFO ordering and Stripe manual capture rather than the local polling simulation.
+Production finalization must retain the same board-row lock and one-pending-
+challenger invariant, but use SQS FIFO ordering and Stripe manual capture rather
+than the local polling simulation. A dev/staging queue should be exercised before
+the production queue is enabled so ordering, retries, visibility timeouts, and a
+dead-letter path are observable.
 
 ## Weekly Reset
 
@@ -144,8 +173,28 @@ management command:
 python manage.py reset_boards
 ```
 
-The command should be invoked by EventBridge Scheduler at Sunday 11:59 PM in
-`America/New_York`. It marks the completed `(year, week_number)` period, rebuilds
+The command is ready to be invoked by EventBridge Scheduler at Sunday 11:59 PM
+in `America/New_York`, but that schedule and its alerting still need to be
+configured in AWS. It marks the completed `(year, week_number)` period, rebuilds
 its cached entity stats, creates the next period, cancels any pending authorized
 challenger before clearing live board state, and preserves all bids, takeovers,
-and ledger entries. Repeating the command for the same period is a no-op.
+and ledger entries. Repeating the command for the same period is a no-op. The
+command was manually exercised against the local Docker database on 2026-08-31;
+it reset the current boards while preserving historical takeovers, bids, and
+all-time totals, and a second invocation was a no-op.
+
+## Payment and moderation operations
+
+The following operational commands are implemented:
+
+```bash
+python manage.py reconcile_payment_captures
+python manage.py purge_moderation_content
+```
+
+`reconcile_payment_captures` backfills missing Stripe capture snapshots and
+attaches delayed fee data when Stripe makes it available. The reconciliation
+logic is idempotent, but a production schedule, alert, and owner still need to
+be configured. `purge_moderation_content` clears expired blocked/review
+moderation text while retaining decision metadata. Its production schedule and
+monitoring also need to be configured.

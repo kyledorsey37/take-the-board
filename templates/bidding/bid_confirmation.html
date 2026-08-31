@@ -44,4 +44,5 @@
     <button class="button button-primary bid-submit" type="submit">Continue to payment · ${{ confirmation.amount_dollars|floatformat:2 }}</button>
   </form>
   <p class="bid-confirmation-trust">Secured by Stripe <span aria-hidden="true">·</span> Message approved <span aria-hidden="true">·</span> Only charged if you win</p>
+  <p class="bid-confirmation-policy">By continuing, you agree to our <a href="{% url 'core:terms' %}">Terms</a> and <a href="{% url 'core:refunds' %}">Refund Policy</a>.</p>
 </section>

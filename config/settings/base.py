@@ -174,6 +174,8 @@ TAKEBOARD_VALIDATION_EXPIRATION_MINUTES = int(
     os.environ.get("TAKEBOARD_VALIDATION_EXPIRATION_MINUTES", "10")
 )
 TAKEBOARD_BID_TERMS_VERSION = os.environ.get("TAKEBOARD_BID_TERMS_VERSION", "bid-terms-v1")
+TAKEBOARD_SUPPORT_EMAIL = os.environ.get("TAKEBOARD_SUPPORT_EMAIL", "support@taketheboard.com")
+TAKEBOARD_POLICY_LAST_UPDATED = os.environ.get("TAKEBOARD_POLICY_LAST_UPDATED", "August 31, 2026")
 TAKEBOARD_STRIPE_STATEMENT_DESCRIPTOR = os.environ.get(
     "TAKEBOARD_STRIPE_STATEMENT_DESCRIPTOR", "TAKETHEBOARD"
 )
@@ -264,6 +266,9 @@ else:
 # This remains empty outside production, even if a developer happens to have a
 # measurement ID in a local environment file.
 GOOGLE_ANALYTICS_MEASUREMENT_ID = ""
+TAKEBOARD_ANALYTICS_CONSENT_PREVIEW = env_bool(
+    "TAKEBOARD_ANALYTICS_CONSENT_PREVIEW", False
+)
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
 if SENTRY_DSN:

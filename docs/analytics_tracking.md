@@ -2,8 +2,14 @@
 
 Take the Board uses the Google tag in `templates/base.html` and a fail-silent
 `window.takeTheBoard.trackEvent()` helper in `static/js/app.js`. The tag is
-rendered only when production has a valid `GOOGLE_ANALYTICS_MEASUREMENT_ID`.
-Local and staging environments intentionally do not collect analytics.
+rendered only when production has a valid `GOOGLE_ANALYTICS_MEASUREMENT_ID`
+and the visitor has accepted optional analytics through the first-party
+`ttb_analytics_consent` cookie. Local and staging environments intentionally do
+not collect analytics. The banner does not create an account, session, or
+database record for anonymous visitors.
+
+Set `TAKEBOARD_ANALYTICS_CONSENT_PREVIEW=true` locally to preview the banner
+without a measurement ID. Preview mode never loads the Google tag.
 
 ## Rules
 
@@ -65,7 +71,7 @@ Local and staging environments intentionally do not collect analytics.
 
 1. Create the production web data stream and put its `G-...` measurement ID in
    the production environment only.
-2. Decide and implement the privacy notice and consent behavior for the
+2. Keep the lightweight opt-in banner and privacy notice aligned with the
    jurisdictions where the game is offered before enabling collection.
 3. Register only the low-cardinality parameters needed in reports as custom
    dimensions: `surface`, `destination`, `school_slug`, `rivalry_slug`,
@@ -81,5 +87,17 @@ Local and staging environments intentionally do not collect analytics.
 5. Use GA4 Enhanced Measurement for scroll and outbound-link reporting rather
    than adding noisy application events.
 
+The planned board-level X/Twitter button should reuse `board_share_clicked` and
+`board_share_result` with `share_method=x_twitter`; do not add the board message,
+user identity, or full share URL as an event parameter.
+
 GA4 events do not replace server-side payment, moderation, or audit records.
 Those records remain the source of truth for business outcomes.
+
+## Consent storage
+
+The browser stores only `ttb_analytics_consent=accepted` or
+`ttb_analytics_consent=declined` for one year. The value contains no account,
+payment, message, or authentication information. A visitor can change the
+choice through the Cookie settings footer link; clearing browser storage also
+resets the choice.

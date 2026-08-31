@@ -7,6 +7,7 @@ not affect that area.
 
 The checklist is a review prompt, not a replacement for the source-of-truth
 documents linked below.
+For the current consolidated launch status, see [launch readiness](launch_readiness.md).
 
 ## Start-of-work review
 
@@ -80,7 +81,9 @@ Use these additional prompts when applicable:
 
 Keep only durable, actionable items here. Remove an item once it is completed.
 
-- None currently.
+- [ ] Before enabling live payments, configure and monitor the published support
+      mailbox, and keep public policy copy aligned with payment, moderation,
+      privacy, retention, and analytics behavior.
 
 ## Review log
 

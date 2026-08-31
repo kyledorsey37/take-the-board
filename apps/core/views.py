@@ -1,4 +1,5 @@
 from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.conf import settings
 from django.shortcuts import render
 
 from apps.accounts.services.session import get_authenticated_profile
@@ -50,6 +51,37 @@ def home(request: HttpRequest) -> HttpResponse:
 
 def how_it_works(request: HttpRequest) -> HttpResponse:
     return render(request, "how_it_works.html")
+
+
+def _render_public_page(request: HttpRequest, template_name: str) -> HttpResponse:
+    return render(
+        request,
+        template_name,
+        {
+            "support_email": settings.TAKEBOARD_SUPPORT_EMAIL,
+            "policy_last_updated": settings.TAKEBOARD_POLICY_LAST_UPDATED,
+        },
+    )
+
+
+def privacy(request: HttpRequest) -> HttpResponse:
+    return _render_public_page(request, "legal/privacy.html")
+
+
+def terms(request: HttpRequest) -> HttpResponse:
+    return _render_public_page(request, "legal/terms.html")
+
+
+def refunds(request: HttpRequest) -> HttpResponse:
+    return _render_public_page(request, "legal/refunds.html")
+
+
+def community_guidelines(request: HttpRequest) -> HttpResponse:
+    return _render_public_page(request, "legal/community_guidelines.html")
+
+
+def contact(request: HttpRequest) -> HttpResponse:
+    return _render_public_page(request, "contact.html")
 
 
 def healthz(request: HttpRequest) -> JsonResponse:

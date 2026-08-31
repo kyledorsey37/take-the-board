@@ -100,5 +100,5 @@ isolated framework checks when no database service is available.
 - Django monolith.
 - Django templates, HTMX, and minimal JavaScript.
 - PostgreSQL for core game state.
-- Cognito email-code authentication and the Stripe sandbox path are wired for local end-to-end testing. Stripe Embedded Checkout creates one-time manual-capture authorizations, verified webhooks are stored idempotently, and the local worker processes authorization, cancellation, and capture transitions. Bedrock/Nova moderation, SQS FIFO finalization, and EventBridge reset jobs remain future production work.
+- Cognito email-code authentication and the Stripe sandbox path are wired for local end-to-end testing. Stripe Embedded Checkout creates one-time manual-capture authorizations, verified webhooks are stored idempotently, and the local worker processes authorization, cancellation, and capture transitions. Moderation, refunds, disputes, ledger entries, and the reset command are implemented; Bedrock/Nova configuration, SQS FIFO finalization, EventBridge scheduling, and production operations remain to be completed. See `docs/launch_readiness.md`.
 - Django Admin is the MVP operational interface.

@@ -52,9 +52,10 @@ work.
     snapshots so delayed Stripe balance-transaction fee data is attached without
     changing the original captured amount.
 
-In the current local slice, message moderation is not yet connected to Bedrock/Nova and
-the worker polls Postgres rather than consuming SQS FIFO messages. Do not use this mode
-for real cards or production traffic.
+In the current local slice, the Bedrock/Nova adapter is available but normally
+disabled until dev AWS IAM and model configuration are complete, and the worker
+polls Postgres rather than consuming SQS FIFO messages. Do not use this mode for
+real cards or production traffic.
 
 ## Protected Display Window
 
