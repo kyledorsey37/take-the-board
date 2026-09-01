@@ -62,6 +62,10 @@ product surface before it is needed:
 - `CompetitionPeriod` scopes active periods and cached `EntityPeriodStats` to one
   competition. The current weekly schedule remains the College Football MVP's
   policy, not a cross-sport schema assumption.
+- The public weekly reset schedule is derived from the active period's `ends_at`.
+  If that deadline passes before the reset command completes, public surfaces show
+  that the reset is due rather than advancing the displayed week. The command is
+  still responsible for clearing live board state and rebuilding period stats.
 
 The current public routes and wording remain College Football-specific
 (`/schools/<slug>/`, “school,” and “conference”). They resolve through
