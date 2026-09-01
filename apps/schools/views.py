@@ -4,6 +4,7 @@ from django.conf import settings
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, render
 from django.urls import reverse
+from django.utils import timezone
 
 from apps.bidding.forms import TakeBoardForm
 from apps.bidding.services.finalize_bid import finalize_due_board
@@ -13,8 +14,43 @@ from apps.boards.models import BoardTakeover
 from apps.moderation.models import MessageReport, MessageReportCase
 from apps.accounts.services.session import get_authenticated_profile
 from apps.core.services.home_board import record_board_visit
+from apps.leaderboard.week_services import current_period_window, weekly_reset_schedule
 from .models import Entity
 from .services import default_competition, safe_accent_color
+
+
+def _group_takeovers_by_week(takeovers: list[BoardTakeover]) -> list[dict]:
+    """Build ordered public history groups from persisted competition weeks."""
+    groups: dict[object, dict] = {}
+    for takeover in takeovers:
+        if takeover.period_id and takeover.period:
+            starts_at = takeover.period.starts_at
+            ends_at = takeover.period.ends_at
+            is_current = takeover.period.active
+        else:
+            window = current_period_window(takeover.occurred_at)
+            starts_at = window.starts_at
+            ends_at = window.ends_at
+            is_current = starts_at <= timezone.now() < ends_at
+        group_key = ("week", starts_at)
+
+        group = groups.setdefault(
+            group_key,
+            {
+                "starts_at": starts_at,
+                "ends_at": ends_at,
+                "is_current": is_current,
+                "takeovers": [],
+            },
+        )
+        group["takeovers"].append(takeover)
+        group["is_current"] = group["is_current"] or is_current
+
+    grouped = list(groups.values())
+    for index, group in enumerate(grouped):
+        group["is_latest"] = index == 0
+        group["count_label"] = "takeover" if len(group["takeovers"]) == 1 else "takeovers"
+    return grouped
 
 
 def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
@@ -85,8 +121,8 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         },
     )
     takeovers = list(
-        board.takeovers.select_related("represented_entity", "report_case")
-        .order_by("-occurred_at", "-id")[:5]
+        board.takeovers.select_related("represented_entity", "report_case", "period")
+        .order_by("-occurred_at", "-id")
     )
     current_takeover = None
     if board.current_bid_id:
@@ -124,6 +160,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         f"{board.entity.name}'s live fan board. See the current message and take it over "
         "with your next move."
     )
+    reset_schedule = weekly_reset_schedule(competition=competition)
     return render(
         request,
         "boards/school_detail.html",
@@ -132,6 +169,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "entity_accent": entity_accent,
             "form": form,
             "takeovers": takeovers,
+            "takeover_week_groups": _group_takeovers_by_week(takeovers),
             "current_takeover": current_takeover,
             "report_categories": MessageReport.Category.choices,
             "minimum_takeover_dollars": minimum_takeover / 100,
@@ -156,5 +194,11 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "social_image_url": social_image_url,
             "social_title": social_title,
             "social_description": social_description,
+            "round_status_enabled": True,
+            "round_status_surface": "school_board",
+            "round_reset_at": reset_schedule.reset_at,
+            "round_server_now": reset_schedule.server_now,
+            "round_is_due": reset_schedule.is_due,
+            "current_week_number": reset_schedule.week_number,
         },
     )

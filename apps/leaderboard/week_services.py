@@ -27,6 +27,16 @@ class CompetitionPeriodWindow:
     week_number: int
 
 
+@dataclass(frozen=True)
+class WeeklyResetSchedule:
+    """Public-facing reset timing derived from the server's current state."""
+
+    server_now: datetime
+    reset_at: datetime
+    is_due: bool
+    week_number: int
+
+
 def current_period_window(now: datetime | None = None) -> CompetitionPeriodWindow:
     now = now or timezone.now()
     local_now = timezone.localtime(now, timezone.get_current_timezone())
@@ -46,6 +56,44 @@ def current_period_window(now: datetime | None = None) -> CompetitionPeriodWindo
         ends_at=ends_at,
         year=iso_calendar.year,
         week_number=iso_calendar.week,
+    )
+
+
+def weekly_reset_schedule(
+    *,
+    competition: Competition,
+    now: datetime | None = None,
+) -> WeeklyResetSchedule:
+    """Return the reset deadline without allowing a late job to fake a new week."""
+    server_now = now or timezone.now()
+    active_week = (
+        CompetitionPeriod.objects.filter(competition=competition, active=True)
+        .order_by("-starts_at")
+        .first()
+    )
+
+    if active_week and active_week.ends_at <= server_now and not active_week.reset_completed_at:
+        return WeeklyResetSchedule(
+            server_now=server_now,
+            reset_at=active_week.ends_at,
+            is_due=True,
+            week_number=active_week.week_number,
+        )
+
+    current_window = current_period_window(server_now)
+    return WeeklyResetSchedule(
+        server_now=server_now,
+        reset_at=(
+            active_week.ends_at
+            if active_week and active_week.ends_at > server_now
+            else current_window.ends_at
+        ),
+        is_due=False,
+        week_number=(
+            active_week.week_number
+            if active_week and active_week.ends_at > server_now
+            else current_window.week_number
+        ),
     )
 
 

@@ -67,6 +67,8 @@ without a measurement ID. Preview mode never loads the Google tag.
 | `standings_period_changed` | Leaderboard period link is clicked | `period` |
 | `rivalry_period_changed` | Rivalry period link is clicked | `rivalry_slug`, `period` |
 | `faq_opened` | FAQ item opens | `surface`, `faq_id` |
+| `round_help_opened` | Weekly reset help dialog opens | `surface` |
+| `takeover_history_week_toggled` | A takeover-history week is opened or closed | `surface`, `period` |
 | `sign_out` | Sign-out form submits | `surface` |
 
 ## Recommended GA4 setup before launch

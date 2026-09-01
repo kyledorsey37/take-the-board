@@ -38,8 +38,8 @@ These are good remote handoffs that do not need your credentials first:
   boundary, retry behavior, disable controls, and a mocked X provider.
 - Build Resend email templates and the refund/message-removal notification
   service behind an environment-based provider interface.
-- Build the board reset countdown from the server-provided reset timestamp and
-  add the public weekly-reset explanation.
+- Verify the weekly reset explainer and countdown in staging after the EventBridge
+  schedule is configured, including the late-reset/in-progress state.
 - Build the authenticated account history/support surface: active and historical
   takeovers, bid/payment status, safe receipt or transaction references,
   refund/dispute state, and clear failed, delayed, and outbid outcomes.
@@ -147,8 +147,8 @@ reconciliation/alerting, and the security gates listed in
 | SQS FIFO bid finalization | Build | The queue URL placeholder exists, but the producer/consumer are not wired. Implement board ID message-grouping, retry/visibility behavior, dead-letter handling, idempotent consumption, and a dev/staging smoke test before production. |
 | Weekly reset service/command | Done | `reset_boards` is idempotent, preserves historical bids/takeovers/ledger entries, rebuilds period stats, and was manually verified against the local Docker database on 2026-08-31. |
 | EventBridge reset schedule | Verify/configure | Configure Sunday 11:59 PM `America/New_York` invocation, permissions, failure alerts, and a manual invocation procedure. Test the schedule in dev/staging before relying on it. |
-| Public weekly-reset explanation | Verify/configure | Make the Sunday-to-Sunday reset, preservation of all-time history, and weekly leaderboard behavior explicit in the public explainer and policy copy. |
-| Board reset countdown | Build | Show the server-derived time until the next weekly reset on board/leaderboard surfaces. The timer is explanatory UX only; the server-side reset command remains authoritative and must handle schedule delays safely. |
+| Public weekly-reset explanation | Done | How it works, the FAQ, and Terms now explain the Sunday-to-Sunday round, fresh weekly boards/standings, and preserved takeover history in player-facing language. |
+| Board reset countdown | Done | A shared weekly-status rail appears below navigation on public gameplay surfaces, with the server-derived college-football week number, countdown, and accessible customer-facing help dialog. A late reset is presented as due/in progress; the reset command remains authoritative. |
 | Shared Redis | Verify/configure | Required for sessions, moderation limits, checkout limits, and abuse controls across instances. Verify outage behavior fails closed for sensitive writes. |
 | Sentry error monitoring | Verify/configure | Server-side Sentry is wired when `SENTRY_DSN` is set. Add/verify browser-side coverage and alerts for webhook, capture/cancel/refund, worker, moderation, reset, reconciliation, and database-integrity failures. |
 | Sentry free-tier hygiene | Verify/configure | Set environments/releases, scrub PII, filter expected 4xx/user-validation noise, keep real payment/provider/worker failures visible, tune alert thresholds, and review event volume before enabling the free-tier project in production. |

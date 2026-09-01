@@ -11,9 +11,10 @@ from django.views.decorators.http import require_GET, require_POST
 
 from apps.bidding.services.rules import current_board_rules, minimum_takeover_cents
 from apps.accounts.services.session import get_authenticated_profile
-from apps.schools.services import default_competition
+from apps.schools.services import default_competition, safe_accent_color
 from apps.moderation.services.rate_limits import RateLimitExceeded, RateLimitUnavailable, ValidationBusy
 from apps.moderation.services.reporting import ReportUnavailable, remote_addr, submit_message_report
+from apps.leaderboard.week_services import weekly_reset_schedule
 
 from .models import Board
 from .services.social_card import render_board_social_card
@@ -26,10 +27,28 @@ REPORT_RETRY = "Please try again later."
 
 
 def board_index(request: HttpRequest) -> HttpResponse:
-    boards = Board.objects.filter(entity__competition=default_competition()).select_related("entity", "current_controller").order_by(
-        "-current_amount_cents", "entity__name"
+    competition = default_competition()
+    boards = list(
+        Board.objects.filter(entity__competition=competition)
+        .select_related("entity", "current_controller")
+        .order_by("-current_amount_cents", "entity__name")
     )
-    return render(request, "boards/index.html", {"boards": boards})
+    for board in boards:
+        board.entity_accent = safe_accent_color(board.entity.accent_color)
+    reset_schedule = weekly_reset_schedule(competition=competition)
+    return render(
+        request,
+        "boards/index.html",
+        {
+            "boards": boards,
+            "round_status_enabled": True,
+            "round_status_surface": "board_directory",
+            "round_reset_at": reset_schedule.reset_at,
+            "round_server_now": reset_schedule.server_now,
+            "round_is_due": reset_schedule.is_due,
+            "current_week_number": reset_schedule.week_number,
+        },
+    )
 
 
 @require_GET

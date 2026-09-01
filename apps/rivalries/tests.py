@@ -134,9 +134,13 @@ class RivalryScoreboardTests(TestCase):
 
         self.assertEqual(index_response.status_code, 200)
         self.assertContains(index_response, "Alabama vs. Texas")
+        self.assertEqual(index_response.content.count(b'class="round-status-rail"'), 1)
+        self.assertContains(index_response, 'data-analytics-surface="rivalry_directory"')
         self.assertContains(detail_response, "Who is taking over?")
         self.assertContains(detail_response, "Alabama")
         self.assertContains(detail_response, "Texas")
         self.assertContains(detail_response, "Back Alabama")
         self.assertContains(detail_response, "backing=alabama")
         self.assertContains(detail_response, "Recent moves")
+        self.assertEqual(detail_response.content.count(b'class="round-status-rail"'), 1)
+        self.assertContains(detail_response, 'data-analytics-surface="rivalry_detail"')

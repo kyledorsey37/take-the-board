@@ -1,0 +1,42 @@
+<section
+  class="round-status-rail{% if round_is_due %} round-status-rail-due{% endif %}"
+  data-round-status
+  data-round-reset-at="{{ round_reset_at|date:'c' }}"
+  data-round-server-now="{{ round_server_now|date:'c' }}"
+  aria-label="College football week {{ current_week_number }}"
+>
+  <div class="round-status-rail-inner">
+    <p class="round-status-label">
+      <span class="week-status-label-full">Week {{ current_week_number }} <span aria-hidden="true">&middot;</span> boards reset in</span>
+      <span class="week-status-label-compact">Week {{ current_week_number }} ends in</span>
+    </p>
+    <p class="round-status-value" data-round-status-value aria-label="Time until the weekly reset">{% if round_is_due %}Now{% else %}Sunday at 11:59 PM ET{% endif %}</p>
+    <button
+      class="round-status-help"
+      type="button"
+      data-open-dialog="round-help-dialog"
+      data-analytics-event="round_help_opened"
+      data-analytics-surface="{{ round_status_surface }}"
+      aria-haspopup="dialog"
+      aria-label="How weekly resets work"
+    ><span aria-hidden="true">ⓘ</span></button>
+  </div>
+</section>
+
+<dialog class="bid-dialog round-help-dialog" id="round-help-dialog" aria-labelledby="round-help-dialog-title" aria-modal="true" data-analytics-modal-id="round_help" data-analytics-surface="{{ round_status_surface }}">
+  <div class="bid-dialog-shell">
+    <div class="bid-dialog-header">
+      <div>
+        <p class="eyebrow">College football week {{ current_week_number }}</p>
+        <h2 id="round-help-dialog-title">How weekly resets work</h2>
+      </div>
+      <form method="dialog">
+        <button class="dialog-close" type="submit" aria-label="Close how weekly resets work dialog" autofocus>&times;</button>
+      </form>
+    </div>
+    <p>Each college football week starts fresh. Boards reset after the week's games, while takeover history remains part of the record. Your message stays live until another fan takes the board, it is removed for a policy violation, or the weekly reset occurs.</p>
+    <form method="dialog" class="round-help-dialog-action">
+      <button class="button button-primary" type="submit">Got it</button>
+    </form>
+  </div>
+</dialog>

@@ -206,6 +206,7 @@ class PublicNavigationTests(BoardTestCase):
 
         terms = self.client.get(reverse("core:terms"))
         self.assertContains(terms, "You must be 18 or older to place bids")
+        self.assertContains(terms, "The game week runs Sunday-to-Sunday")
 
         privacy = self.client.get(reverse("core:privacy"))
         self.assertContains(privacy, "an internal account identifier used to recognize your account")
@@ -228,14 +229,33 @@ class PublicNavigationTests(BoardTestCase):
         self.assertContains(response, "The board moves when the payment settles.")
         self.assertContains(response, "Rivalry is the point. Crossing the line is not.")
         self.assertContains(response, "guaranteed to stay on the board for at least 30 seconds")
+        self.assertContains(response, "Every Sunday, a new fight.")
         self.assertNotContains(response, "There is no guaranteed display duration.")
         self.assertContains(response, reverse("boards:index"))
 
     def test_school_board_has_share_button_and_social_card_metadata(self) -> None:
         response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
 
+        self.assertLess(
+            response.content.find(b'class="round-status-rail'),
+            response.content.find(b'class="live-board"'),
+        )
         self.assertContains(response, 'data-share-board')
         self.assertContains(response, 'data-analytics-event="board_share_clicked"')
+        self.assertEqual(response.content.count(b'class="round-status-rail"'), 1)
+        self.assertContains(response, "data-round-status")
+        self.assertContains(response, "data-round-reset-at=")
+        self.assertContains(response, 'data-open-dialog="round-help-dialog"')
+        self.assertContains(response, 'data-analytics-event="round_help_opened"')
+        self.assertContains(response, f"Week {response.context['current_week_number']}")
+        self.assertContains(response, "How weekly resets work")
+        self.assertContains(
+            response,
+            "Each college football week starts fresh. Boards reset after the week's games, while takeover history remains part of the record. Your message stays live until another fan takes the board, it is removed for a policy violation, or the weekly reset occurs.",
+        )
+        self.assertNotContains(response, "How rounds work")
+        self.assertNotContains(response, "Current game round")
+        self.assertNotContains(response, "weekly-reset-note")
         self.assertContains(response, 'data-analytics-modal-id="bid"')
         self.assertContains(response, 'name="twitter:card" content="summary_large_image"')
         self.assertContains(response, 'property="og:title" content="Oklahoma board: “THIS BOARD IS OPEN.” | Take the Board"')
@@ -244,6 +264,67 @@ class PublicNavigationTests(BoardTestCase):
             response,
             reverse("boards:social_image", kwargs={"slug": "oklahoma"}) + "?v=0",
         )
+
+    def test_school_board_groups_takeover_history_by_week(self) -> None:
+        now = timezone.now()
+        current_period = CompetitionPeriod.objects.create(
+            competition=self.competition,
+            year=2026,
+            week_number=35,
+            starts_at=now - timedelta(days=1),
+            ends_at=now + timedelta(days=6),
+            active=True,
+        )
+        previous_period = CompetitionPeriod.objects.create(
+            competition=self.competition,
+            year=2026,
+            week_number=34,
+            starts_at=now - timedelta(days=8),
+            ends_at=now - timedelta(days=1),
+            active=False,
+        )
+        profile = UserProfile.objects.create(
+            cognito_sub="history-grouping-fan",
+            email="history-grouping@example.com",
+            display_name="HistoryFan",
+        )
+        for period, message, occurred_at in (
+            (current_period, "CURRENT WEEK MOVE.", now - timedelta(hours=1)),
+            (previous_period, "PREVIOUS WEEK MOVE.", now - timedelta(days=2)),
+        ):
+            bid = Bid.objects.create(
+                board=self.board,
+                bidder=profile,
+                represented_entity=self.oklahoma,
+                period=period,
+                message=message,
+                amount_cents=100,
+                status=Bid.Status.DEMO_WON,
+            )
+            takeover = BoardTakeover.objects.create(
+                board=self.board,
+                bid=bid,
+                controller=profile,
+                controller_display_name=profile.display_name,
+                represented_entity=self.oklahoma,
+                period=period,
+                message=message,
+                amount_cents=100,
+            )
+            BoardTakeover.objects.filter(pk=takeover.pk).update(occurred_at=occurred_at)
+
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        body = response.content.decode()
+
+        self.assertIn('<details class="takeover-week takeover-week-current" open>', body)
+        self.assertIn('<details class="takeover-week">', body)
+        self.assertLess(
+            body.find('<details class="takeover-week takeover-week-current" open>'),
+            body.find('<details class="takeover-week">'),
+        )
+        self.assertContains(response, "CURRENT WEEK MOVE.")
+        self.assertContains(response, "PREVIOUS WEEK MOVE.")
+        self.assertContains(response, 'data-analytics-event="takeover_history_week_toggled"')
 
     def test_board_social_image_is_a_large_png(self) -> None:
         response = self.client.get(reverse("boards:social_image", kwargs={"slug": "oklahoma"}))
@@ -310,9 +391,49 @@ class PublicNavigationTests(BoardTestCase):
         rivalry = self.client.get(reverse("rivalries:detail", kwargs={"slug": "red-river"}))
 
         self.assertContains(boards, 'data-analytics-event="board_opened"')
+        self.assertEqual(boards.content.count(b'class="round-status-rail"'), 1)
+        self.assertContains(boards, "board-directory-card")
+        self.assertContains(boards, "board-card-school")
+        self.assertContains(boards, 'style="--board-accent: #841617;"')
+        self.assertContains(boards, 'aria-label="View Oklahoma board, currently open"')
         self.assertContains(how_it_works, 'data-faq-id="display_duration"')
+        self.assertNotContains(how_it_works, "round-status-rail")
         self.assertContains(leaderboard, 'data-analytics-event="standings_period_changed"')
+        self.assertEqual(leaderboard.content.count(b'class="round-status-rail"'), 1)
         self.assertContains(rivalry, 'data-analytics-event="rivalry_period_changed"')
+        self.assertEqual(rivalry.content.count(b'class="round-status-rail"'), 1)
+
+    def test_round_status_rail_is_absent_from_utility_and_legal_pages(self) -> None:
+        for route_name in ("core:home", "core:how_it_works", "core:terms", "core:privacy"):
+            response = self.client.get(reverse(route_name))
+            self.assertNotContains(response, "round-status-rail")
+
+    def test_board_directory_preserves_a_long_board_message(self) -> None:
+        long_message = "THIS BOARD MESSAGE IS LONG ENOUGH TO WRAP ACROSS MORE THAN ONE LINE."
+        self.board.current_message = long_message
+        self.board.save(update_fields=["current_message"])
+
+        response = self.client.get(reverse("boards:index"))
+
+        self.assertContains(response, long_message)
+        self.assertContains(response, 'aria-label="View Oklahoma board, currently open"')
+
+    def test_board_directory_labels_an_occupied_card(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="directory-card-holder",
+            email="directory-card-holder@example.com",
+            display_name="CardHolder",
+        )
+        self.board.current_controller = profile
+        self.board.current_amount_cents = 700
+        self.board.save(update_fields=["current_controller", "current_amount_cents"])
+
+        response = self.client.get(reverse("boards:index"))
+
+        self.assertContains(
+            response,
+            'aria-label="View Oklahoma board, held by CardHolder for $7.00"',
+        )
 
     @override_settings(DEBUG=False)
     def test_public_error_pages_are_branded_and_do_not_expose_debug_details(self) -> None:

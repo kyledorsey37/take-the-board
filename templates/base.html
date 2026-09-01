@@ -39,9 +39,9 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-16">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-26">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
-  <script src="{% static 'js/app.js' %}?v=20260831-3" defer></script>
+  <script src="{% static 'js/app.js' %}?v=20260831-5" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
@@ -67,6 +67,9 @@
       </div>
     </nav>
   </header>
+  {% if round_status_enabled %}
+    {% include "components/round_status_rail.html" %}
+  {% endif %}
   <main id="main">
     {% block content %}{% endblock %}
   </main>

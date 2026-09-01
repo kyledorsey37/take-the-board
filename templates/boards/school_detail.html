@@ -115,13 +115,32 @@
     </div>
   </div>
   <div class="takeover-history">
-    {% for takeover in takeovers %}
-      <article class="takeover-row">
-        <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_entity.name }}</p>
-        <p class="takeover-row-message">{% if takeover.report_case.status == "removed" %}Message removed for violating community guidelines.{% else %}{{ takeover.message }}{% endif %}</p>
-        <p class="takeover-row-amount">${{ takeover.amount_dollars|floatformat:2 }}</p>
-        {% include "boards/partials/report_affordance.html" with dialog_prefix="report-modal-history-" school_slug=board.entity.slug %}
-      </article>
+    {% for week in takeover_week_groups %}
+      <details class="takeover-week{% if week.is_current %} takeover-week-current{% endif %}"{% if week.is_latest %} open{% endif %}>
+        <summary
+          class="takeover-week-summary"
+          data-analytics-event="takeover_history_week_toggled"
+          data-analytics-surface="takeover_history"
+          data-analytics-period="{% if week.is_latest %}latest{% else %}previous{% endif %}"
+        >
+          <span class="takeover-week-summary-copy">
+            <span class="eyebrow">{% if week.is_current %}This week{% elif week.is_latest %}Last week{% else %}Previous week{% endif %}</span>
+            <span class="takeover-week-dates">{{ week.starts_at|date:"M j" }} &ndash; {{ week.ends_at|date:"M j, Y" }}</span>
+          </span>
+          <span class="takeover-week-count">{{ week.takeovers|length }} {{ week.count_label }}</span>
+          <span class="takeover-week-chevron" aria-hidden="true"></span>
+        </summary>
+        <div class="takeover-week-entries">
+          {% for takeover in week.takeovers %}
+            <article class="takeover-row">
+              <p><strong>{{ takeover.controller_display_name }}</strong> backed {{ takeover.represented_entity.name }}</p>
+              <p class="takeover-row-message">{% if takeover.report_case.status == "removed" %}Message removed for violating community guidelines.{% else %}{{ takeover.message }}{% endif %}</p>
+              <p class="takeover-row-amount">${{ takeover.amount_dollars|floatformat:2 }}</p>
+              {% include "boards/partials/report_affordance.html" with dialog_prefix="report-modal-history-" school_slug=board.entity.slug %}
+            </article>
+          {% endfor %}
+        </div>
+      </details>
     {% empty %}
       <p class="muted">No one has taken this board yet. Make the first move.</p>
     {% endfor %}

@@ -13,7 +13,7 @@ from apps.boards.services.reset_boards import reset_boards
 
 from .models import EntityPeriodStats, CompetitionPeriod
 from .services import build_leaderboard
-from .week_services import current_period_window
+from .week_services import current_period_window, weekly_reset_schedule
 
 
 class LeaderboardTests(TestCase):
@@ -135,6 +135,41 @@ class LeaderboardTests(TestCase):
         self.assertEqual(data["period"], "week")
         self.assertEqual(data["summary"]["total_spend_cents"], 900)
 
+    def test_public_reset_schedule_uses_the_active_period_deadline(self) -> None:
+        now = timezone.make_aware(datetime(2026, 8, 27, 12, 0, 0))
+        period = CompetitionPeriod.objects.create(
+            competition=self.competition,
+            year=2026,
+            week_number=34,
+            starts_at=now - timedelta(days=4),
+            ends_at=now + timedelta(days=3, hours=11, minutes=59),
+            active=True,
+        )
+
+        schedule = weekly_reset_schedule(competition=self.competition, now=now)
+
+        self.assertEqual(schedule.server_now, now)
+        self.assertEqual(schedule.reset_at, period.ends_at)
+        self.assertFalse(schedule.is_due)
+        self.assertEqual(schedule.week_number, 34)
+
+    def test_public_reset_schedule_marks_a_late_reset_as_due(self) -> None:
+        now = timezone.make_aware(datetime(2026, 8, 31, 12, 0, 0))
+        period = CompetitionPeriod.objects.create(
+            competition=self.competition,
+            year=2026,
+            week_number=35,
+            starts_at=now - timedelta(days=7),
+            ends_at=now - timedelta(hours=12),
+            active=True,
+        )
+
+        schedule = weekly_reset_schedule(competition=self.competition, now=now)
+
+        self.assertEqual(schedule.reset_at, period.ends_at)
+        self.assertTrue(schedule.is_due)
+        self.assertEqual(schedule.week_number, 35)
+
     def test_refunded_takeovers_do_not_count_in_public_standings(self) -> None:
         self.create_takeover(
             bidder=self.first_fan,
@@ -172,6 +207,9 @@ class LeaderboardTests(TestCase):
         self.assertContains(response, "SEC")
         self.assertContains(response, "FirstFan")
         self.assertContains(response, "$12.00")
+        self.assertEqual(response.content.count(b'class="round-status-rail"'), 1)
+        self.assertContains(response, 'data-analytics-surface="standings"')
+        self.assertNotContains(response, "weekly-reset-note")
 
     def test_week_marker_uses_the_iso_week_year(self) -> None:
         new_year_boundary = timezone.make_aware(datetime(2026, 1, 4, 23, 59, 1))

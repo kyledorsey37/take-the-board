@@ -127,6 +127,57 @@ document.addEventListener("DOMContentLoaded", function trackPageAnalytics() {
   });
 });
 
+function formatRoundRemaining(milliseconds) {
+  if (milliseconds <= 0) {
+    return "Now";
+  }
+
+  const totalMinutes = Math.max(1, Math.ceil(milliseconds / 60000));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0) {
+    return `${days}d ${hours}h`;
+  }
+  if (hours > 0) {
+    return `${hours}h ${minutes}m`;
+  }
+  return `${minutes}m`;
+}
+
+window.takeTheBoard.formatRoundRemaining = formatRoundRemaining;
+
+document.addEventListener("DOMContentLoaded", function initializeRoundStatusRails() {
+  document.querySelectorAll("[data-round-status]").forEach(function (roundStatus) {
+    const resetAt = Date.parse(roundStatus.dataset.roundResetAt || "");
+    const serverNow = Date.parse(roundStatus.dataset.roundServerNow || "");
+    const value = roundStatus.querySelector("[data-round-status-value]");
+
+    if (!Number.isFinite(resetAt) || !Number.isFinite(serverNow) || !value) {
+      return;
+    }
+
+    const clientStartedAt = Date.now();
+
+    function updateRoundStatus() {
+      const elapsed = Date.now() - clientStartedAt;
+      const remaining = resetAt - (serverNow + elapsed);
+
+      if (remaining <= 0) {
+        roundStatus.classList.add("round-status-rail-due");
+        value.textContent = "Now";
+        return;
+      }
+
+      value.textContent = formatRoundRemaining(remaining);
+    }
+
+    updateRoundStatus();
+    window.setInterval(updateRoundStatus, 30000);
+  });
+});
+
 document.addEventListener("click", function trackAnalyticsClick(event) {
   const target = event.target.closest("[data-analytics-event]");
 

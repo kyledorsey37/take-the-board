@@ -23,6 +23,11 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 
 The visual system should be independent from official school brands. Use plain school names and generic accent colors. Do not use official logos, mascot art, seals, athletics typography, or university lockups.
 
+The board directory uses each entity's validated accent as a compact card masthead
+behind the school name. This creates an immediate board identity without implying
+official school branding. Each card is one accessible board link; on mobile its
+content area grows with its message while the footer stays directly beneath it.
+
 ## Board Sharing and Social Previews
 
 Each school board has one canonical public URL and a Share button. Browsers with the
@@ -91,11 +96,21 @@ The payment status endpoint must disclose a bid only to its authenticated bidder
 returns lifecycle state and the owning board URL, not payment identifiers or message
 content.
 
+School board takeover history is grouped by the persisted Sunday-to-Sunday
+competition period. The latest period is open on first load; older periods are
+visually separated and collapsed, while all published takeover records remain
+available in the public history.
+
 The leaderboard shows fanbase backing by represented school, conference standings,
 top spender accounts, most-attacked boards, and the largest successful takeovers.
-All-time standings are available immediately; a `SeasonWeek` configured in the admin
-also enables a This week view. The page uses successful published takeovers only, so
-uncaptured authorizations and rejected bids do not inflate public totals.
+The game runs Sunday-to-Sunday: the This week view starts fresh with each reset,
+while All time preserves the full record. A server-rendered reset timestamp powers a
+shared passive weekly-status rail directly beneath navigation on public gameplay
+surfaces (board directory, school boards, rivalries, and standings). It displays the
+server-derived college-football week number and reset countdown. The rail's help
+dialog records `round_help_opened`; the server reset command remains authoritative.
+The page uses successful published takeovers only, so uncaptured authorizations and
+rejected bids do not inflate public totals.
 
 Rivalry pages are a focused scoreboard view over two existing boards. The directory
 shows active matchups, while each matchup page shows the leading side, takeover wins,
