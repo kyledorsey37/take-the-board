@@ -51,6 +51,7 @@ SECRET_KEY = os.environ.get(
     "DJANGO_SECRET_KEY",
     "unsafe-local-dev-key-change-me",
 )
+TAKEBOARD_ENVIRONMENT = os.environ.get("TAKEBOARD_ENVIRONMENT", "local").strip().lower()
 
 DEBUG = env_bool("DJANGO_DEBUG", False)
 
@@ -75,6 +76,12 @@ INSTALLED_APPS = [
     "apps.leaderboard",
     "apps.core",
 ]
+try:
+    import django_otp  # noqa: F401
+except ImportError:
+    pass
+else:
+    INSTALLED_APPS[6:6] = ["django_otp", "django_otp.plugins.otp_totp"]
 
 UNFOLD = {
     "SITE_TITLE": "Take the Board operations",
@@ -87,10 +94,12 @@ UNFOLD = {
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
     "apps.core.middleware.request_id.RequestIDMiddleware",
+    "apps.core.middleware.security.SecurityHeadersMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "apps.core.middleware.admin_security.AdminSecurityMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -156,6 +165,8 @@ SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
 SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 X_FRAME_OPTIONS = "DENY"
+PERMISSIONS_POLICY = "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(self \"https://js.stripe.com\"), usb=()"
+CSP_REPORT_ONLY = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com https://www.googletagmanager.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com; img-src 'self' data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'"
 
 TAKEBOARD_DEFAULT_BOARD_MESSAGE = "THIS BOARD IS OPEN."
 TAKEBOARD_DEFAULT_COMPETITION_SLUG = os.environ.get(

@@ -1,6 +1,11 @@
+from django.core.exceptions import ImproperlyConfigured
+
 from .base import *  # noqa: F403
 from .base import BASE_DIR, database_from_url, env_bool, env_list
 import os
+
+if os.environ.get("TAKEBOARD_ENVIRONMENT", "local").strip().lower() not in {"", "local"}:
+    raise ImproperlyConfigured("config.settings.local cannot be used outside local development.")
 
 
 DEBUG = env_bool("DJANGO_DEBUG", True)

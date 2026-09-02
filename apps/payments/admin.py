@@ -10,6 +10,11 @@ class StripeEventAdmin(ModelAdmin):
     search_fields = ("event_id", "event_type")
     readonly_fields = ("received_at", "processed_at")
 
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False
+    actions = ()
+
 
 @admin.register(LedgerEntry)
 class LedgerEntryAdmin(ModelAdmin):
@@ -17,6 +22,11 @@ class LedgerEntryAdmin(ModelAdmin):
     list_filter = ("type", "entity")
     search_fields = ("user__display_name", "entity__name", "bid__public_id")
     readonly_fields = ("created_at",)
+
+    def has_add_permission(self, request): return False
+    def has_change_permission(self, request, obj=None): return False
+    def has_delete_permission(self, request, obj=None): return False
+    actions = ()
 
 
 @admin.register(PaymentCapture)
@@ -62,6 +72,10 @@ class PaymentCaptureAdmin(ModelAdmin):
     def has_delete_permission(self, request, obj=None):
         return False
 
+    def has_change_permission(self, request, obj=None):
+        return False
+    actions = ()
+
 
 @admin.register(PurchaseEvidence)
 class PurchaseEvidenceAdmin(ModelAdmin):
@@ -74,3 +88,7 @@ class PurchaseEvidenceAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+    actions = ()

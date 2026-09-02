@@ -9,28 +9,20 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 - [x] Add a first-paid-bid acknowledgement that the user is 18 or older, enforce
       it server-side, and preserve the acknowledgement with purchase evidence.
 - [ ] Protect Django Admin at `/admin/` with an edge allowlist, VPN, or SSO.
-- [ ] Require MFA for every staff/admin account.
-- [ ] Add admin login throttling and alerting for repeated failures.
+- [x] Require MFA for every staff/admin account in non-local deployments using django-otp TOTP; enrollment and external access controls remain deployment tasks.
+- [x] Add shared-cache admin login throttling with safe outage behavior; alert routing remains an external deployment task.
 - [ ] Split deployment environment files so Postgres receives only `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
 - [ ] Remove Cognito access, ID, and refresh tokens from Django sessions unless they are genuinely needed.
 - [ ] If tokens must remain in sessions, encrypt the session values and document the key-rotation procedure.
-- [ ] Make payment and historical records immutable in Admin:
-  - [ ] `StripeEvent`
-  - [ ] `LedgerEntry`
-  - [ ] `Bid`
-  - [ ] `BoardTakeover`
-  - [ ] `BidConfirmation`
-  - [ ] `PaymentCapture`
-  - [ ] `PurchaseEvidence`
-- [ ] Disable Admin add/change/delete permissions for immutable records.
-- [ ] Add audit coverage for every administrative state-changing action.
+- [x] Make payment and historical records view-only in Admin: `StripeEvent`, `LedgerEntry`, `Bid`, `BoardTakeover`, `BidConfirmation`, `PaymentCapture`, and `PurchaseEvidence`.
+- [x] Disable Admin add/change/delete permissions and bulk actions for immutable records.
+- [x] Audit administrative state changes for user controls, board controls, moderation remediation, and game configuration.
 
 ## Deployment fail-closed checks
 
-- [ ] Reject known/default Django secret keys outside local development.
-- [ ] Enforce minimum length and entropy for `DJANGO_SECRET_KEY` and `MODERATION_HASH_SECRET`.
-- [ ] Reject `DJANGO_ALLOWED_HOSTS=*` in staging and production.
-- [ ] Require an explicit production/staging environment setting; prevent accidental use of `config.settings.local` on public hosts.
+- [x] Reject known/default Django and moderation secret keys outside local development, with length and diversity checks.
+- [x] Reject `DJANGO_ALLOWED_HOSTS=*` in staging and production.
+- [x] Require explicit `TAKEBOARD_ENVIRONMENT` and prevent accidental use of local settings outside local development.
 - [ ] Apply the same required integration checks in staging and production for Cognito, Stripe, Redis, and database configuration.
 - [ ] Ensure production and staging use Gunicorn, never `runserver` or `--insecure`.
 - [ ] Set secret files to owner-readable only: `chmod 600 .env` and equivalent server files.
@@ -40,12 +32,12 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 
 ## Browser and HTTP hardening
 
-- [ ] Add a Content Security Policy, starting in report-only mode and then enforcing it.
+- [x] Add a tight Content Security Policy in report-only mode.
 - [ ] Self-host or integrity-pin third-party frontend assets where practical, especially HTMX.
 - [ ] Keep Stripe.js loaded only from Stripe's official origin.
-- [ ] Add and verify `Permissions-Policy` and any other required security headers at the edge.
-- [ ] Add `Cache-Control: no-store` to authentication start, verify, resend, and OAuth callback responses.
-- [ ] Validate or replace client-supplied `X-Request-ID`; generate server-side IDs when the value is malformed or oversized.
+- [x] Add application-owned `Permissions-Policy` and baseline security headers; edge headers remain external.
+- [x] Add `Cache-Control: no-store` to authentication start, verify, resend, and OAuth callback responses.
+- [x] Validate or replace malformed/oversized client-supplied `X-Request-ID` values.
 
 ## Authentication and authorization tests
 

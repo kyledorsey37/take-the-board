@@ -93,3 +93,4 @@ future implementation work should know about.
 | Date | Change | Decision or follow-up |
 | --- | --- | --- |
 | 2026-08-31 | Added checklist | Every implementation reviews analytics, security, SEO, accessibility, operations, tests, and documentation at start and completion. |
+| 2026-09-02 | Overnight security hardening | Added fail-closed deployment settings, browser headers/request-ID validation, immutable Admin records, shared-cache Admin throttling, and django-otp staff MFA. No new GA4 markers; edge access controls, alerting, and live deployment verification remain external. |

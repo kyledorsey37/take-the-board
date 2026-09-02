@@ -8,6 +8,20 @@ import os
 
 DEBUG = False
 
+try:
+    import django_otp  # noqa: F401
+except ImportError as exc:
+    raise ImproperlyConfigured("django-otp is required outside local development.") from exc
+
+if os.environ.get("TAKEBOARD_ENVIRONMENT", "").strip().lower() != "production":
+    raise ImproperlyConfigured("TAKEBOARD_ENVIRONMENT=production is required for production settings.")
+
+
+def _require_strong_secret(name: str, value: str) -> None:
+    weak = {"unsafe-local-dev-key-change-me", "changeme", "secret", "password"}
+    if not value or value.lower() in weak or len(value) < 32 or len(set(value)) < 12:
+        raise ImproperlyConfigured(f"{name} must be a unique secret of at least 32 characters.")
+
 if not os.environ.get("DJANGO_SECRET_KEY"):
     raise ImproperlyConfigured("DJANGO_SECRET_KEY is required in production.")
 
@@ -17,10 +31,20 @@ if not os.environ.get("MODERATION_HASH_SECRET"):
 if not os.environ.get("DATABASE_URL"):
     raise ImproperlyConfigured("DATABASE_URL is required in production.")
 
+_require_strong_secret("DJANGO_SECRET_KEY", os.environ.get("DJANGO_SECRET_KEY", ""))
+_require_strong_secret("MODERATION_HASH_SECRET", os.environ.get("MODERATION_HASH_SECRET", ""))
 DATABASES = {"default": database_from_url(os.environ["DATABASE_URL"])}
+if DATABASES["default"]["ENGINE"] != "django.db.backends.postgresql":
+    raise ImproperlyConfigured("Production requires a PostgreSQL DATABASE_URL.")
 ALLOWED_HOSTS = env_list("DJANGO_ALLOWED_HOSTS")
 if not ALLOWED_HOSTS:
     raise ImproperlyConfigured("DJANGO_ALLOWED_HOSTS is required in production.")
+if "*" in ALLOWED_HOSTS:
+    raise ImproperlyConfigured("Wildcard DJANGO_ALLOWED_HOSTS is not allowed in production.")
+if TAKEBOARD_RATE_LIMITING_ENABLED and not REDIS_URL:
+    raise ImproperlyConfigured("REDIS_URL is required when rate limiting is enabled in production.")
+if TAKEBOARD_BEDROCK_ENABLED and (not TAKEBOARD_BEDROCK_MODEL_ID or not TAKEBOARD_BEDROCK_REGION):
+    raise ImproperlyConfigured("Bedrock model and region are required when moderation is enabled.")
 
 if TAKEBOARD_COGNITO_AUTH_ENABLED and not all(
     [COGNITO_REGION, COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID]
@@ -28,6 +52,8 @@ if TAKEBOARD_COGNITO_AUTH_ENABLED and not all(
     raise ImproperlyConfigured(
         "COGNITO_REGION, COGNITO_USER_POOL_ID, and COGNITO_CLIENT_ID are required when Cognito auth is enabled."
     )
+if TAKEBOARD_COGNITO_AUTH_ENABLED and (not COGNITO_DOMAIN or not COGNITO_REDIRECT_URI):
+    raise ImproperlyConfigured("COGNITO_DOMAIN and COGNITO_REDIRECT_URI are required when auth is enabled.")
 
 if TAKEBOARD_COGNITO_AUTH_ENABLED and not REDIS_URL:
     raise ImproperlyConfigured("REDIS_URL is required when Cognito auth is enabled in production.")
@@ -38,6 +64,12 @@ if TAKEBOARD_STRIPE_ENABLED and not all(
     raise ImproperlyConfigured(
         "Stripe secret, publishable, and webhook secrets are required when Stripe is enabled."
     )
+if TAKEBOARD_STRIPE_ENABLED and (not STRIPE_SECRET_KEY.startswith(("sk_live_", "sk_test_")) or not STRIPE_WEBHOOK_SECRET.startswith("whsec_")):
+    raise ImproperlyConfigured("Stripe keys have invalid formats.")
+if TAKEBOARD_STRIPE_ENABLED and not STRIPE_PUBLISHABLE_KEY.startswith(("pk_live_", "pk_test_")):
+    raise ImproperlyConfigured("Stripe publishable key has an invalid format.")
+if REDIS_URL and not REDIS_URL.startswith(("redis://", "rediss://")):
+    raise ImproperlyConfigured("REDIS_URL must use redis:// or rediss://.")
 
 if TAKEBOARD_STRIPE_ENABLED and TAKEBOARD_BID_FINALIZATION_MODE != "sqs_fifo":
     raise ImproperlyConfigured(
@@ -54,6 +86,8 @@ if TAKEBOARD_BID_FINALIZATION_MODE == "sqs_fifo":
         )
     if not TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL.endswith(".fifo"):
         raise ImproperlyConfigured("The bid finalization queue must be an SQS FIFO queue (.fifo).")
+    if not TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL.startswith("https://"):
+        raise ImproperlyConfigured("The SQS FIFO queue URL must use HTTPS.")
     if not TAKEBOARD_SQS_BID_FINALIZATION_REGION:
         raise ImproperlyConfigured(
             "TAKEBOARD_SQS_BID_FINALIZATION_REGION is required when SQS FIFO finalization is enabled."

@@ -1,11 +1,13 @@
 import logging
 import time
 import uuid
+import re
 
 from apps.core.logging import request_id_var, user_id_var
 
 
 logger = logging.getLogger(__name__)
+REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,63}$")
 
 
 class RequestIDMiddleware:
@@ -13,7 +15,8 @@ class RequestIDMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())
+        supplied_id = request.headers.get("X-Request-ID", "")
+        request_id = supplied_id if REQUEST_ID_PATTERN.fullmatch(supplied_id) else str(uuid.uuid4())
         request.request_id = request_id
         request_id_token = request_id_var.set(request_id)
 
