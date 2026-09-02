@@ -1,0 +1,13 @@
+<a class="board-card board-card-link board-directory-card" style="--board-accent: {{ board.entity_accent }};" href="{% url 'schools:detail' slug=board.entity.slug %}" aria-label="{% if board.current_controller %}View {{ board.entity.name }} board, held by {{ board.current_controller.display_name }} for ${{ board.current_amount_dollars|floatformat:2 }}{% else %}View {{ board.entity.name }} board, currently open{% endif %}" data-analytics-event="board_opened" data-analytics-surface="{{ analytics_surface }}" data-analytics-school-slug="{{ board.entity.slug }}">
+  <div class="board-card-school">
+    <p class="school-name">{{ board.entity.name }}</p>
+  </div>
+  <div class="board-card-body">
+    <p class="board-message">{{ board.current_message }}</p>
+    {% if board.current_controller %}
+      <p class="bid-line">Held by {{ board.current_controller.display_name }} for ${{ board.current_amount_dollars|floatformat:2 }} <span aria-hidden="true">&rarr;</span></p>
+    {% else %}
+      <p class="bid-line">Open board <span aria-hidden="true">&rarr;</span></p>
+    {% endif %}
+  </div>
+</a>

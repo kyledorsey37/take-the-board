@@ -78,6 +78,15 @@ class PublicNavigationTests(BoardTestCase):
         self.assertContains(response, "Oklahoma")
         self.assertNotContains(response, 'href="/admin/"')
 
+    def test_home_board_preview_uses_directory_card_contract(self) -> None:
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, "board-directory-card")
+        self.assertContains(response, "board-card-school")
+        self.assertContains(response, 'style="--board-accent: #841617;"')
+        self.assertContains(response, 'data-analytics-surface="home_board_preview"')
+        self.assertContains(response, "Open board")
+
     def test_home_hero_variant_is_session_stable_and_tracks_conversion_context(self) -> None:
         session = self.client.session
         session[HERO_VARIANT_SESSION_KEY] = "b"

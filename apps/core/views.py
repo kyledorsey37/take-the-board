@@ -16,6 +16,8 @@ def home(request: HttpRequest) -> HttpResponse:
         .select_related("entity", "current_controller")
         .order_by("-current_amount_cents", "entity__name")[:6]
     )
+    for board in boards:
+        board.entity_accent = safe_accent_color(board.entity.accent_color)
     profile = get_authenticated_profile(request)
     hero_variant = home_hero_variant(request)
     featured_board = most_active_board_for(profile) if profile else None
