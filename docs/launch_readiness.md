@@ -95,7 +95,7 @@ authentication, Stripe manual-capture flows, moderation and reporting records,
 refund/dispute/ledger services, and an idempotent weekly reset command.
 
 The primary launch gaps are production wiring and operations rather than missing
-core domain models: SQS FIFO finalization, EventBridge reset scheduling,
+core domain models: external SQS FIFO queue/DLQ/IAM configuration, EventBridge reset scheduling,
 Bedrock/Nova configuration, support and moderation operations,
 reconciliation/alerting, and the security gates listed in
 `docs/security_todo.md`.
@@ -144,7 +144,7 @@ reconciliation/alerting, and the security gates listed in
 | Item | Status | Notes |
 | --- | --- | --- |
 | Local bid finalization worker | Done | `run_bid_worker` processes the local Postgres polling path and preserves the board lock and pending-challenger invariants. |
-| SQS FIFO bid finalization | Build | The queue URL placeholder exists, but the producer/consumer are not wired. Implement board ID message-grouping, retry/visibility behavior, dead-letter handling, idempotent consumption, and a dev/staging smoke test before production. |
+| SQS FIFO bid finalization | Verify/configure | Producer/consumer, board-ID grouping, stable deduplication, bounded retry/visibility handling, and idempotent consumption are implemented. Configure the external FIFO queue, FIFO DLQ/redrive policy, task-role IAM, alerts, worker deployment, and staging smoke test before production. |
 | Weekly reset service/command | Done | `reset_boards` is idempotent, preserves historical bids/takeovers/ledger entries, rebuilds period stats, and was manually verified against the local Docker database on 2026-08-31. |
 | EventBridge reset schedule | Verify/configure | Configure Sunday 11:59 PM `America/New_York` invocation, permissions, failure alerts, and a manual invocation procedure. Test the schedule in dev/staging before relying on it. |
 | Public weekly-reset explanation | Done | How it works, the FAQ, and Terms now explain the Sunday-to-Sunday round, fresh weekly boards/standings, and preserved takeover history in player-facing language. |

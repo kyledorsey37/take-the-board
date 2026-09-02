@@ -5,8 +5,9 @@ the authenticated bid flow. Django requires a fresh, matching, one-time approved
 `MessageValidation` before it creates an Embedded Checkout Session with
 manual capture, verifies Stripe signatures against the raw request body, stores each
 event once in `StripeEvent`, and lets the local worker process authorization,
-cancellation, and capture transitions. SQS FIFO delivery remains later production
-work.
+cancellation, and capture transitions. In production, authorized bids enqueue an
+opaque finalization trigger on the configured SQS FIFO queue; local free-play and
+the local Stripe sandbox retain Postgres polling when queue mode is not selected.
 
 ## Invariants
 
@@ -45,17 +46,41 @@ work.
    creating a `Bid` and Stripe Embedded Checkout Session using manual capture.
 5. Stripe authorizes the card and sends webhooks through the local Stripe CLI.
 6. Django verifies the webhook, stores a `StripeEvent`, and the local worker processes it.
-7. The worker keeps only the highest authorized challenger during the current guarantee.
-8. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
-9. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
-10. The worker processes `charge.updated` and periodically reconciles pending capture
+7. Authorization processing enqueues `{"bid_id": "<opaque UUID>"}` with
+   `MessageGroupId=board-<board id>` and a stable per-bid deduplication ID. No
+   message text, display name, payment payload, token, or other user data is sent.
+8. The FIFO worker keeps only the highest authorized challenger during the current guarantee.
+9. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
+10. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
+11. The worker processes `charge.updated` and periodically reconciles pending capture
     snapshots so delayed Stripe balance-transaction fee data is attached without
     changing the original captured amount.
 
-In the current local slice, the Bedrock/Nova adapter is available but normally
-disabled until dev AWS IAM and model configuration are complete, and the worker
-polls Postgres rather than consuming SQS FIFO messages. Do not use this mode for
-real cards or production traffic.
+In local settings the worker deliberately polls Postgres, so free-play tests do
+not require AWS. Select `TAKEBOARD_BID_FINALIZATION_MODE=sqs_fifo` only in an
+environment with a valid FIFO queue configuration. Production Stripe settings
+fail closed unless that mode is selected and the queue URL/region are valid.
+
+## SQS FIFO finalization boundary
+
+`apps/bidding/services/finalization_queue.py` owns both enqueue and consumption.
+The producer runs inside the authorization transaction; if `SendMessage` fails,
+the authorization rolls back and the Stripe event remains retryable. The consumer
+long-polls one message at a time, checks the bid's current board and pending-bid
+identity under the existing board row lock, and deletes a message only after that
+safe handling completes. Missing, duplicate, stale, canceled, outbid, and already
+finalized messages are settled without changing state. Unexpected failures leave
+the message invisible for bounded exponential retry and allow the queue redrive
+policy to move it to the FIFO DLQ.
+
+Required application settings are `TAKEBOARD_BID_FINALIZATION_MODE`,
+`TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL`, `TAKEBOARD_SQS_BID_FINALIZATION_REGION`,
+`TAKEBOARD_SQS_BID_FINALIZATION_WAIT_SECONDS`,
+`TAKEBOARD_SQS_BID_FINALIZATION_VISIBILITY_TIMEOUT_SECONDS`,
+`TAKEBOARD_SQS_BID_FINALIZATION_RETRY_VISIBILITY_SECONDS`, and
+`TAKEBOARD_SQS_BID_FINALIZATION_MAX_RECEIVE_COUNT`. Queue creation, DLQ, IAM,
+alerts, and staging smoke testing remain external operational work; see the
+[SQS finalization runbook](sqs_bid_finalization_runbook.md).
 
 ## Protected Display Window
 

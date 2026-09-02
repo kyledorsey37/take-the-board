@@ -9,6 +9,7 @@ from django.utils import timezone
 from apps.bidding.models import Bid
 from apps.bidding.services.finalize_bid import finalize_locked_pending_bid
 from apps.bidding.services.rules import current_board_rules, minimum_takeover_cents
+from apps.bidding.services.finalization_queue import enqueue_bid_finalization
 from apps.boards.models import Board
 
 from .cancel_authorization import cancel_authorization
@@ -90,6 +91,10 @@ def _authorize_bid(bid_id: int, payment_intent_id: str, now: datetime) -> list[B
     bid.save(update_fields=["stripe_payment_intent_id", "status", "authorized_at"])
     board.pending_bid = bid
     board.save(update_fields=["pending_bid", "updated_at"])
+    # Publishing is delayed until the protected window ends.  In SQS mode this
+    # send is part of the same transaction: a provider failure rolls back the
+    # authorization so the Stripe event can be retried safely.
+    enqueue_bid_finalization(bid=bid, due_at=board.guaranteed_until, now=now)
     return canceled_bids
 
 
