@@ -33,6 +33,13 @@ Production settings require:
 - `SECURE_CONTENT_TYPE_NOSNIFF = True`
 - `SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"`
 - `X_FRAME_OPTIONS = "DENY"`
+- explicit `TAKEBOARD_ENVIRONMENT`, strong non-default secrets, PostgreSQL,
+  explicit non-wildcard hosts, and enabled-feature integration configuration.
+
+Application responses include report-only CSP, Permissions-Policy, no-store
+authentication responses, and validated request IDs. Admin payment/history
+records are view-only; non-local staff sessions require django-otp TOTP MFA and
+shared-cache login throttling. See [the Admin runbook](admin_security_runbook.md).
 
 ## CSRF And Webhooks
 

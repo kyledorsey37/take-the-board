@@ -278,13 +278,14 @@ def hosted_login_url(*, screen: str, state: str) -> str:
     domain = settings.COGNITO_DOMAIN
     if not domain.startswith("https://"):
         domain = f"https://{domain}"
-    return f"{domain}/{screen}?{urlencode({
+    query = urlencode({
         'client_id': settings.COGNITO_CLIENT_ID,
         'response_type': 'code',
         'scope': 'openid email',
         'redirect_uri': settings.COGNITO_REDIRECT_URI,
         'state': state,
-    })}"
+    })
+    return f"{domain}/{screen}?{query}"
 
 
 def new_oauth_state() -> str:

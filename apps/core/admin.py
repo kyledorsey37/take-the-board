@@ -2,6 +2,7 @@ from django.contrib import admin
 from unfold.admin import ModelAdmin
 
 from .models import Activity, GameConfig
+from apps.moderation.services.operations import audit_action
 
 
 @admin.register(GameConfig)
@@ -23,6 +24,10 @@ class GameConfigAdmin(ModelAdmin):
 
     def has_add_permission(self, request) -> bool:
         return not GameConfig.objects.exists()
+
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        audit_action(actor=request.user, action="update_game_config", target=obj, reason="Django Admin action")
 
 
 @admin.register(Activity)

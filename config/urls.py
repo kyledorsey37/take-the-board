@@ -1,8 +1,10 @@
 from django.contrib import admin
 from django.urls import include, path
+from apps.core.admin_mfa import mfa_gate
 
 
 urlpatterns = [
+    path("admin/mfa/", mfa_gate, name="admin_mfa"),
     path("admin/", admin.site.urls),
     path("", include("apps.core.urls")),
     path("", include("apps.accounts.urls")),

@@ -2,6 +2,7 @@ from django.contrib import admin
 from django.urls import reverse
 from django.utils.html import format_html
 from unfold.admin import ModelAdmin
+from apps.moderation.services.operations import audit_action
 
 from .models import Bid, BidConfirmation, BidRiskConfig
 
@@ -27,6 +28,17 @@ class BidAdmin(ModelAdmin):
         "payment_capture_snapshot",
     )
 
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+    actions = ()
+
     @admin.display(description="Payment capture snapshot")
     def payment_capture_snapshot(self, obj):
         try:
@@ -48,6 +60,10 @@ class BidRiskConfigAdmin(ModelAdmin):
     def has_add_permission(self, request):
         return not BidRiskConfig.objects.exists()
 
+    def save_model(self, request, obj, form, change):
+        super().save_model(request, obj, form, change)
+        audit_action(actor=request.user, action="update_bid_risk_config", target=obj, reason="Django Admin action")
+
 
 @admin.register(BidConfirmation)
 class BidConfirmationAdmin(ModelAdmin):
@@ -61,3 +77,8 @@ class BidConfirmationAdmin(ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    actions = ()

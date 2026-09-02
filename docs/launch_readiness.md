@@ -173,7 +173,7 @@ still launch work unless the operator records a documented risk acceptance.
 The highest-priority items are:
 
 - staging verification of the first-paid-bid 18+ acknowledgement and server-side evidence;
-- Admin protection, MFA, login throttling, and audit coverage;
+- Admin application protection, MFA, login throttling, and audit coverage are implemented; edge allowlist/VPN/SSO, staff enrollment/recovery, and alert destinations remain external deployment tasks;
 - immutable payment/history records in Admin;
 - fail-closed production settings, secret handling, dependency scanning, and
   production-like integration checks;
