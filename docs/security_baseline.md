@@ -79,7 +79,14 @@ raw IP addresses, raw request bodies, or payment-provider payloads.
 
 ## Error Monitoring
 
-Server-side Sentry is wired by `SENTRY_DSN`. Browser-side Sentry should be added before public launch. Alerts should cover webhook failures, capture/cancel/refund failures, SQS worker failures, moderation failures, weekly reset failures, and database integrity errors.
+Server-side Sentry is wired by `SENTRY_DSN`, with `SENTRY_ENVIRONMENT` and
+optional `SENTRY_RELEASE` tags. Default PII collection is disabled. The
+`/sentry-debug/` verification route is registered only in the local
+environment and returns 404 unless `DEBUG=True`; it must not expose an error
+trigger in staging or production. Browser-side
+Sentry should be added before public launch. Alerts should cover webhook
+failures, capture/cancel/refund failures, SQS worker failures, moderation
+failures, weekly reset failures, and database integrity errors.
 
 ## Public Error Pages
 

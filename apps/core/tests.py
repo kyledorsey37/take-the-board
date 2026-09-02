@@ -4,6 +4,7 @@ from django.urls import reverse
 from django.utils import timezone
 from datetime import timedelta
 from decimal import Decimal
+import os
 
 from apps.bidding.models import Bid
 from apps.bidding.services.create_bid import BidTooLowError, create_bid
@@ -66,6 +67,17 @@ class BoardTestCase(TestCase):
             entity_a=cls.oklahoma,
             entity_b=cls.texas,
         )
+
+
+class ProductionRosterCommandTests(TestCase):
+    @patch.dict(os.environ, {"TAKEBOARD_ENVIRONMENT": "production"})
+    def test_production_roster_is_idempotent(self) -> None:
+        call_command("seed_production_roster")
+        call_command("seed_production_roster")
+
+        self.assertEqual(Entity.objects.filter(active=True).count(), 9)
+        self.assertEqual(Board.objects.count(), 9)
+        self.assertEqual(Rivalry.objects.filter(active=True).count(), 3)
 
 
 class PublicNavigationTests(BoardTestCase):
@@ -242,6 +254,12 @@ class PublicNavigationTests(BoardTestCase):
         self.assertNotContains(response, "There is no guaranteed display duration.")
         self.assertContains(response, reverse("boards:index"))
 
+    @override_settings(
+        TAKEBOARD_DEMO_BIDDING_ENABLED=True,
+        TAKEBOARD_STRIPE_ENABLED=False,
+        TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING=False,
+        TAKEBOARD_AUTH_MODAL_PREVIEW=False,
+    )
     def test_school_board_has_share_button_and_social_card_metadata(self) -> None:
         response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
 
@@ -382,6 +400,7 @@ class PublicNavigationTests(BoardTestCase):
 
         self.assertContains(response, 'id="analytics-consent-banner"')
         self.assertContains(response, 'data-analytics-consent-choice="accepted"')
+        self.assertContains(response, 'class="analytics-consent-description-compact"')
         self.assertNotContains(response, "googletagmanager.com/gtag/js")
 
     def test_public_pages_expose_discovery_and_modal_funnel_events(self) -> None:
@@ -465,6 +484,22 @@ class PublicNavigationTests(BoardTestCase):
                 self.assertIn("test-request-123", body)
                 self.assertNotIn("internal detail", body)
                 self.assertNotIn("Traceback", body)
+
+
+class SentryDebugTests(TestCase):
+    @override_settings(DEBUG=True, TAKEBOARD_ENVIRONMENT="local")
+    def test_local_sentry_debug_route_returns_server_error(self) -> None:
+        client = Client(raise_request_exception=False)
+
+        response = client.get("/sentry-debug/")
+
+        self.assertEqual(response.status_code, 500)
+
+    @override_settings(DEBUG=False, TAKEBOARD_ENVIRONMENT="production")
+    def test_sentry_debug_route_is_disabled_outside_local_debug(self) -> None:
+        response = self.client.get("/sentry-debug/")
+
+        self.assertEqual(response.status_code, 404)
 
 
 @override_settings(

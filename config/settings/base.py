@@ -92,7 +92,9 @@ UNFOLD = {
 }
 
 MIDDLEWARE = [
+    "apps.core.middleware.health_check.HealthCheckHostMiddleware",
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
     "apps.core.middleware.request_id.RequestIDMiddleware",
     "apps.core.middleware.security.SecurityHeadersMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -157,6 +159,14 @@ USE_TZ = True
 STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
+STORAGES = {
+    "default": {
+        "BACKEND": "django.core.files.storage.FileSystemStorage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -311,14 +321,16 @@ TAKEBOARD_ANALYTICS_CONSENT_PREVIEW = env_bool(
 )
 
 SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+SENTRY_ENVIRONMENT = os.environ.get("SENTRY_ENVIRONMENT", TAKEBOARD_ENVIRONMENT)
+SENTRY_RELEASE = os.environ.get("SENTRY_RELEASE", "")
 if SENTRY_DSN:
     try:
         import sentry_sdk
 
         sentry_sdk.init(
             dsn=SENTRY_DSN,
-            environment=os.environ.get("SENTRY_ENVIRONMENT", "local"),
-            release=os.environ.get("SENTRY_RELEASE", ""),
+            environment=SENTRY_ENVIRONMENT,
+            release=SENTRY_RELEASE or None,
             send_default_pii=False,
         )
     except ImportError:

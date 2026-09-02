@@ -100,9 +100,9 @@ if TAKEBOARD_BID_FINALIZATION_MODE == "sqs_fifo":
         raise ImproperlyConfigured("SQS bid finalization retry visibility is out of bounds.")
     if not 1 <= TAKEBOARD_SQS_BID_FINALIZATION_MAX_RECEIVE_COUNT <= 1000:
         raise ImproperlyConfigured("SQS bid finalization receive count is out of bounds.")
-    if TAKEBOARD_GUARANTEED_DISPLAY_SECONDS > 900:
+    if TAKEBOARD_GUARANTEED_DISPLAY_SECONDS > 43200:
         raise ImproperlyConfigured(
-            "TAKEBOARD_GUARANTEED_DISPLAY_SECONDS cannot exceed SQS FIFO's 15-minute delay limit."
+            "TAKEBOARD_GUARANTEED_DISPLAY_SECONDS cannot exceed SQS visibility's 12-hour limit."
         )
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")

@@ -1,3 +1,9 @@
+from base64 import b64encode
+from io import BytesIO
+from urllib.parse import parse_qs, urlparse
+
+import qrcode
+from qrcode.image.svg import SvgPathImage
 from django.contrib.auth.decorators import user_passes_test
 from django.shortcuts import redirect, render
 from django.views.decorators.http import require_http_methods
@@ -5,8 +11,28 @@ from django.views.decorators.http import require_http_methods
 from .middleware.admin_security import ADMIN_MFA_SESSION_KEY
 
 
-def _staff(request):
-    return request.user.is_authenticated and request.user.is_staff
+def _staff(user):
+    return user.is_authenticated and user.is_staff
+
+
+def _enrollment_context(device):
+    config_url = device.config_url
+    qr_code = qrcode.QRCode(
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=4,
+        image_factory=SvgPathImage,
+    )
+    qr_code.add_data(config_url)
+    qr_code.make(fit=True)
+    image = qr_code.make_image()
+    output = BytesIO()
+    image.save(output)
+    manual_key = parse_qs(urlparse(config_url).query).get("secret", [""])[0]
+    return {
+        "qr_code_data": b64encode(output.getvalue()).decode("ascii"),
+        "manual_key": manual_key,
+    }
 
 
 @user_passes_test(_staff)
@@ -29,7 +55,7 @@ def mfa_gate(request):
                 request.session[ADMIN_MFA_SESSION_KEY] = True
                 return redirect("admin:index")
             return render(request, "admin/mfa_gate.html", {"device": device, "error": "Enter the current code from your authenticator."}, status=400)
-        return render(request, "admin/mfa_gate.html", {"device": device})
+        return render(request, "admin/mfa_gate.html", {**_enrollment_context(device), "device": device})
     if request.method == "POST" and device.verify_token(request.POST.get("token", "")):
         request.session[ADMIN_MFA_SESSION_KEY] = True
         return redirect("admin:index")

@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.urls import path
 
 from . import views
@@ -15,3 +16,6 @@ urlpatterns = [
     path("contact/", views.contact, name="contact"),
     path("healthz/", views.healthz, name="healthz"),
 ]
+
+if settings.TAKEBOARD_ENVIRONMENT == "local":
+    urlpatterns.append(path("sentry-debug/", views.sentry_debug, name="sentry_debug"))

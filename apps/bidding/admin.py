@@ -9,7 +9,17 @@ from .models import Bid, BidConfirmation, BidRiskConfig
 
 @admin.register(Bid)
 class BidAdmin(ModelAdmin):
-    list_display = ("public_id", "board", "bidder", "represented_entity", "amount_cents", "status", "created_at")
+    list_display = (
+        "public_id",
+        "board",
+        "bidder",
+        "represented_entity",
+        "amount_cents",
+        "status",
+        "payment_failure_count",
+        "payment_failed_at",
+        "created_at",
+    )
     list_filter = ("status", "represented_entity")
     search_fields = (
         "public_id",
@@ -25,6 +35,8 @@ class BidAdmin(ModelAdmin):
         "authorized_at",
         "captured_at",
         "canceled_at",
+        "payment_failure_count",
+        "payment_failed_at",
         "payment_capture_snapshot",
     )
 

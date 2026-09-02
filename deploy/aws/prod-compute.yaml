@@ -1,0 +1,349 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Take the Board production ECS cluster, web task, and dormant worker service.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: prod
+    AllowedPattern: '^[a-z0-9-]+$'
+  ImageUri:
+    Type: String
+  AppSecretArn:
+    Type: String
+  BidFinalizationQueueUrl:
+    Type: String
+  WebDesiredCount:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    MaxValue: 2
+  WorkerDesiredCount:
+    Type: Number
+    Default: 0
+    MinValue: 0
+    MaxValue: 1
+  WebCpu:
+    Type: String
+    Default: '512'
+  WebMemory:
+    Type: String
+    Default: '1024'
+  WorkerCpu:
+    Type: String
+    Default: '256'
+  WorkerMemory:
+    Type: String
+    Default: '512'
+
+Resources:
+  Cluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: !Sub 'takeboard-${EnvironmentName}'
+      ClusterSettings:
+        - Name: containerInsights
+          Value: disabled
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WebLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub '/ecs/takeboard/${EnvironmentName}/web'
+      RetentionInDays: 14
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      LogGroupName: !Sub '/ecs/takeboard/${EnvironmentName}/worker'
+      RetentionInDays: 14
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WebTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub 'takeboard-${EnvironmentName}-web'
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: !Ref WebCpu
+      Memory: !Ref WebMemory
+      ExecutionRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/TTBProductionEcsExecution'
+      TaskRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/TTBProductionWebTask'
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ContainerDefinitions:
+        - Name: web
+          Image: !Ref ImageUri
+          Essential: true
+          Command:
+            - sh
+            - -c
+            - python manage.py migrate --noinput && exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 2 --threads 4 --timeout 60
+          PortMappings:
+            - ContainerPort: 8000
+              Protocol: tcp
+          Environment:
+            - Name: TAKEBOARD_ENVIRONMENT
+              Value: production
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: config.settings.production
+            - Name: DJANGO_DEBUG
+              Value: 'false'
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: taketheboard.com,www.taketheboard.com
+            - Name: DJANGO_CSRF_TRUSTED_ORIGINS
+              Value: https://taketheboard.com,https://www.taketheboard.com
+            - Name: AWS_REGION
+              Value: us-east-1
+            - Name: TAKEBOARD_SUPPORT_EMAIL
+              Value: support@taketheboard.com
+            - Name: TAKEBOARD_POLICY_LAST_UPDATED
+              Value: September 2, 2026
+            - Name: TAKEBOARD_DEFAULT_COMPETITION_SLUG
+              Value: college-football
+            - Name: TAKEBOARD_RATE_LIMITING_ENABLED
+              Value: 'true'
+            - Name: TAKEBOARD_DEMO_BIDDING_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_COGNITO_AUTH_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_AUTH_MODAL_PREVIEW
+              Value: 'true'
+            - Name: TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING
+              Value: 'true'
+            - Name: TAKEBOARD_STRIPE_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_BID_FINALIZATION_MODE
+              Value: sqs_fifo
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL
+              Value: !Ref BidFinalizationQueueUrl
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_REGION
+              Value: us-east-1
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_WAIT_SECONDS
+              Value: '20'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_VISIBILITY_TIMEOUT_SECONDS
+              Value: '120'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_RETRY_VISIBILITY_SECONDS
+              Value: '30'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_MAX_RECEIVE_COUNT
+              Value: '5'
+            - Name: TAKEBOARD_BEDROCK_ENABLED
+              Value: 'false'
+            - Name: SENTRY_ENVIRONMENT
+              Value: production
+            - Name: GOOGLE_ANALYTICS_MEASUREMENT_ID
+              Value: G-X054N05H9C
+          Secrets:
+            - Name: DJANGO_SECRET_KEY
+              ValueFrom: !Sub '${AppSecretArn}:DJANGO_SECRET_KEY::'
+            - Name: MODERATION_HASH_SECRET
+              ValueFrom: !Sub '${AppSecretArn}:MODERATION_HASH_SECRET::'
+            - Name: DATABASE_URL
+              ValueFrom: !Sub '${AppSecretArn}:DATABASE_URL::'
+            - Name: REDIS_URL
+              ValueFrom: !Sub '${AppSecretArn}:REDIS_URL::'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref WebLogGroup
+              awslogs-region: us-east-1
+              awslogs-stream-prefix: web
+          HealthCheck:
+            Command:
+              - CMD-SHELL
+              - >-
+                python -c 'import urllib.request; request = urllib.request.Request("http://127.0.0.1:8000/healthz/", headers={"Host": "taketheboard.com", "X-Forwarded-Proto": "https", "User-Agent": "ELB-HealthChecker/2.0"}); urllib.request.urlopen(request, timeout=2)'
+            Interval: 30
+            Timeout: 5
+            Retries: 3
+            StartPeriod: 90
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WorkerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub 'takeboard-${EnvironmentName}-worker'
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: !Ref WorkerCpu
+      Memory: !Ref WorkerMemory
+      ExecutionRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/TTBProductionEcsExecution'
+      TaskRoleArn: !Sub 'arn:${AWS::Partition}:iam::${AWS::AccountId}:role/TTBProductionWorkerTask'
+      RuntimePlatform:
+        OperatingSystemFamily: LINUX
+        CpuArchitecture: X86_64
+      ContainerDefinitions:
+        - Name: worker
+          Image: !Ref ImageUri
+          Essential: true
+          Command:
+            - python
+            - manage.py
+            - run_bid_worker
+            - --poll-seconds=1
+          Environment:
+            - Name: TAKEBOARD_ENVIRONMENT
+              Value: production
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: config.settings.production
+            - Name: DJANGO_DEBUG
+              Value: 'false'
+            - Name: DJANGO_ALLOWED_HOSTS
+              Value: taketheboard.com,www.taketheboard.com
+            - Name: AWS_REGION
+              Value: us-east-1
+            - Name: TAKEBOARD_RATE_LIMITING_ENABLED
+              Value: 'true'
+            - Name: TAKEBOARD_DEMO_BIDDING_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_COGNITO_AUTH_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_STRIPE_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_BID_FINALIZATION_MODE
+              Value: sqs_fifo
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL
+              Value: !Ref BidFinalizationQueueUrl
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_REGION
+              Value: us-east-1
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_WAIT_SECONDS
+              Value: '20'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_VISIBILITY_TIMEOUT_SECONDS
+              Value: '120'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_RETRY_VISIBILITY_SECONDS
+              Value: '30'
+            - Name: TAKEBOARD_SQS_BID_FINALIZATION_MAX_RECEIVE_COUNT
+              Value: '5'
+          Secrets:
+            - Name: DJANGO_SECRET_KEY
+              ValueFrom: !Sub '${AppSecretArn}:DJANGO_SECRET_KEY::'
+            - Name: MODERATION_HASH_SECRET
+              ValueFrom: !Sub '${AppSecretArn}:MODERATION_HASH_SECRET::'
+            - Name: DATABASE_URL
+              ValueFrom: !Sub '${AppSecretArn}:DATABASE_URL::'
+            - Name: REDIS_URL
+              ValueFrom: !Sub '${AppSecretArn}:REDIS_URL::'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref WorkerLogGroup
+              awslogs-region: us-east-1
+              awslogs-stream-prefix: worker
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WebService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Cluster
+    Properties:
+      ServiceName: !Sub 'takeboard-${EnvironmentName}-web'
+      Cluster: !Ref Cluster
+      LaunchType: FARGATE
+      DesiredCount: !Ref WebDesiredCount
+      PlatformVersion: LATEST
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MaximumPercent: 200
+        MinimumHealthyPercent: 100
+      HealthCheckGracePeriodSeconds: 120
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSecurityGroup'
+          Subnets:
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSubnetA'
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSubnetB'
+      LoadBalancers:
+        - ContainerName: web
+          ContainerPort: 8000
+          TargetGroupArn:
+            Fn::ImportValue: !Sub '${EnvironmentName}-TargetGroupArn'
+      TaskDefinition: !Ref WebTaskDefinition
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+  WorkerService:
+    Type: AWS::ECS::Service
+    DependsOn:
+      - Cluster
+    Properties:
+      ServiceName: !Sub 'takeboard-${EnvironmentName}-worker'
+      Cluster: !Ref Cluster
+      LaunchType: FARGATE
+      DesiredCount: !Ref WorkerDesiredCount
+      PlatformVersion: LATEST
+      EnableECSManagedTags: true
+      PropagateTags: SERVICE
+      DeploymentConfiguration:
+        DeploymentCircuitBreaker:
+          Enable: true
+          Rollback: true
+        MaximumPercent: 200
+        MinimumHealthyPercent: 0
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          SecurityGroups:
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSecurityGroup'
+          Subnets:
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSubnetA'
+            - Fn::ImportValue: !Sub '${EnvironmentName}-AppSubnetB'
+      TaskDefinition: !Ref WorkerTaskDefinition
+      Tags:
+        - Key: Project
+          Value: take-the-board
+        - Key: Environment
+          Value: !Ref EnvironmentName
+
+Outputs:
+  ClusterName:
+    Value: !Ref Cluster
+    Export:
+      Name: !Sub '${EnvironmentName}-EcsClusterName'
+  WebServiceName:
+    Value: !GetAtt WebService.Name
+    Export:
+      Name: !Sub '${EnvironmentName}-EcsWebServiceName'
+  WorkerServiceName:
+    Value: !GetAtt WorkerService.Name
+    Export:
+      Name: !Sub '${EnvironmentName}-EcsWorkerServiceName'
+  WebTaskDefinitionArn:
+    Value: !Ref WebTaskDefinition
+    Export:
+      Name: !Sub '${EnvironmentName}-EcsWebTaskDefinitionArn'

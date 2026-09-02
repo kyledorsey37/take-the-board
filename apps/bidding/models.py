@@ -59,6 +59,8 @@ class Bid(models.Model):
     authorized_at = models.DateTimeField(null=True, blank=True)
     captured_at = models.DateTimeField(null=True, blank=True)
     canceled_at = models.DateTimeField(null=True, blank=True)
+    payment_failure_count = models.PositiveIntegerField(default=0)
+    payment_failed_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         indexes = [
@@ -67,6 +69,7 @@ class Bid(models.Model):
             models.Index(fields=["represented_entity", "-created_at"]),
             models.Index(fields=["status", "-created_at"]),
             models.Index(fields=["stripe_payment_intent_id"]),
+            models.Index(fields=["bidder", "-payment_failed_at"]),
         ]
 
     def __str__(self) -> str:

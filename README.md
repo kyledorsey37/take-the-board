@@ -72,6 +72,27 @@ Run Django checks with the local settings module:
 python manage.py check
 ```
 
+### Verify Sentry locally
+
+Sentry is enabled only when `SENTRY_DSN` is set. Copy `.env.example` to the
+ignored `.env` file, set `SENTRY_DSN` to the DSN from the Sentry project, and
+start the local stack:
+
+```bash
+cp -n .env.example .env
+docker compose up --build
+```
+
+With the web container running, trigger one deterministic test event:
+
+```bash
+curl -i http://localhost:8000/sentry-debug/
+```
+
+The local-only route returns HTTP 500 and should create an event in Sentry
+after a short delay. It returns HTTP 404 when `DEBUG=False` or outside the
+local environment. The SDK keeps default PII collection disabled.
+
 The local `runserver` command includes Django's `--insecure` option so production-style (`DEBUG=False`) previews can still serve local static assets. This option is only for the development Compose service; production static assets are intended for S3 and CloudFront.
 
 If the database schema is behind the code after pulling changes, apply pending migrations inside the web container:

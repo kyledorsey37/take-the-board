@@ -20,6 +20,28 @@ from ..models import LedgerEntry, PaymentCapture, StripeEvent
 
 AUTHORIZATION_EVENT = "payment_intent.amount_capturable_updated"
 
+# A failed card attempt is not a failed bid.  Stripe can reuse the same
+# PaymentIntent from an Embedded Checkout Session after the customer supplies a
+# different payment method.  Keep these states retryable until Stripe either
+# authorizes the PaymentIntent or cancels it.
+RETRYABLE_PAYMENT_STATES = {
+    Bid.Status.CREATED,
+    Bid.Status.MODERATION_APPROVED,
+    Bid.Status.CHECKOUT_CREATED,
+}
+
+# These states are already settled and must not be replaced by a cancellation
+# event.  An authorized or processing bid remains cancellable until capture.
+CANCELLATION_IMMUTABLE_STATES = {
+    Bid.Status.WON,
+    Bid.Status.DEMO_WON,
+    Bid.Status.PAYMENT_FAILED,
+    Bid.Status.AUTH_CANCELED,
+    Bid.Status.OUTBID,
+    Bid.Status.REFUNDED,
+    Bid.Status.DISPUTED,
+}
+
 
 def _bid_public_id(event_object: dict) -> str:
     metadata = event_object.get("metadata") or {}
@@ -111,18 +133,48 @@ def _handle_authorization(event_object: dict, now: datetime) -> None:
 
 
 @transaction.atomic
-def _handle_payment_failure(event_object: dict, status: str, now: datetime) -> None:
+def _handle_payment_failed(event_object: dict, now: datetime) -> None:
+    """Record the PaymentIntent while leaving a failed card attempt retryable."""
     bid = _find_bid(event_object)
     if not bid:
         return
 
     bid = Bid.objects.select_for_update().get(pk=bid.pk)
-    if bid.status in {Bid.Status.WON, Bid.Status.DEMO_WON, Bid.Status.REFUNDED}:
+    if bid.status not in RETRYABLE_PAYMENT_STATES:
         return
-    bid.status = status
-    if status == Bid.Status.AUTH_CANCELED:
-        bid.canceled_at = now
-    bid.save(update_fields=["status", "canceled_at"] if status == Bid.Status.AUTH_CANCELED else ["status"])
+
+    # PaymentIntent metadata normally supplies this earlier through Checkout or
+    # the authorization event.  Saving the ID here also makes the retry path
+    # observable without storing provider payload details in the bid.
+    payment_intent_id = str(event_object.get("id") or "")
+    updates = ["payment_failure_count", "payment_failed_at"]
+    if payment_intent_id and not bid.stripe_payment_intent_id:
+        bid.stripe_payment_intent_id = payment_intent_id
+        updates.append("stripe_payment_intent_id")
+    bid.payment_failure_count += 1
+    bid.payment_failed_at = now
+    bid.save(update_fields=updates)
+
+
+@transaction.atomic
+def _handle_payment_canceled(event_object: dict, now: datetime) -> None:
+    """Invalidate a canceled PaymentIntent and release any local challenger."""
+    bid = _find_bid(event_object)
+    if not bid:
+        return
+
+    bid = Bid.objects.select_for_update().get(pk=bid.pk)
+    if bid.status in CANCELLATION_IMMUTABLE_STATES:
+        return
+
+    updates = ["status", "canceled_at"]
+    payment_intent_id = str(event_object.get("id") or "")
+    if payment_intent_id and not bid.stripe_payment_intent_id:
+        bid.stripe_payment_intent_id = payment_intent_id
+        updates.append("stripe_payment_intent_id")
+    bid.status = Bid.Status.AUTH_CANCELED
+    bid.canceled_at = now
+    bid.save(update_fields=updates)
 
     board = Board.objects.select_for_update().get(pk=bid.board_id)
     if board.pending_bid_id == bid.id:
@@ -193,9 +245,9 @@ def process_stripe_event(event_id: str) -> bool:
     elif event.event_type == AUTHORIZATION_EVENT:
         _handle_authorization(event_object, now)
     elif event.event_type == "payment_intent.payment_failed":
-        _handle_payment_failure(event_object, Bid.Status.PAYMENT_FAILED, now)
+        _handle_payment_failed(event_object, now)
     elif event.event_type == "payment_intent.canceled":
-        _handle_payment_failure(event_object, Bid.Status.AUTH_CANCELED, now)
+        _handle_payment_canceled(event_object, now)
     elif event.event_type == "payment_intent.succeeded":
         _handle_payment_succeeded(event_object)
     elif event.event_type == "charge.updated":

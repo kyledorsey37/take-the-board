@@ -39,7 +39,7 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260831-26">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260902-27">
   <script src="https://unpkg.com/htmx.org@1.9.12" defer></script>
   <script src="{% static 'js/app.js' %}?v=20260831-5" defer></script>
 </head>
@@ -177,10 +177,16 @@
       {% if analytics_consent %}hidden{% endif %}
     >
       <div class="analytics-consent-inner">
-        <div>
+        <div class="analytics-consent-copy">
           <p class="analytics-consent-label">Optional analytics</p>
-          <h2 id="analytics-consent-title">Help us understand what is useful.</h2>
-          <p>We use Google Analytics to measure aggregate site usage. It is off unless you accept. Read our <a href="{% url 'core:privacy' %}">Privacy Policy</a>.</p>
+          <h2 id="analytics-consent-title">
+            <span class="analytics-consent-title-full">Help us understand what is useful.</span>
+            <span class="analytics-consent-title-compact">Optional analytics</span>
+          </h2>
+          <p>
+            <span class="analytics-consent-description-full">We use Google Analytics to measure aggregate site usage. It is off unless you accept. Read our <a href="{% url 'core:privacy' %}">Privacy Policy</a>.</span>
+            <span class="analytics-consent-description-compact"><a href="{% url 'core:privacy' %}">Privacy</a></span>
+          </p>
         </div>
         <div class="analytics-consent-actions">
           <button class="button button-primary" type="button" data-analytics-consent-choice="accepted">Accept</button>

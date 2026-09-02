@@ -92,5 +92,8 @@ future implementation work should know about.
 
 | Date | Change | Decision or follow-up |
 | --- | --- | --- |
+| 2026-09-02 | Production preview bootstrap | Provisioned the low-scale AWS foundation/edge/compute path, added a narrowly scoped ALB health-check middleware/probe, and created the idempotent `seed_production_roster` command. Preview remains no-bid until DNS, provider credentials, worker permissions, and external launch checks are complete. |
 | 2026-08-31 | Added checklist | Every implementation reviews analytics, security, SEO, accessibility, operations, tests, and documentation at start and completion. |
 | 2026-09-02 | Overnight security hardening | Added fail-closed deployment settings, browser headers/request-ID validation, immutable Admin records, shared-cache Admin throttling, and django-otp staff MFA. No new GA4 markers; edge access controls, alerting, and live deployment verification remain external. |
+| 2026-09-02 | Initial Sentry verification | Added environment-backed server-side Sentry tags, a local-only deterministic test route, Docker/ECS DSN wiring, and documented PII-safe connectivity verification. |
+| 2026-09-02 | Mobile analytics consent | Replaced the tall mobile consent card with a compact first-load bar so the first board CTA remains visible. Analytics still remains off until explicit acceptance; local preview renders the prompt without loading GA4. |

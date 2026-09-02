@@ -17,10 +17,12 @@ RUN pip install --upgrade pip \
 COPY . .
 
 RUN DJANGO_SETTINGS_MODULE=config.settings.production \
+    TAKEBOARD_ENVIRONMENT=production \
     DJANGO_SECRET_KEY=build-placeholder-not-runtime-secret \
     MODERATION_HASH_SECRET=build-placeholder-not-runtime-secret \
     DJANGO_ALLOWED_HOSTS=example.com \
     DATABASE_URL=postgres://placeholder:placeholder@localhost:5432/placeholder \
+    REDIS_URL=redis://localhost:6379/0 \
     python manage.py collectstatic --noinput
 
 EXPOSE 8000

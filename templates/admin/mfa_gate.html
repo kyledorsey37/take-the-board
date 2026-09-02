@@ -1,3 +1,160 @@
-<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Staff verification</title></head><body><main><h1>Staff verification</h1>
-{% if device %}<p>Scan this authenticator setup URI, then enter the current code:</p><p><code>{{ device.config_url }}</code></p>{% endif %}{% if error %}<p role="alert">{{ error }}</p>{% endif %}
-<form method="post">{% csrf_token %}<label for="token">Authenticator code</label><input id="token" name="token" inputmode="numeric" autocomplete="one-time-code" required><button type="submit">Verify</button></form></main></body></html>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Staff verification · Take the Board</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --ink: #151515;
+      --panel: #202020;
+      --panel-soft: #292929;
+      --paper: #fffdf8;
+      --muted: #b9b5ad;
+      --amber: #ffb84d;
+      --red: #d0343a;
+      --line: rgba(255, 255, 255, .14);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--ink);
+      color: var(--paper);
+      font: 16px/1.5 ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    .mfa-shell {
+      width: min(100% - 2rem, 960px);
+      margin: 0 auto;
+      padding: clamp(2rem, 7vw, 5rem) 0;
+    }
+    .brand {
+      margin-bottom: clamp(2rem, 6vw, 4rem);
+      color: var(--amber);
+      font-size: .78rem;
+      font-weight: 800;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+    .mfa-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+      gap: clamp(2rem, 7vw, 5rem);
+      align-items: start;
+    }
+    h1 {
+      max-width: 12ch;
+      margin: 0 0 1rem;
+      font-size: clamp(2.5rem, 7vw, 5.5rem);
+      line-height: .94;
+      letter-spacing: -.055em;
+    }
+    .intro { max-width: 38rem; color: var(--muted); font-size: 1.05rem; }
+    .step-list { display: grid; gap: .9rem; margin: 2rem 0 0; padding: 0; list-style: none; }
+    .step-list li { display: flex; gap: .75rem; align-items: baseline; }
+    .step-number { color: var(--amber); font-weight: 800; }
+    .mfa-card {
+      padding: 1rem;
+      background: var(--paper);
+      color: var(--ink);
+      border-top: 7px solid var(--amber);
+      box-shadow: .45rem .45rem 0 rgba(255, 184, 77, .28);
+    }
+    .qr-frame { display: grid; place-items: center; min-height: 280px; padding: 1.1rem; background: white; }
+    .qr-frame img { display: block; width: min(100%, 270px); height: auto; }
+    .card-caption { margin: .9rem .25rem 1.25rem; color: #5f5a52; font-size: .9rem; }
+    label { display: block; margin-bottom: .4rem; font-size: .86rem; font-weight: 800; }
+    input {
+      width: 100%;
+      padding: .8rem .85rem;
+      border: 2px solid #c9c3b8;
+      border-radius: 0;
+      background: white;
+      color: var(--ink);
+      font: inherit;
+      letter-spacing: .18em;
+    }
+    input:focus { border-color: var(--red); outline: 3px solid rgba(208, 52, 58, .22); outline-offset: 2px; }
+    button {
+      width: 100%;
+      margin-top: .7rem;
+      padding: .85rem 1rem;
+      border: 0;
+      border-radius: 0;
+      background: var(--red);
+      color: white;
+      cursor: pointer;
+      font: inherit;
+      font-weight: 800;
+    }
+    button:hover { background: #ad252d; }
+    button:focus-visible, summary:focus-visible { outline: 3px solid var(--amber); outline-offset: 3px; }
+    .error { margin: 0 0 1rem; padding: .75rem; border-left: 4px solid var(--red); background: #fff0ef; color: #7d1f24; }
+    details { margin-top: 1.25rem; border-top: 1px solid #ded8cc; padding-top: 1rem; }
+    summary { cursor: pointer; color: #5f2428; font-size: .9rem; font-weight: 800; }
+    .manual-key { display: flex; gap: .5rem; align-items: stretch; margin-top: .75rem; }
+    .manual-key code { min-width: 0; flex: 1; overflow-wrap: anywhere; padding: .7rem; background: #f0ece4; color: var(--ink); font-size: .82rem; letter-spacing: .08em; }
+    .copy-button { width: auto; flex: 0 0 auto; margin: 0; padding: .65rem .75rem; background: var(--ink); font-size: .82rem; }
+    .fine-print { margin: .9rem 0 0; color: #6c665d; font-size: .78rem; }
+    @media (max-width: 700px) {
+      .mfa-layout { grid-template-columns: 1fr; }
+      h1 { max-width: 10ch; }
+      .mfa-card { max-width: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="mfa-shell">
+    <div class="brand">Take the Board · Operations</div>
+    <div class="mfa-layout">
+      <section aria-labelledby="mfa-title">
+        <h1 id="mfa-title">Staff verification.</h1>
+        <p class="intro">Protecting Admin with a second step. Add Take the Board to an authenticator app, then enter the six-digit code it generates.</p>
+        <ol class="step-list">
+          <li><span class="step-number">01</span><span>Open your authenticator app and scan the code.</span></li>
+          <li><span class="step-number">02</span><span>Enter the current six-digit code.</span></li>
+          <li><span class="step-number">03</span><span>Keep the app available for future Admin sign-ins.</span></li>
+        </ol>
+      </section>
+      <section class="mfa-card" aria-label="Authenticator enrollment">
+        {% if error %}<p class="error" role="alert">{{ error }}</p>{% endif %}
+        {% if qr_code_data %}
+          <div class="qr-frame">
+            <img src="data:image/svg+xml;base64,{{ qr_code_data }}" alt="QR code for enrolling the staff authenticator">
+          </div>
+          <p class="card-caption">Scan this code from Google Authenticator, 1Password, Authy, or another TOTP app.</p>
+          <details>
+            <summary>Can’t scan? Use a setup key</summary>
+            <div class="manual-key">
+              <code id="manual-key">{{ manual_key }}</code>
+              <button class="copy-button" type="button" data-copy-target="manual-key">Copy</button>
+            </div>
+            <p class="fine-print">Treat this key like a password. Anyone with it can generate your Admin codes.</p>
+          </details>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <label for="token">Authenticator code</label>
+          <input id="token" name="token" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]{6}" maxlength="6" required>
+          <button type="submit">Verify code</button>
+        </form>
+      </section>
+    </div>
+  </main>
+  <script>
+    document.querySelectorAll("[data-copy-target]").forEach((button) => {
+      button.addEventListener("click", async () => {
+        const target = document.getElementById(button.dataset.copyTarget);
+        try {
+          await navigator.clipboard.writeText(target.textContent.trim());
+          button.textContent = "Copied";
+          window.setTimeout(() => { button.textContent = "Copy"; }, 1600);
+        } catch (error) {
+          button.textContent = "Select key";
+        }
+      });
+    });
+  </script>
+</body>
+</html>

@@ -6,6 +6,29 @@ display names, payment payloads, tokens, or raw webhook data.
 
 ## Queue and DLQ
 
+The repeatable CLI setup is:
+
+```bash
+TTB_AWS_PROFILE=ttb-dev \
+TTB_AWS_REGION=us-east-1 \
+TTB_SQS_WORKER_ROLE_NAME=ttb-ec2-dev-role \
+./deploy/aws/setup_bid_finalization_sqs.sh
+```
+
+For production, use the production AWS profile and worker role explicitly:
+
+```bash
+TTB_AWS_PROFILE=<production-profile> \
+TTB_AWS_REGION=<production-region> \
+TTB_ENVIRONMENT=prod \
+TTB_SQS_WORKER_ROLE_NAME=<production-worker-role> \
+./deploy/aws/setup_bid_finalization_sqs.sh
+```
+
+The script is intentionally outside Terraform/IaC for now. Use one ownership
+method per queue; do not later import these queues into Terraform while also
+continuing to manage them with the script.
+
 Create a FIFO queue whose URL ends in `.fifo` and configure:
 
 - `FifoQueue=true`.
@@ -20,8 +43,10 @@ Create a FIFO queue whose URL ends in `.fifo` and configure:
 - Queue visibility timeout at least the configured
   `TAKEBOARD_SQS_BID_FINALIZATION_VISIBILITY_TIMEOUT_SECONDS` (default 120s),
   with enough headroom for the Stripe capture API and database transaction.
-  The consumer applies bounded retry visibility (default 30s, exponential, capped
-  at 900s).
+  FIFO does not support per-message `DelaySeconds`; the consumer extends
+  visibility for a current authorized bid until `guaranteed_until`, then applies
+  bounded retry visibility (default 30s, exponential, capped at 900s) for
+  unexpected failures.
 - Queue receive wait time of 20 seconds. The worker uses SQS long polling and
   deletes only after safe database handling.
 
@@ -57,8 +82,9 @@ sandbox tests therefore need no AWS queue.
 2. Place a Stripe test-mode bid on a board with an active guarantee. Confirm the
    authorization webhook creates one queue message whose body contains only the
    opaque bid ID, with `MessageGroupId=board-<id>`.
-3. Run `python manage.py run_bid_worker` and confirm the message is not captured
-   before `guaranteed_until`, then is captured and deleted afterward.
+3. Run `python manage.py run_bid_worker` and confirm the message is received but
+   not captured before `guaranteed_until`, its visibility is extended, and it is
+   captured and deleted afterward.
 4. Deliver the same message twice and confirm no duplicate takeover, capture, or
    ledger entry. Deliver a stale/canceled bid message and confirm it is settled
    without changing the current board.

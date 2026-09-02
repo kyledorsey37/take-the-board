@@ -125,11 +125,20 @@ def calculate_pending_authorization_exposure(user: UserProfile) -> int:
 
 
 def _payment_failure_cooldown(user: UserProfile, config: BidRiskConfig, now) -> bool:
-    return Bid.objects.filter(
+    window_start = now - timedelta(minutes=config.payment_failure_window_minutes)
+    recent_failures = Bid.objects.filter(
+        bidder=user,
+        payment_failed_at__gte=window_start,
+    ).aggregate(total=Sum("payment_failure_count"))["total"] or 0
+    # Preserve the cooldown for terminal failures created before the retry
+    # counter was introduced.
+    legacy_failures = Bid.objects.filter(
         bidder=user,
         status=Bid.Status.PAYMENT_FAILED,
-        created_at__gte=now - timedelta(minutes=config.payment_failure_window_minutes),
-    ).count() >= config.payment_failure_limit
+        payment_failed_at__isnull=True,
+        created_at__gte=window_start,
+    ).count()
+    return int(recent_failures) + legacy_failures >= config.payment_failure_limit
 
 
 def validate_bid_risk(user: UserProfile, amount_cents: int, *, now=None) -> RiskDecision:

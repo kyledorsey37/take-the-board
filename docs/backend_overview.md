@@ -102,9 +102,21 @@ configuration without overwriting existing records. The public Boards page and
 school pages query that competition directly; Django Admin remains the operational
 source of truth after seeding.
 
+Production bootstrap uses the separate `python manage.py seed_production_roster`
+command. It requires `TAKEBOARD_ENVIRONMENT=production`, is idempotent, and creates
+only the initial competition, roster, boards, rivalries, game configuration, and
+current period; it does not create users, bids, payments, or demo activity.
+
 When `TAKEBOARD_DEMO_BIDDING_ENABLED` is on in local settings, the bid service implements the protected-board state machine without calling Stripe. A published local bid receives a 30-second `guaranteed_until` window. During that period, only one higher `authorized` bid may be pending; a still-higher bid transactionally replaces it and records the prior authorization as canceled. The minimum uses the maximum of the current captured amount and pending amount.
 
 When `TAKEBOARD_STRIPE_ENABLED` is on, authenticated bids create Stripe Embedded Checkout Sessions with manual capture. Stripe webhooks are signature-verified and stored in `StripeEvent`; authorization processing cancels superseded authorizations and enqueues an opaque bid identifier to the configured SQS FIFO queue when queue mode is selected. The `run_bid_worker` consumer captures a valid pending bid when its guarantee is due. Local settings deliberately use the Postgres polling path.
+
+A failed card attempt is tracked on the bid for risk controls without changing
+the bid to terminal `payment_failed`: the open Checkout Session remains
+retryable on the same PaymentIntent. A later authorization can proceed; a
+canceled PaymentIntent marks the bid `auth_canceled` and clears any pending
+challenger. `payment_failed` remains the post-authorization capture-failure
+outcome.
 
 The `run_bid_worker` command always processes stored Stripe events, then either
 long-polls SQS FIFO or polls due boards according to

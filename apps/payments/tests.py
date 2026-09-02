@@ -11,10 +11,11 @@ from django.core.cache import cache
 
 from apps.accounts.models import UserProfile
 from apps.accounts.services.session import AUTH_SESSION_KEY
-from apps.bidding.models import Bid, BidConfirmation
+from apps.bidding.models import Bid, BidConfirmation, BidRiskConfig
 from apps.bidding.services.confirmation import create_confirmation
 from apps.bidding.services.create_bid import TakeoverError
 from apps.bidding.services.finalize_bid import finalize_due_board
+from apps.bidding.services.risk import RiskReason, validate_bid_risk
 from apps.bidding.services.rules import current_board_rules
 from apps.boards.models import Board
 from apps.core.models import GameConfig
@@ -28,7 +29,7 @@ from .models import LedgerEntry, PaymentCapture, PurchaseEvidence, StripeEvent
 from .services.capture_payment import capture_payment
 from .services.create_checkout import create_checkout
 from .services.evidence import record_purchase_evidence
-from .services.process_webhooks import process_pending_stripe_events
+from .services.process_webhooks import process_pending_stripe_events, process_stripe_event
 
 
 @override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")
@@ -486,6 +487,220 @@ class StripeBidFlowTests(TestCase):
         self.assertEqual(bid.status, Bid.Status.AUTHORIZED)
         self.assertEqual(bid.stripe_payment_intent_id, "pi_test_123")
         self.assertEqual(self.board.pending_bid_id, bid.id)
+
+    @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
+    def test_failed_attempts_keep_one_payment_intent_retryable_until_authorization(self, enqueue) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=100,
+            status=Bid.Status.CHECKOUT_CREATED,
+            stripe_checkout_session_id="cs_retry_123",
+        )
+        for event_id in ("evt_failed_1", "evt_failed_2"):
+            StripeEvent.objects.create(
+                event_id=event_id,
+                event_type="payment_intent.payment_failed",
+                payload={
+                    "data": {
+                        "object": {
+                            "id": "pi_retry_123",
+                            "metadata": {"bid_id": str(bid.public_id)},
+                        }
+                    }
+                },
+            )
+        StripeEvent.objects.create(
+            event_id="evt_retry_authorized",
+            event_type="payment_intent.amount_capturable_updated",
+            payload={
+                "data": {
+                    "object": {
+                        "id": "pi_retry_123",
+                        "metadata": {"bid_id": str(bid.public_id)},
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(process_pending_stripe_events(), 3)
+
+        bid.refresh_from_db()
+        self.board.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.AUTHORIZED)
+        self.assertEqual(bid.stripe_payment_intent_id, "pi_retry_123")
+        self.assertEqual(bid.payment_failure_count, 2)
+        self.assertIsNotNone(bid.payment_failed_at)
+        self.assertEqual(self.board.pending_bid_id, bid.id)
+        enqueue.assert_called_once()
+
+        self.board.guaranteed_until = timezone.now() - timedelta(seconds=1)
+        self.board.save(update_fields=["guaranteed_until"])
+        with patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture") as capture:
+            capture.return_value = {
+                "id": "pi_retry_123",
+                "status": "succeeded",
+                "amount_received": 100,
+                "currency": "usd",
+                "latest_charge": {"id": "ch_retry_123"},
+            }
+            result = finalize_due_board(
+                board_id=self.board.id,
+                rules=current_board_rules(),
+                capture_pending_bid=capture_payment,
+            )
+
+        self.assertTrue(result.published)
+        bid.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.WON)
+
+    @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
+    def test_duplicate_authorization_processing_does_not_enqueue_twice(self, enqueue) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=100,
+            status=Bid.Status.CHECKOUT_CREATED,
+        )
+        event = StripeEvent.objects.create(
+            event_id="evt_authorized_once",
+            event_type="payment_intent.amount_capturable_updated",
+            payload={
+                "data": {
+                    "object": {
+                        "id": "pi_authorized_once",
+                        "metadata": {"bid_id": str(bid.public_id)},
+                    }
+                }
+            },
+        )
+
+        self.assertTrue(process_stripe_event(event.event_id))
+        self.assertFalse(process_stripe_event(event.event_id))
+        enqueue.assert_called_once()
+
+    def test_late_failed_attempt_does_not_downgrade_successful_bid_states(self) -> None:
+        statuses = (Bid.Status.AUTHORIZED, Bid.Status.PROCESSING, Bid.Status.WON)
+        bids = []
+        for index, status in enumerate(statuses):
+            bid = Bid.objects.create(
+                board=self.board,
+                bidder=self.profile,
+                represented_entity=self.represented_entity,
+                message="TAKE THE BOARD.",
+                amount_cents=100,
+                status=status,
+                stripe_payment_intent_id=f"pi_late_failure_{index}",
+            )
+            bids.append(bid)
+            StripeEvent.objects.create(
+                event_id=f"evt_late_failure_{index}",
+                event_type="payment_intent.payment_failed",
+                payload={
+                    "data": {
+                        "object": {
+                            "id": f"pi_late_failure_{index}",
+                            "metadata": {"bid_id": str(bid.public_id)},
+                        }
+                    }
+                },
+            )
+
+        self.assertEqual(process_pending_stripe_events(), len(statuses))
+
+        for bid, status in zip(bids, statuses):
+            bid.refresh_from_db()
+            self.assertEqual(bid.status, status)
+
+    def test_retryable_payment_failures_count_toward_the_existing_cooldown(self) -> None:
+        BidRiskConfig.objects.create(payment_failure_limit=2, payment_failure_window_minutes=30)
+        Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=100,
+            status=Bid.Status.CHECKOUT_CREATED,
+            payment_failure_count=2,
+            payment_failed_at=timezone.now(),
+        )
+
+        decision = validate_bid_risk(self.profile, 100)
+
+        self.assertFalse(decision.allowed)
+        self.assertEqual(decision.reason, RiskReason.PAYMENT_FAILURE_COOLDOWN)
+
+    @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
+    def test_canceled_payment_intent_releases_authorized_pending_bid(self, enqueue) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=100,
+            status=Bid.Status.AUTHORIZED,
+            stripe_payment_intent_id="pi_canceled_123",
+            authorized_at=timezone.now(),
+        )
+        self.board.pending_bid = bid
+        self.board.save(update_fields=["pending_bid"])
+        StripeEvent.objects.create(
+            event_id="evt_canceled_123",
+            event_type="payment_intent.canceled",
+            payload={
+                "data": {
+                    "object": {
+                        "id": "pi_canceled_123",
+                        "metadata": {"bid_id": str(bid.public_id)},
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(process_pending_stripe_events(), 1)
+
+        bid.refresh_from_db()
+        self.board.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.AUTH_CANCELED)
+        self.assertIsNotNone(bid.canceled_at)
+        self.assertIsNone(self.board.pending_bid_id)
+        enqueue.assert_not_called()
+
+    @patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture")
+    def test_capture_non_success_after_authorization_keeps_board_unchanged(self, capture) -> None:
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE BOARD.",
+            amount_cents=1700,
+            status=Bid.Status.AUTHORIZED,
+            stripe_payment_intent_id="pi_capture_failed",
+            authorized_at=timezone.now(),
+        )
+        self.board.pending_bid = bid
+        self.board.guaranteed_until = timezone.now() - timedelta(seconds=1)
+        self.board.save(update_fields=["pending_bid", "guaranteed_until"])
+        capture.return_value = {"id": "pi_capture_failed", "status": "requires_capture"}
+
+        result = finalize_due_board(
+            board_id=self.board.id,
+            rules=current_board_rules(),
+            capture_pending_bid=capture_payment,
+        )
+
+        self.assertFalse(result.published)
+        bid.refresh_from_db()
+        self.board.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.PAYMENT_FAILED)
+        self.assertIsNone(self.board.pending_bid_id)
+        self.assertIsNone(self.board.current_bid_id)
+        self.assertEqual(PaymentCapture.objects.count(), 0)
+        self.assertEqual(LedgerEntry.objects.count(), 0)
 
     def test_successful_capture_publishes_a_stripe_bid(self) -> None:
         bid = Bid.objects.create(

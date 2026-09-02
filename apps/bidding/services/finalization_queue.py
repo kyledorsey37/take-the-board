@@ -108,26 +108,19 @@ def enqueue_bid_finalization(
 
     The caller invokes this inside the authorization transaction.  A provider
     failure therefore rolls back the local authorization and leaves the Stripe
-    event unprocessed for a later retry.
+    event unprocessed for a later retry. FIFO queues do not support per-message
+    delivery delays, so the consumer handles the protected display window by
+    extending message visibility until the bid is due.
     """
     if not sqs_finalization_enabled():
         return False
     config = get_queue_config()
     body, group_id, deduplication_id = _message_values(bid=bid)
-    now = now or timezone.now()
-    delay_seconds = 0
-    if due_at is not None and due_at > now:
-        delay_seconds = max(0, math.ceil((due_at - now).total_seconds()))
-        if delay_seconds > 900:
-            raise FinalizationQueueConfigurationError(
-                "SQS FIFO delay cannot cover a protected window longer than 15 minutes."
-            )
     (client or _sqs_client(config)).send_message(
         QueueUrl=config.queue_url,
         MessageBody=body,
         MessageGroupId=group_id,
         MessageDeduplicationId=deduplication_id,
-        DelaySeconds=delay_seconds,
     )
     return True
 
@@ -157,6 +150,30 @@ def _finalize_message(*, bid: Bid, group_id: str) -> FinalizationResult | None:
         rules=current_board_rules(),
         capture_pending_bid=capture_payment if settings.TAKEBOARD_STRIPE_ENABLED else None,
     )
+
+
+def _defer_active_guarantee(
+    *, bid: Bid, group_id: str, receipt_handle: str, queue_url: str, client: Any
+) -> bool:
+    """Keep a current authorized bid invisible until its guarantee expires."""
+    if group_id != f"board-{bid.board_id}":
+        return False
+    if bid.status != Bid.Status.AUTHORIZED or bid.board.pending_bid_id != bid.id:
+        return False
+
+    guaranteed_until = bid.board.guaranteed_until
+    now = timezone.now()
+    if not guaranteed_until or guaranteed_until <= now:
+        return False
+
+    visibility = max(1, min(43200, math.ceil((guaranteed_until - now).total_seconds())))
+    client.change_message_visibility(
+        QueueUrl=queue_url,
+        ReceiptHandle=receipt_handle,
+        VisibilityTimeout=visibility,
+    )
+    logger.info("sqs_bid_finalization_deferred_until_guarantee", extra={"bid_id": bid.id})
+    return True
 
 
 class SqsBidFinalizationConsumer:
@@ -196,6 +213,14 @@ class SqsBidFinalizationConsumer:
             logger.info("sqs_bid_finalization_message_settled_missing_bid")
             return 1
         try:
+            if _defer_active_guarantee(
+                bid=bid,
+                group_id=group_id,
+                receipt_handle=receipt_handle,
+                queue_url=self.config.queue_url,
+                client=self.client,
+            ):
+                return 1
             _finalize_message(bid=bid, group_id=group_id)
         except Exception:
             attributes = message.get("MessageSystemAttributes") or message.get("Attributes") or {}

@@ -5,7 +5,7 @@ the current MVP implementation to a public, real-money launch. It is a status
 document, not legal advice and not a replacement for the detailed source-of-
 truth documents linked below.
 
-Last reviewed: 2026-08-31
+Last reviewed: 2026-09-02
 
 ## Status legend
 
@@ -94,10 +94,12 @@ The MVP has public policy pages, lightweight analytics consent, Cognito-based
 authentication, Stripe manual-capture flows, moderation and reporting records,
 refund/dispute/ledger services, and an idempotent weekly reset command.
 
-The primary launch gaps are production wiring and operations rather than missing
-core domain models: external SQS FIFO queue/DLQ/IAM configuration, EventBridge reset scheduling,
-Bedrock/Nova configuration, support and moderation operations,
-reconciliation/alerting, and the security gates listed in
+The preview production environment is now wired with private ECS/Fargate web
+compute, RDS PostgreSQL, Redis, SQS FIFO/DLQ, one NAT gateway, an HTTPS ALB,
+ACM, WAF, CloudWatch logs, SNS notifications, and a budget alert. The primary
+launch gaps are still production wiring and operations rather than missing core
+domain models: EventBridge reset scheduling, Bedrock/Nova configuration,
+support and moderation operations, reconciliation/alerting, and the security gates listed in
 `docs/security_todo.md`.
 
 ## Product and public surface
@@ -115,12 +117,15 @@ reconciliation/alerting, and the security gates listed in
 | Automatic takeover posts | Build | Connect the Take the Board X/Twitter account so a successfully captured and published takeover can generate one automatic public post. Trigger only from the server-side published outcome, make delivery idempotent, keep posting failures from blocking the game, and provide an operational retry/disable path. |
 | Post-purchase account history and support | Done | Authenticated `/account/` shows active and historical takeovers, bid/payment status, safe account references, refund/dispute state, and plain-language failed, delayed, and outbid outcomes. The bidder-owned status endpoint remains checkout polling only. |
 | 18+ acknowledgement for paid bidding | Done | The first paid-bid form collects a versioned 18+ acknowledgement, the confirmation and Checkout service boundaries enforce it, and captured purchase evidence preserves the timestamp and version. |
+| Production preview deployment | Done | The production CloudFormation foundation, edge, and compute stacks are complete in `us-east-1`; one private ECS web task is healthy behind HTTPS ALB/WAF. Stripe, Cognito, Bedrock, and the worker remain disabled for preview. |
+| Production roster bootstrap | Done | The separate `seed_production_roster` command created the initial 9 schools, boards, rivalries, game configuration, and current period without demo users, bids, or payments. |
 
 ## Payments and money movement
 
 | Item | Status | Notes |
 | --- | --- | --- |
 | Stripe Checkout/manual capture | Done | Embedded Checkout, signature-verified webhooks, idempotent event storage, authorization, cancellation, and capture are implemented and tested in sandbox flows. See [payment flow](payment_flow.md). |
+| Retry after a failed Stripe payment attempt | Verify/configure | Retryable checkout state, stale-event protection, idempotent authorization, cancellation release, and capture-failure coverage are implemented in the [payment retry story](payment_retry_after_failed_attempt_story.md). Run the interactive Stripe test-mode decline-then-success smoke and reconcile/cancel any orphaned test authorization before enabling live payments. |
 | Ledger and capture snapshots | Done | Successful captures, refunds, chargebacks, and adjustments have durable ledger records; capture fee data can arrive later. |
 | Refunds for moderated paid messages | Done | Admin actions create retryable, idempotent cancellation/refund work and use actual recorded Stripe fees. |
 | Dispute intake | Done | `charge.dispute.created` is stored idempotently, records a chargeback entry, and suspends paid bidding while open. A live/test-mode operational response runbook is still needed. |
@@ -144,16 +149,17 @@ reconciliation/alerting, and the security gates listed in
 | Item | Status | Notes |
 | --- | --- | --- |
 | Local bid finalization worker | Done | `run_bid_worker` processes the local Postgres polling path and preserves the board lock and pending-challenger invariants. |
-| SQS FIFO bid finalization | Verify/configure | Producer/consumer, board-ID grouping, stable deduplication, bounded retry/visibility handling, and idempotent consumption are implemented. Configure the external FIFO queue, FIFO DLQ/redrive policy, task-role IAM, alerts, worker deployment, and staging smoke test before production. |
+| Dev SQS FIFO bid-finalization setup and smoke test | Done | Dev FIFO queue/DLQ, worker-role IAM, deployment, guaranteed-window deferral, duplicate/stale handling, retry visibility, and worker restart behavior were verified on 2026-09-02. The reusable CLI setup script is [documented in the SQS runbook](sqs_bid_finalization_runbook.md). |
+| SQS FIFO bid finalization | Verify/configure | Production FIFO queue/DLQ are created, but the worker remains at desired count 0 and its task-role permissions plus production-like Stripe smoke test must be completed before enabling paid bidding. |
 | Weekly reset service/command | Done | `reset_boards` is idempotent, preserves historical bids/takeovers/ledger entries, rebuilds period stats, and was manually verified against the local Docker database on 2026-08-31. |
 | EventBridge reset schedule | Verify/configure | Configure Sunday 11:59 PM `America/New_York` invocation, permissions, failure alerts, and a manual invocation procedure. Test the schedule in dev/staging before relying on it. |
 | Public weekly-reset explanation | Done | How it works, the FAQ, and Terms now explain the Sunday-to-Sunday round, fresh weekly boards/standings, and preserved takeover history in player-facing language. |
 | Board reset countdown | Done | A shared weekly-status rail appears below navigation on public gameplay surfaces, with the server-derived college-football week number, countdown, and accessible customer-facing help dialog. A late reset is presented as due/in progress; the reset command remains authoritative. |
-| Shared Redis | Verify/configure | Required for sessions, moderation limits, checkout limits, and abuse controls across instances. Verify outage behavior fails closed for sensitive writes. |
+| Shared Redis | Verify/configure | Production Redis OSS is provisioned with transit and at-rest encryption and is used by the preview task for shared rate limits. Verify outage behavior fails closed for sensitive writes before launch. |
 | Sentry error monitoring | Verify/configure | Server-side Sentry is wired when `SENTRY_DSN` is set. Add/verify browser-side coverage and alerts for webhook, capture/cancel/refund, worker, moderation, reset, reconciliation, and database-integrity failures. |
 | Sentry free-tier hygiene | Verify/configure | Set environments/releases, scrub PII, filter expected 4xx/user-validation noise, keep real payment/provider/worker failures visible, tune alert thresholds, and review event volume before enabling the free-tier project in production. |
-| AWS operational notifications | Build | Create low-cost CloudWatch metrics/log filters or application counters for signups, successful bids, payment failures, moderation/provider failures, worker failures, reset failures, and reconciliation drift. Route actionable alarms through an SNS email topic; decide whether signup/success notifications are immediate or batched so they do not become alert spam. |
-| Backups and restore | Verify/configure | Confirm automated database backups, retention, restore testing, and an owner. |
+| AWS operational notifications | Verify/configure | SNS email delivery, budget alerts, WAF, and baseline infrastructure alarms are configured. Add application-level counters/filters for signups, successful bids, payment failures, moderation/provider failures, worker failures, reset failures, and reconciliation drift before live payments. |
+| Backups and restore | Verify/configure | RDS automated backups are enabled for 7 days with deletion protection; perform a restore test and assign an owner before launch. |
 
 ## Web quality and release verification
 
@@ -163,8 +169,8 @@ reconciliation/alerting, and the security gates listed in
 | Accessibility and responsive UX | Verify/configure | Run keyboard, focus, dialog, form-error, mobile, and reduced-motion checks across the public board, bidding, policy, contact, and consent flows. |
 | Board sharing | Build | Keep the existing native-share/clipboard control and add a separate board-level X/Twitter intent button. Use the canonical URL and safe, escaped share text; track it with the existing low-cardinality share events. The post-takeover X/Twitter link already exists. |
 | Browser consent behavior | Done | Accept/Decline and Cookie settings are implemented, stored only in the browser, and tested in the local preview mode. |
-| Automated application tests | Verify/configure | The implementation has coverage for payment state, idempotency, moderation, reporting, and reset behavior. Run the full suite and record the result for the release candidate. |
-| External HTTP smoke tests | Verify/configure | Run the checks in [security TODOs](security_todo.md) from outside the server/network, including HTTPS, invalid hosts, sensitive-file paths, error responses, XSS rendering, and unauthorized object access. |
+| Automated application tests | Done | Full Django suite passed 124 tests locally on 2026-09-02; production provider and external-network checks remain separate gates. |
+| External HTTP smoke tests | Verify/configure | ALB-routed HTTPS smoke passed for `/`, `/healthz/`, and `/schools/alabama/`; add the apex and `www` DNS aliases, then run the remaining invalid-host, sensitive-file, error-response, XSS, and unauthorized-access checks against the public names. |
 
 ## Security and deployment gate
 

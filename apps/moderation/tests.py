@@ -2,7 +2,7 @@ from datetime import timedelta
 from unittest.mock import patch
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import UserProfile
@@ -94,6 +94,7 @@ class ModerationServiceTests(TestCase):
         classify.assert_called_once()
 
     @patch("apps.moderation.services.validation.classify_message", side_effect=ClassifierUnavailable)
+    @override_settings(TAKEBOARD_RATE_LIMITING_ENABLED=True)
     def test_classifier_failure_fails_closed_and_opens_circuit(self, classify) -> None:
         with self.assertRaises(ValidationBusy):
             validate_message(

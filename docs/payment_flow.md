@@ -65,8 +65,10 @@ fail closed unless that mode is selected and the queue URL/region are valid.
 
 `apps/bidding/services/finalization_queue.py` owns both enqueue and consumption.
 The producer runs inside the authorization transaction; if `SendMessage` fails,
-the authorization rolls back and the Stripe event remains retryable. The consumer
-long-polls one message at a time, checks the bid's current board and pending-bid
+the authorization rolls back and the Stripe event remains retryable. Because SQS
+FIFO does not support per-message delivery delays, the consumer long-polls one
+message at a time and extends visibility for the current authorized bid until
+the protected window ends. It then checks the bid's current board and pending-bid
 identity under the existing board row lock, and deletes a message only after that
 safe handling completes. Missing, duplicate, stale, canceled, outbid, and already
 finalized messages are settled without changing state. Unexpected failures leave
@@ -101,6 +103,21 @@ Requirements:
 - Store event IDs with a unique constraint.
 - Return 200 for already-stored duplicate events.
 - Do not update board state in the webhook request.
+
+`payment_intent.payment_failed` represents a failed payment attempt and must
+not be treated as permanently terminal when Stripe can retry the same
+PaymentIntent. A later `payment_intent.amount_capturable_updated` for that
+PaymentIntent must still be able to authorize the bid. Late failure events must
+not downgrade an already authorized or captured bid. The implementation story,
+state matrix, and acceptance criteria are in [payment retry after a failed
+attempt](payment_retry_after_failed_attempt_story.md).
+
+While a Checkout Session remains open, each failed card attempt increments the
+bid's local payment-failure counter and timestamp for risk controls but leaves
+the bid in `checkout_created`. Only a canceled PaymentIntent invalidates that
+retryable checkout; `payment_failed` is reserved for a failed capture after an
+authorization, where the pending challenger is cleared and the live board is
+unchanged.
 
 The local receiver can be exercised with the Stripe CLI:
 

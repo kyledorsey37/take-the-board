@@ -47,7 +47,9 @@ def finalize_locked_pending_bid(
 
     if capture_pending_bid is not None and not capture_pending_bid(pending_bid):
         pending_bid.status = Bid.Status.PAYMENT_FAILED
-        pending_bid.save(update_fields=["status"])
+        pending_bid.payment_failure_count += 1
+        pending_bid.payment_failed_at = now
+        pending_bid.save(update_fields=["status", "payment_failure_count", "payment_failed_at"])
         board.pending_bid = None
         board.save(update_fields=["pending_bid", "updated_at"])
         Activity.objects.create(

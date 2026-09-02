@@ -107,7 +107,7 @@ class FinalizationQueueTests(TestCase):
         self.assertEqual(json.loads(client.sent[0]["MessageBody"]), {"bid_id": str(first.public_id)})
         self.assertNotIn("PRIVATE MESSAGE", client.sent[0]["MessageBody"])
 
-    def test_producer_uses_guarantee_expiry_as_bounded_fifo_delay(self):
+    def test_producer_does_not_send_unsupported_fifo_delay_parameter(self):
         bid = self.bid()
         client = FakeSqsClient()
         now = timezone.now()
@@ -119,19 +119,20 @@ class FinalizationQueueTests(TestCase):
             due_at=now + timedelta(seconds=31),
         )
 
-        self.assertEqual(client.sent[0]["DelaySeconds"], 31)
+        self.assertNotIn("DelaySeconds", client.sent[0])
 
-    def test_duplicate_delivery_is_acknowledged_after_harmless_processing(self):
+    def test_active_guarantee_defers_message_without_acknowledging_it(self):
         bid = self.bid()
+        now = timezone.now()
         bid.board.pending_bid = bid
-        bid.board.guaranteed_until = timezone.now() + timedelta(minutes=1)
+        bid.board.guaranteed_until = now + timedelta(seconds=31)
         bid.board.save(update_fields=["pending_bid", "guaranteed_until"])
         message = {
             "Body": json.dumps({"bid_id": str(bid.public_id)}),
             "ReceiptHandle": "receipt-1",
             "Attributes": {"MessageGroupId": f"board-{self.board.id}", "ApproximateReceiveCount": "1"},
         }
-        client = FakeSqsClient([message, {**message, "ReceiptHandle": "receipt-2"}])
+        client = FakeSqsClient([message])
         consumer = SqsBidFinalizationConsumer(
             client=client,
             config=FinalizationQueueConfig(
@@ -145,9 +146,34 @@ class FinalizationQueueTests(TestCase):
         )
 
         self.assertEqual(consumer.consume_once(), 1)
-        self.assertEqual(consumer.consume_once(), 1)
-        self.assertEqual([item["ReceiptHandle"] for item in client.deleted], ["receipt-1", "receipt-2"])
+        self.assertEqual(client.deleted, [])
+        self.assertEqual(client.visibility_changes[0]["ReceiptHandle"], "receipt-1")
+        self.assertGreaterEqual(client.visibility_changes[0]["VisibilityTimeout"], 30)
+        self.assertLessEqual(client.visibility_changes[0]["VisibilityTimeout"], 31)
         self.assertEqual(client.receive_kwargs["WaitTimeSeconds"], 20)
+
+    def test_due_message_is_finalized_and_acknowledged(self):
+        bid = self.bid()
+        bid.board.pending_bid = bid
+        bid.board.guaranteed_until = timezone.now() - timedelta(seconds=1)
+        bid.board.save(update_fields=["pending_bid", "guaranteed_until"])
+        message = {
+            "Body": json.dumps({"bid_id": str(bid.public_id)}),
+            "ReceiptHandle": "receipt-due",
+            "Attributes": {"MessageGroupId": f"board-{self.board.id}", "ApproximateReceiveCount": "1"},
+        }
+        client = FakeSqsClient([message])
+        consumer = SqsBidFinalizationConsumer(
+            client=client,
+            config=FinalizationQueueConfig("https://sqs.example/bids.fifo", "us-east-1", 20, 120, 30, 5),
+        )
+
+        with patch("apps.bidding.services.finalization_queue._finalize_message") as finalize:
+            consumer.consume_once()
+
+        finalize.assert_called_once_with(bid=bid, group_id=f"board-{self.board.id}")
+        self.assertEqual(client.deleted[0]["ReceiptHandle"], "receipt-due")
+        self.assertEqual(client.visibility_changes, [])
 
     def test_stale_bid_message_is_settled_without_finalizing_new_pending_bid(self):
         stale = self.bid()
