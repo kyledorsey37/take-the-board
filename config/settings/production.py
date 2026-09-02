@@ -39,6 +39,38 @@ if TAKEBOARD_STRIPE_ENABLED and not all(
         "Stripe secret, publishable, and webhook secrets are required when Stripe is enabled."
     )
 
+if TAKEBOARD_STRIPE_ENABLED and TAKEBOARD_BID_FINALIZATION_MODE != "sqs_fifo":
+    raise ImproperlyConfigured(
+        "TAKEBOARD_BID_FINALIZATION_MODE=sqs_fifo is required for Stripe production bidding."
+    )
+
+if TAKEBOARD_BID_FINALIZATION_MODE not in {"polling", "sqs_fifo"}:
+    raise ImproperlyConfigured("TAKEBOARD_BID_FINALIZATION_MODE must be polling or sqs_fifo.")
+
+if TAKEBOARD_BID_FINALIZATION_MODE == "sqs_fifo":
+    if not TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL:
+        raise ImproperlyConfigured(
+            "TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL is required when SQS FIFO finalization is enabled."
+        )
+    if not TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL.endswith(".fifo"):
+        raise ImproperlyConfigured("The bid finalization queue must be an SQS FIFO queue (.fifo).")
+    if not TAKEBOARD_SQS_BID_FINALIZATION_REGION:
+        raise ImproperlyConfigured(
+            "TAKEBOARD_SQS_BID_FINALIZATION_REGION is required when SQS FIFO finalization is enabled."
+        )
+    if not 0 <= TAKEBOARD_SQS_BID_FINALIZATION_WAIT_SECONDS <= 20:
+        raise ImproperlyConfigured("SQS bid finalization long-poll wait must be between 0 and 20 seconds.")
+    if not 1 <= TAKEBOARD_SQS_BID_FINALIZATION_VISIBILITY_TIMEOUT_SECONDS <= 43200:
+        raise ImproperlyConfigured("SQS bid finalization visibility timeout is out of bounds.")
+    if not 1 <= TAKEBOARD_SQS_BID_FINALIZATION_RETRY_VISIBILITY_SECONDS <= 900:
+        raise ImproperlyConfigured("SQS bid finalization retry visibility is out of bounds.")
+    if not 1 <= TAKEBOARD_SQS_BID_FINALIZATION_MAX_RECEIVE_COUNT <= 1000:
+        raise ImproperlyConfigured("SQS bid finalization receive count is out of bounds.")
+    if TAKEBOARD_GUARANTEED_DISPLAY_SECONDS > 900:
+        raise ImproperlyConfigured(
+            "TAKEBOARD_GUARANTEED_DISPLAY_SECONDS cannot exceed SQS FIFO's 15-minute delay limit."
+        )
+
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 SESSION_COOKIE_SECURE = True
 SESSION_COOKIE_HTTPONLY = True

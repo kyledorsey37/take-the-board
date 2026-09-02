@@ -97,9 +97,12 @@ def finalize_due_board(
     rules: BoardRules,
     now: datetime | None = None,
     capture_pending_bid: CapturePendingBid | None = None,
+    expected_pending_bid_id: int | None = None,
 ) -> FinalizationResult | None:
     now = now or timezone.now()
     board = Board.objects.select_for_update().get(pk=board_id)
+    if expected_pending_bid_id is not None and board.pending_bid_id != expected_pending_bid_id:
+        return None
     return finalize_locked_pending_bid(
         board=board,
         rules=rules,

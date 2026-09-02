@@ -4,8 +4,15 @@ import time
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import OperationalError, ProgrammingError
+from botocore.exceptions import BotoCoreError, ClientError
 
 from apps.bidding.services.finalize_bid import finalize_due_boards
+from apps.bidding.services.finalization_queue import (
+    FinalizationQueueConfigurationError,
+    SqsBidFinalizationConsumer,
+    get_queue_config,
+    sqs_finalization_enabled,
+)
 from apps.bidding.services.rules import current_board_rules
 from apps.payments.services.capture_payment import capture_payment
 from apps.payments.services.capture_records import reconcile_pending_capture_fees
@@ -33,6 +40,17 @@ class Command(BaseCommand):
             raise CommandError("Bid finalization is disabled in this environment.")
         if options["poll_seconds"] <= 0:
             raise CommandError("--poll-seconds must be greater than zero.")
+        finalization_mode = str(settings.TAKEBOARD_BID_FINALIZATION_MODE).strip().lower()
+        if finalization_mode not in {"polling", "sqs_fifo"}:
+            raise CommandError("TAKEBOARD_BID_FINALIZATION_MODE must be polling or sqs_fifo.")
+
+        queue_enabled = sqs_finalization_enabled()
+        if queue_enabled:
+            try:
+                queue_config = get_queue_config()
+            except FinalizationQueueConfigurationError as error:
+                raise CommandError(str(error)) from error
+            consumer = SqsBidFinalizationConsumer(config=queue_config)
 
         while True:
             try:
@@ -40,20 +58,30 @@ class Command(BaseCommand):
                     process_pending_stripe_events()
                     reconcile_pending_capture_fees()
                     process_pending_payment_actions()
-                results = finalize_due_boards(
-                    rules=current_board_rules(),
-                    capture_pending_bid=capture_payment if settings.TAKEBOARD_STRIPE_ENABLED else None,
-                )
-                published_count = sum(result.published for result in results)
-                if results:
-                    logger.info(
-                        "bid_finalization_completed",
-                        extra={"finalized_count": len(results), "published_count": published_count},
+                if queue_enabled:
+                    consumer.consume_once(wait_seconds=0 if options["once"] else None)
+                else:
+                    results = finalize_due_boards(
+                        rules=current_board_rules(),
+                        capture_pending_bid=capture_payment if settings.TAKEBOARD_STRIPE_ENABLED else None,
                     )
+                    published_count = sum(result.published for result in results)
+                    if results:
+                        logger.info(
+                            "bid_finalization_completed",
+                            extra={"finalized_count": len(results), "published_count": published_count},
+                        )
             except (OperationalError, ProgrammingError):
                 # The local worker can start before the web service has run migrations.
                 logger.info("demo_bid_finalizer_waiting_for_database")
+            except (BotoCoreError, ClientError):
+                # Queue/provider outages are retried by the next worker pass; no
+                # message is acknowledged until the consumer completes safely.
+                logger.exception("bid_finalization_queue_unavailable")
+                if not options["once"]:
+                    time.sleep(options["poll_seconds"])
 
             if options["once"]:
                 return
-            time.sleep(options["poll_seconds"])
+            if not queue_enabled:
+                time.sleep(options["poll_seconds"])

@@ -100,15 +100,20 @@ source of truth after seeding.
 
 When `TAKEBOARD_DEMO_BIDDING_ENABLED` is on in local settings, the bid service implements the protected-board state machine without calling Stripe. A published local bid receives a 30-second `guaranteed_until` window. During that period, only one higher `authorized` bid may be pending; a still-higher bid transactionally replaces it and records the prior authorization as canceled. The minimum uses the maximum of the current captured amount and pending amount.
 
-When `TAKEBOARD_STRIPE_ENABLED` is on, authenticated bids create Stripe Embedded Checkout Sessions with manual capture. Stripe webhooks are signature-verified and stored in `StripeEvent`; the local `run_bid_worker` processes authorization and payment events, cancels superseded authorizations, and captures a valid pending bid when its guarantee is due. The worker currently polls Postgres. SQS FIFO is the intended production delivery mechanism, but it is not wired into the application yet.
+When `TAKEBOARD_STRIPE_ENABLED` is on, authenticated bids create Stripe Embedded Checkout Sessions with manual capture. Stripe webhooks are signature-verified and stored in `StripeEvent`; authorization processing cancels superseded authorizations and enqueues an opaque bid identifier to the configured SQS FIFO queue when queue mode is selected. The `run_bid_worker` consumer captures a valid pending bid when its guarantee is due. Local settings deliberately use the Postgres polling path.
 
-The local `run_bid_worker` command polls Stripe events and due boards. On a successful capture it publishes the pending bid, writes takeover history, and starts a new guarantee. Its callback boundary also models a failed capture: the pending bid becomes `payment_failed`, is cleared, and the current controller remains live. The Compose `demo-finalizer` service runs this command in either local free-play or Stripe sandbox mode, based on the feature flags.
+The `run_bid_worker` command always processes stored Stripe events, then either
+long-polls SQS FIFO or polls due boards according to
+`TAKEBOARD_BID_FINALIZATION_MODE`. On a successful capture it publishes the
+pending bid, writes takeover history, and starts a new guarantee. Its callback
+boundary also models a failed capture: the pending bid becomes `payment_failed`,
+is cleared, and the current controller remains live. The Compose `demo-finalizer`
+service remains local polling for free-play and sandbox development.
 
 The local integration slice includes moderation approval records, ledger entries,
 refund handling, and dispute handling. Those paths have service boundaries and
-automated tests. It still differs from the intended production topology because
-the worker polls Postgres instead of consuming SQS FIFO messages, and the
-Bedrock/Nova provider is fail-closed until its AWS configuration is enabled.
+automated tests. The Bedrock/Nova provider remains fail-closed until its AWS
+configuration is enabled.
 
 ## Public Standings
 
@@ -146,11 +151,12 @@ though yearly rollup statistics are not required.
 
 ## Finalization Worker and Queue
 
-SQS FIFO is not used by the current local worker. The production queue should be
-used only for bid finalization ordering, with messages grouped by board ID so
-bids for the same board finalize sequentially while unrelated boards can process
-independently. The queue consumer must retain the existing board-row lock and
-one-pending-challenger invariant, and must be safe to retry.
+SQS FIFO is used only for bid finalization ordering, with messages grouped by
+board ID so bids for the same board finalize sequentially while unrelated boards
+can process independently. The queue consumer retains the existing board-row
+lock and one-pending-challenger invariant; FIFO ordering is defense in depth and
+never replaces transactional validation. See the [SQS finalization runbook](sqs_bid_finalization_runbook.md)
+for queue/DLQ and IAM requirements.
 
 The production worker command will be:
 
@@ -158,11 +164,11 @@ The production worker command will be:
 python manage.py run_bid_worker
 ```
 
-Production finalization must retain the same board-row lock and one-pending-
-challenger invariant, but use SQS FIFO ordering and Stripe manual capture rather
-than the local polling simulation. A dev/staging queue should be exercised before
-the production queue is enabled so ordering, retries, visibility timeouts, and a
-dead-letter path are observable.
+Production finalization retains the same board-row lock and one-pending-
+challenger invariant, using SQS FIFO ordering and Stripe manual capture rather
+than polling. A dev/staging queue should be exercised before the production queue
+is enabled so ordering, retries, visibility timeouts, and a dead-letter path are
+observable.
 
 ## Weekly Reset
 
