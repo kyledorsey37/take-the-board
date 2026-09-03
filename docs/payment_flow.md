@@ -182,6 +182,19 @@ The worker leaves the durable remediation action pending until the associated
 as a fallback. The resulting `LedgerEntry(type=REFUND)` is the exact negative
 amount returned to the customer.
 
+After a successful refund action commits its bid status and refund ledger entry,
+the transaction completes the one customer moderation-resolution email intent
+created when the message was removed. That email explains the removal and shows
+the amount paid, the actual Stripe processing fee, and the net refund issued;
+the removed message text and payment-provider identifiers are omitted. A paid
+removal waits for the refund action before delivery, so it does not produce a
+separate removal email and refund email. The durable outbox record is delivered
+asynchronously with a stable provider idempotency key. Email delivery failure
+never rolls back or blocks the payment or moderation state transition. See
+[backend overview](backend_overview.md) for the provider and retry
+configuration; delivery remains disabled until the sender and provider are
+configured.
+
 ## Weekly Reset Interaction
 
 The weekly reset clears live board state without deleting captured payment history.

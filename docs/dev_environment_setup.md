@@ -4,6 +4,24 @@ This document defines the first hosted development environment for Take the Boar
 The goal is to keep dev cheap while proving the same image, settings, auth,
 payment, webhook, and worker loop that production will use.
 
+## One-off Resend test
+
+To test Resend without changing Django settings or the worker, put one
+development API key in the ignored `.resend-dev-key` file at the repository
+root. Do not commit it or pass it as a command-line argument. Then run:
+
+```bash
+chmod 600 .resend-dev-key
+python3 scripts/test_resend_email.py \
+  --key-file .resend-dev-key \
+  --from "Take the Board <notifications@taketheboard.com>" \
+  --to your-email@example.com
+```
+
+The script sends exactly one labeled test email and prints only the Resend
+provider ID or a generic HTTP/network error. The sender domain must be
+verified in Resend.
+
 ## Target Shape
 
 Use separate AWS accounts from the start:

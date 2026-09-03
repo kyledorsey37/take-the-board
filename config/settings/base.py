@@ -72,6 +72,7 @@ INSTALLED_APPS = [
     "apps.boards",
     "apps.bidding",
     "apps.payments",
+    "apps.notifications",
     "apps.moderation",
     "apps.rivalries",
     "apps.leaderboard",
@@ -201,6 +202,28 @@ TAKEBOARD_AGE_ACKNOWLEDGEMENT_VERSION = os.environ.get(
 )
 TAKEBOARD_SUPPORT_EMAIL = os.environ.get("TAKEBOARD_SUPPORT_EMAIL", "support@taketheboard.com")
 TAKEBOARD_POLICY_LAST_UPDATED = os.environ.get("TAKEBOARD_POLICY_LAST_UPDATED", "August 31, 2026")
+TAKEBOARD_EMAIL_ENABLED = env_bool("TAKEBOARD_EMAIL_ENABLED", False)
+TAKEBOARD_EMAIL_PROVIDER = os.environ.get("TAKEBOARD_EMAIL_PROVIDER", "noop").strip().lower()
+TAKEBOARD_EMAIL_FROM = os.environ.get("TAKEBOARD_EMAIL_FROM", "Take the Board <notifications@taketheboard.com>")
+TAKEBOARD_EMAIL_PUBLIC_BASE_URL = os.environ.get(
+    "TAKEBOARD_EMAIL_PUBLIC_BASE_URL", "http://localhost:8000"
+).rstrip("/")
+TAKEBOARD_EMAIL_RESEND_API_KEY = os.environ.get("TAKEBOARD_EMAIL_RESEND_API_KEY", "")
+TAKEBOARD_EMAIL_RESEND_API_URL = os.environ.get(
+    "TAKEBOARD_EMAIL_RESEND_API_URL", "https://api.resend.com/emails"
+)
+TAKEBOARD_EMAIL_PROVIDER_TIMEOUT_SECONDS = int(
+    os.environ.get("TAKEBOARD_EMAIL_PROVIDER_TIMEOUT_SECONDS", "10")
+)
+TAKEBOARD_EMAIL_PROCESSING_TIMEOUT_SECONDS = int(
+    os.environ.get("TAKEBOARD_EMAIL_PROCESSING_TIMEOUT_SECONDS", "900")
+)
+TAKEBOARD_EMAIL_RETRY_BASE_SECONDS = int(
+    os.environ.get("TAKEBOARD_EMAIL_RETRY_BASE_SECONDS", "60")
+)
+TAKEBOARD_EMAIL_RETRY_MAX_SECONDS = int(
+    os.environ.get("TAKEBOARD_EMAIL_RETRY_MAX_SECONDS", "3600")
+)
 TAKEBOARD_STRIPE_STATEMENT_DESCRIPTOR = os.environ.get(
     "TAKEBOARD_STRIPE_STATEMENT_DESCRIPTOR", "TAKETHEBOARD"
 )

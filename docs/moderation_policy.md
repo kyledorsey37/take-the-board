@@ -79,6 +79,13 @@ preserving an audit trail of who acted and when. Captured paid-message removals
 create retryable, idempotent cancellation/refund actions; refunds use the
 recorded Stripe fee rather than estimating one.
 
+Message removal creates one durable customer-resolution email intent. For a
+paid removal, delivery waits until the fee-deducted refund succeeds, then the
+same email explains the removal and the amount paid, actual Stripe processing
+fee, and net refund issued. The email templates omit the removed message text
+and payment-provider identifiers; delivery is asynchronous and disabled until
+the configured provider and sender identity are ready.
+
 Before launch, the operator still needs to configure the moderation provider in
 dev/staging, run provider failure and allowed/blocked smoke tests, define who
 reviews reports, and monitor the purge and moderation-failure paths. See

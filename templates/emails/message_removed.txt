@@ -1,0 +1,19 @@
+An update about your Take the Board message
+
+The message you published on {{ board_name }} was removed on {{ removed_on }} because it did not meet our community guidelines.
+
+Reference: {{ reference }}
+
+{% if refund_amount %}Because this was a paid takeover, we issued a refund. The refund is the amount you paid minus the Stripe processing fee.
+
+Refund details:
+- Amount paid: {{ amount_paid }}
+- Stripe processing fee: {{ processing_fee }}
+- Refund issued: {{ refund_amount }}
+
+Your card provider may take a few business days to show the refund.{% else %}If a payment authorization was still pending, it was canceled and you will not be charged.{% endif %}
+
+Review the community guidelines: {{ policy_url }}
+Questions? Contact {{ support_email }}: {{ support_url }}
+
+Take the Board

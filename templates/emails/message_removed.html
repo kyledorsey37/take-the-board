@@ -1,0 +1,150 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="x-apple-disable-message-reformatting">
+    <title>An update about your Take the Board message</title>
+    <style>
+      @media screen and (max-width: 620px) {
+        .email-shell { width: 100% !important; }
+        .email-padding { padding: 28px 22px !important; }
+        .amount-value { font-size: 30px !important; }
+      }
+    </style>
+  </head>
+
+  <body style="margin:0; padding:0; background:#f3f0e9; color:#171717; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;">
+    <span style="display:none; max-height:0; overflow:hidden; opacity:0;">
+      We removed a Take the Board message and updated its payment status.
+    </span>
+
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="background:#f3f0e9;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" class="email-shell" width="600" cellspacing="0" cellpadding="0" border="0" style="width:600px; max-width:600px; background:#fbfaf7;">
+            <tr>
+              <td style="height:6px; background:#b3262f; font-size:0; line-height:0;">&nbsp;</td>
+            </tr>
+
+            <tr>
+              <td style="padding:24px 32px; background:#171717; color:#ffffff;">
+                <p style="margin:0; font-size:12px; font-weight:800; letter-spacing:0.14em; text-transform:uppercase;">
+                  Take the Board
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td class="email-padding" style="padding:42px 48px 36px;">
+                <p style="margin:0 0 12px; color:#b3262f; font-size:12px; font-weight:800; letter-spacing:0.1em; text-transform:uppercase;">
+                  Message removed
+                </p>
+
+                <h1 style="margin:0 0 22px; color:#171717; font-size:32px; line-height:1.12; letter-spacing:-0.03em;">
+                  An update about your board message
+                </h1>
+
+                <p style="margin:0 0 24px; color:#3f3d39; font-size:16px; line-height:1.65;">
+                  The message you published on <strong style="color:#171717;">{{ board_name }}</strong>
+                  was removed on {{ removed_on }} because it did not meet our
+                  <a href="{{ policy_url }}" style="color:#841923; font-weight:700; text-decoration:underline;">Community Guidelines</a>.
+                </p>
+
+                <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px; border-left:4px solid #b3262f; background:#f3f0e9;">
+                  <tr>
+                    <td style="padding:16px 18px;">
+                      <p style="margin:0 0 4px; color:#63615d; font-size:11px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;">
+                        Reference
+                      </p>
+                      <p style="margin:0; color:#171717; font-size:15px; font-weight:700;">
+                        {{ reference }}
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+
+                {% if refund_amount %}
+                  <h2 style="margin:0 0 10px; color:#171717; font-size:22px; line-height:1.2;">
+                    Your refund has been issued
+                  </h2>
+
+                  <p style="margin:0 0 22px; color:#3f3d39; font-size:16px; line-height:1.65;">
+                    Because this was a paid takeover, we issued a refund. The amount reflects
+                    what you paid, less the Stripe processing fee.
+                  </p>
+
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 24px; border:1px solid #ded9cf; background:#ffffff;">
+                    <tr>
+                      <td style="padding:22px 22px 18px; border-bottom:1px solid #ded9cf;">
+                        <p style="margin:0 0 5px; color:#63615d; font-size:11px; font-weight:800; letter-spacing:0.08em; text-transform:uppercase;">
+                          Refund issued
+                        </p>
+                        <p class="amount-value" style="margin:0; color:#171717; font-size:34px; font-weight:800; line-height:1;">
+                          {{ refund_amount }}
+                        </p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding:16px 22px;">
+                        <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                          <tr>
+                            <td style="padding:0 0 8px; color:#63615d; font-size:14px;">Amount paid</td>
+                            <td align="right" style="padding:0 0 8px; color:#171717; font-size:14px; font-weight:700;">{{ amount_paid }}</td>
+                          </tr>
+                          <tr>
+                            <td style="color:#63615d; font-size:14px;">Stripe processing fee</td>
+                            <td align="right" style="color:#171717; font-size:14px; font-weight:700;">{{ processing_fee }}</td>
+                          </tr>
+                        </table>
+                      </td>
+                    </tr>
+                  </table>
+
+                  <p style="margin:0 0 28px; color:#63615d; font-size:14px; line-height:1.6;">
+                    Your card provider may take a few business days to show the refund.
+                  </p>
+                {% else %}
+                  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px; border:1px solid #ded9cf; background:#ffffff;">
+                    <tr>
+                      <td style="padding:22px;">
+                        <p style="margin:0 0 7px; color:#171717; font-size:18px; font-weight:800;">
+                          No charge was made
+                        </p>
+                        <p style="margin:0; color:#63615d; font-size:15px; line-height:1.6;">
+                          Your payment authorization was canceled. If your bank shows a temporary pending authorization, it should disappear automatically.
+                        </p>
+                      </td>
+                    </tr>
+                  </table>
+                {% endif %}
+
+                <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 28px;">
+                  <tr>
+                    <td style="background:#b3262f;">
+                      <a href="{{ policy_url }}" style="display:inline-block; padding:13px 18px; color:#ffffff; font-size:14px; font-weight:800; text-decoration:none;">
+                        Review community guidelines
+                      </a>
+                    </td>
+                  </tr>
+                </table>
+
+                <p style="margin:0; color:#63615d; font-size:14px; line-height:1.6;">
+                  Questions? <a href="{{ support_url }}" style="color:#841923; font-weight:700; text-decoration:underline;">Contact {{ support_email }}</a>.
+                </p>
+              </td>
+            </tr>
+
+            <tr>
+              <td style="padding:22px 32px; border-top:1px solid #ded9cf; background:#f3f0e9;">
+                <p style="margin:0; color:#63615d; font-size:12px; line-height:1.5;">
+                  Take the Board is independent fan entertainment and is not affiliated with any school, athletic department, conference, or the NCAA.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>

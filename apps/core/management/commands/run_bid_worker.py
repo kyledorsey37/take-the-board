@@ -19,6 +19,7 @@ from apps.payments.services.capture_payment import capture_payment
 from apps.payments.services.capture_records import reconcile_pending_capture_fees
 from apps.payments.services.process_webhooks import process_pending_stripe_events
 from apps.moderation.services.payment_actions import process_pending_payment_actions
+from apps.notifications.services.outbox import process_pending_email_outbox
 
 
 logger = logging.getLogger(__name__)
@@ -37,7 +38,11 @@ class Command(BaseCommand):
         )
 
     def handle(self, *args, **options):
-        if not (settings.TAKEBOARD_DEMO_BIDDING_ENABLED or settings.TAKEBOARD_STRIPE_ENABLED):
+        if not (
+            settings.TAKEBOARD_DEMO_BIDDING_ENABLED
+            or settings.TAKEBOARD_STRIPE_ENABLED
+            or settings.TAKEBOARD_EMAIL_ENABLED
+        ):
             raise CommandError("Bid finalization is disabled in this environment.")
         if options["poll_seconds"] <= 0:
             raise CommandError("--poll-seconds must be greater than zero.")
@@ -45,7 +50,8 @@ class Command(BaseCommand):
         if finalization_mode not in {"polling", "sqs_fifo"}:
             raise CommandError("TAKEBOARD_BID_FINALIZATION_MODE must be polling or sqs_fifo.")
 
-        queue_enabled = sqs_finalization_enabled()
+        bid_processing_enabled = settings.TAKEBOARD_DEMO_BIDDING_ENABLED or settings.TAKEBOARD_STRIPE_ENABLED
+        queue_enabled = bid_processing_enabled and sqs_finalization_enabled()
         if queue_enabled:
             try:
                 queue_config = get_queue_config()
@@ -59,9 +65,10 @@ class Command(BaseCommand):
                     process_pending_stripe_events()
                     reconcile_pending_capture_fees()
                     process_pending_payment_actions()
+                process_pending_email_outbox()
                 if queue_enabled:
                     consumer.consume_once(wait_seconds=0 if options["once"] else None)
-                else:
+                elif bid_processing_enabled:
                     results = finalize_due_boards(
                         rules=current_board_rules(),
                         capture_pending_bid=capture_payment if settings.TAKEBOARD_STRIPE_ENABLED else None,

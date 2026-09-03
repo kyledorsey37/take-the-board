@@ -68,6 +68,14 @@ if TAKEBOARD_STRIPE_ENABLED and (not STRIPE_SECRET_KEY.startswith(("sk_live_", "
     raise ImproperlyConfigured("Stripe keys have invalid formats.")
 if TAKEBOARD_STRIPE_ENABLED and not STRIPE_PUBLISHABLE_KEY.startswith(("pk_live_", "pk_test_")):
     raise ImproperlyConfigured("Stripe publishable key has an invalid format.")
+if TAKEBOARD_EMAIL_PROVIDER not in {"noop", "resend"}:
+    raise ImproperlyConfigured("TAKEBOARD_EMAIL_PROVIDER must be noop or resend.")
+if TAKEBOARD_EMAIL_ENABLED and TAKEBOARD_EMAIL_PROVIDER == "resend" and not TAKEBOARD_EMAIL_RESEND_API_KEY:
+    raise ImproperlyConfigured(
+        "TAKEBOARD_EMAIL_RESEND_API_KEY is required when Resend email is enabled."
+    )
+if TAKEBOARD_EMAIL_ENABLED and not TAKEBOARD_EMAIL_FROM:
+    raise ImproperlyConfigured("TAKEBOARD_EMAIL_FROM is required when email is enabled.")
 if REDIS_URL and not REDIS_URL.startswith(("redis://", "rediss://")):
     raise ImproperlyConfigured("REDIS_URL must use redis:// or rediss://.")
 

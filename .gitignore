@@ -1,6 +1,7 @@
 .env
 .env.*
 !.env.example
+.resend-dev-key
 *.py[cod]
 __pycache__/
 .Python

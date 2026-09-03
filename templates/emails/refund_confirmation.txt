@@ -1,0 +1,13 @@
+Your Take the Board refund is confirmed
+
+We issued a refund of {{ refund_amount }} for your takeover on {{ board_name }} on {{ refunded_on }}.
+
+Reference: {{ reference }}
+
+Your card provider may take a few business days to show the refund.
+
+Review our refund policy: {{ policy_url }}
+Questions? Contact {{ support_email }}: {{ support_url }}
+
+Take the Board
+

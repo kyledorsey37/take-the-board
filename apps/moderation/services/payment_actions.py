@@ -14,6 +14,7 @@ from apps.moderation.models import ModerationPaymentAction
 from apps.payments.models import LedgerEntry, PaymentCapture
 from apps.payments.services.cancel_authorization import cancel_authorization
 from apps.payments.services.refund_payment import refund_payment
+from apps.notifications.services.outbox import attach_refund_to_removal_notice, enqueue_message_removed_notice
 
 
 logger = logging.getLogger(__name__)
@@ -78,6 +79,7 @@ def process_payment_action(action_id: int) -> bool:
                 action.save(
                     update_fields=["status", "amount_cents", "last_error_code", "completed_at", "updated_at"]
                 )
+                enqueue_message_removed_notice(case=action.case)
                 return False
             action.amount_cents = amount_cents
         action.attempts += 1
@@ -132,6 +134,7 @@ def process_payment_action(action_id: int) -> bool:
             bid.bidder.__class__.objects.filter(pk=bid.bidder_id).update(
                 refund_count=F("refund_count") + 1,
             )
+            attach_refund_to_removal_notice(action=action)
         logger.info("message_report_payment_action_succeeded", extra={"action_id": str(action.public_id)})
         return True
 

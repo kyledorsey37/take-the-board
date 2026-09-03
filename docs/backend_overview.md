@@ -18,6 +18,7 @@ apps/
   bidding/
   payments/
   moderation/
+  notifications/
   rivalries/
   leaderboard/
   core/
@@ -35,6 +36,7 @@ tests/
 - `bidding`: bid records and bid lifecycle service boundaries.
 - `payments`: Stripe event storage, ledger entries, and payment service boundaries.
 - `moderation`: message validation records and deterministic/Nova moderation service boundaries.
+- `notifications`: customer email intents, provider adapters, templates, and retry-safe outbox delivery.
 - `rivalries`: explicit rivalry pairs.
 - `leaderboard`: public standings, season weeks, and cached school-week statistics.
 - `core`: shared config, private board-visit preference counters, activity feed records, health checks, middleware, and management commands.
@@ -204,6 +206,31 @@ and ledger entries. Repeating the command for the same period is a no-op. The
 command was manually exercised against the local Docker database on 2026-08-31;
 it reset the current boards while preserving historical takeovers, bids, and
 all-time totals, and a second invocation was a no-op.
+
+## Transactional customer email
+
+Published-message moderation resolution notices are created as durable
+`EmailOutbox` records. A paid removal waits for the fee-deducted refund to
+succeed, then enriches that same outbox record with the amount paid, Stripe
+processing fee, and refund amount. Their event keys are unique, so repeated
+admin actions, refund retries, and worker retries do not create duplicate
+email intents. A delivery attempt uses the outbox event key as the provider
+idempotency key; a stale `processing` lease can be reclaimed safely after a
+worker crash.
+
+The email provider is selected with `TAKEBOARD_EMAIL_PROVIDER`. The default
+`noop` provider never sends email, and the feature is disabled by default with
+`TAKEBOARD_EMAIL_ENABLED=false`. The Resend adapter is present for later
+configuration, but this repository does not require a Resend credential and
+does not send any email until the feature is explicitly enabled. Delivery logs
+contain only event kind and outcome/error code; they do not contain recipient
+addresses, message text, payment identifiers, or provider payloads.
+
+The existing `run_bid_worker` drains the email outbox when email is enabled.
+Failed attempts use bounded exponential backoff, and `EmailOutbox` is
+read-only in Admin for operational inspection. Configure sender identity,
+domain authentication, bounce/complaint handling, and a monitored mailbox
+before enabling live delivery.
 
 ## Payment and moderation operations
 

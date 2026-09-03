@@ -13,6 +13,7 @@ from apps.bidding.models import Bid
 from apps.boards.models import Board, BoardTakeover
 from apps.moderation.models import MessageReportCase, ModerationPaymentAction
 from apps.moderation.services.operations import audit_action
+from apps.notifications.services.outbox import enqueue_message_removed_notice
 
 
 logger = logging.getLogger(__name__)
@@ -165,6 +166,13 @@ def remove_case(*, case_id: int, actor, reason: str) -> CaseResolution:
     case.resolution_reason = reason
     case.save(update_fields=["status", "resolved_at", "resolved_by", "resolution_reason", "updated_at"])
     action = _payment_action_for_bid(case=case, bid=bid)
+    enqueue_message_removed_notice(
+        case=case,
+        waiting_for_refund=(
+            action.operation == ModerationPaymentAction.Operation.REFUND
+            and action.status == ModerationPaymentAction.Status.PENDING
+        ),
+    )
     audit_action(actor=actor, action="remove_message", target=case, reason=reason)
     if restored_previous:
         audit_action(actor=actor, action="restore_previous_takeover", target=board, reason=reason)

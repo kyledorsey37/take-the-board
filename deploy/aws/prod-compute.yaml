@@ -115,6 +115,14 @@ Resources:
               Value: us-east-1
             - Name: TAKEBOARD_SUPPORT_EMAIL
               Value: support@taketheboard.com
+            - Name: TAKEBOARD_EMAIL_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_EMAIL_PROVIDER
+              Value: noop
+            - Name: TAKEBOARD_EMAIL_FROM
+              Value: 'Take the Board <notifications@taketheboard.com>'
+            - Name: TAKEBOARD_EMAIL_PUBLIC_BASE_URL
+              Value: https://taketheboard.com
             - Name: TAKEBOARD_POLICY_LAST_UPDATED
               Value: September 2, 2026
             - Name: TAKEBOARD_DEFAULT_COMPETITION_SLUG
@@ -131,6 +139,14 @@ Resources:
               Value: 'true'
             - Name: TAKEBOARD_STRIPE_ENABLED
               Value: 'false'
+            - Name: TAKEBOARD_EMAIL_ENABLED
+              Value: 'false'
+            - Name: TAKEBOARD_EMAIL_PROVIDER
+              Value: noop
+            - Name: TAKEBOARD_EMAIL_FROM
+              Value: 'Take the Board <notifications@taketheboard.com>'
+            - Name: TAKEBOARD_EMAIL_PUBLIC_BASE_URL
+              Value: https://taketheboard.com
             - Name: TAKEBOARD_BID_FINALIZATION_MODE
               Value: sqs_fifo
             - Name: TAKEBOARD_SQS_BID_FINALIZATION_QUEUE_URL

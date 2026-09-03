@@ -16,7 +16,7 @@ This document is the source of truth for the initial Take the Board security pos
 - `.env*` files are excluded from Git and Docker build context.
 - Production secrets belong in AWS Secrets Manager or SSM Parameter Store.
 - ECS task roles should be used for AWS service access instead of static AWS credentials.
-- Expected production secrets include `DJANGO_SECRET_KEY`, `DATABASE_URL`, Cognito configuration, Stripe keys, Sentry DSN, and Bedrock configuration.
+- Expected production secrets include `DJANGO_SECRET_KEY`, `DATABASE_URL`, Cognito configuration, Stripe keys, Sentry DSN, and Bedrock configuration. If Resend is selected and email is enabled, `TAKEBOARD_EMAIL_RESEND_API_KEY` belongs in Secrets Manager/SSM as well.
 
 ## Django Defaults
 
@@ -61,6 +61,10 @@ Do not log:
 - full moderation prompts or raw model responses unless a future retention policy explicitly permits it
 
 Payment and moderation work should log named state-transition events such as `message_validation_started`, `checkout_created`, `payment_authorized`, `payment_capture_success`, `payment_capture_failure`, `refund_created`, and `dispute_created`.
+
+Transactional email delivery may log only the email kind, delivery outcome,
+and non-sensitive error code. It must not log recipient addresses, message
+content, payment identifiers, provider request/response bodies, or credentials.
 
 ## Rate Limiting
 
