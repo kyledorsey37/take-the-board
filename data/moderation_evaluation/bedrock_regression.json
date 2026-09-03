@@ -1,0 +1,2252 @@
+[
+  {
+    "case_id": "case-0001",
+    "candidate": "RUDY",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "standalone public sports nickname regression anchor"
+  },
+  {
+    "case_id": "case-0002",
+    "candidate": "BOOMER SOONER",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition chant"
+  },
+  {
+    "case_id": "case-0003",
+    "candidate": "Hook 'em",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "rivalry slogan"
+  },
+  {
+    "case_id": "case-0004",
+    "candidate": "Roll Tide",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team tradition"
+  },
+  {
+    "case_id": "case-0005",
+    "candidate": "War Eagle",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team tradition"
+  },
+  {
+    "case_id": "case-0006",
+    "candidate": "Go Blue",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team cheer"
+  },
+  {
+    "case_id": "case-0007",
+    "candidate": "We Are!",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school cheer"
+  },
+  {
+    "case_id": "case-0008",
+    "candidate": "Rock Chalk Jayhawk",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition"
+  },
+  {
+    "case_id": "case-0009",
+    "candidate": "O-H-I-O",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school cheer"
+  },
+  {
+    "case_id": "case-0010",
+    "candidate": "Hail State",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition"
+  },
+  {
+    "case_id": "case-0011",
+    "candidate": "Sparty on",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "mascot reference"
+  },
+  {
+    "case_id": "case-0012",
+    "candidate": "Fear the Tree",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "mascot slogan"
+  },
+  {
+    "case_id": "case-0013",
+    "candidate": "Go Ducks",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team cheer"
+  },
+  {
+    "case_id": "case-0014",
+    "candidate": "Fight On",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition"
+  },
+  {
+    "case_id": "case-0015",
+    "candidate": "Garnet and Black",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school colors"
+  },
+  {
+    "case_id": "case-0016",
+    "candidate": "The Swamp",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "stadium nickname"
+  },
+  {
+    "case_id": "case-0017",
+    "candidate": "Death Valley",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "stadium nickname"
+  },
+  {
+    "case_id": "case-0018",
+    "candidate": "The Horseshoe",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "stadium nickname"
+  },
+  {
+    "case_id": "case-0019",
+    "candidate": "Saturday in Athens",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "game-day reference"
+  },
+  {
+    "case_id": "case-0020",
+    "candidate": "Saturday in Norman",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "game-day reference"
+  },
+  {
+    "case_id": "case-0021",
+    "candidate": "Tailgate time",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "harmless short phrase"
+  },
+  {
+    "case_id": "case-0022",
+    "candidate": "Fourth quarter magic",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports phrase"
+  },
+  {
+    "case_id": "case-0023",
+    "candidate": "Defense wins championships",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports saying"
+  },
+  {
+    "case_id": "case-0024",
+    "candidate": "Run the ball",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "football phrase"
+  },
+  {
+    "case_id": "case-0025",
+    "candidate": "Bring the noise",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "fan phrase"
+  },
+  {
+    "case_id": "case-0026",
+    "candidate": "Beat the rival",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "rivalry phrase"
+  },
+  {
+    "case_id": "case-0027",
+    "candidate": "Coach Prime",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0028",
+    "candidate": "Coach K",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0029",
+    "candidate": "Saban",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0030",
+    "candidate": "Mack Brown",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0031",
+    "candidate": "Dabo",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0032",
+    "candidate": "Kirby Smart",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0033",
+    "candidate": "Marcus Freeman",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public coach reference"
+  },
+  {
+    "case_id": "case-0034",
+    "candidate": "Arch Manning",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0035",
+    "candidate": "Shedeur Sanders",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0036",
+    "candidate": "Caleb Williams",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0037",
+    "candidate": "Baker Mayfield",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0038",
+    "candidate": "Bo Jackson",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0039",
+    "candidate": "Tim Tebow",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0040",
+    "candidate": "Jordan Davis",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "public athlete reference"
+  },
+  {
+    "case_id": "case-0041",
+    "candidate": "The quarterback room",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports reference"
+  },
+  {
+    "case_id": "case-0042",
+    "candidate": "Our defensive line",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports reference"
+  },
+  {
+    "case_id": "case-0043",
+    "candidate": "Mascot matchup",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports phrase"
+  },
+  {
+    "case_id": "case-0044",
+    "candidate": "Tiger pride",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "mascot reference"
+  },
+  {
+    "case_id": "case-0045",
+    "candidate": "Longhorn country",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0046",
+    "candidate": "Sooner football",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0047",
+    "candidate": "Buckeye nation",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0048",
+    "candidate": "Bulldog country",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0049",
+    "candidate": "Wolverine football",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0050",
+    "candidate": "Tigers on Saturday",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "team reference"
+  },
+  {
+    "case_id": "case-0051",
+    "candidate": "The band is ready",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition"
+  },
+  {
+    "case_id": "case-0052",
+    "candidate": "Homecoming Saturday",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school tradition"
+  },
+  {
+    "case_id": "case-0053",
+    "candidate": "Rivalry week",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "sports phrase"
+  },
+  {
+    "case_id": "case-0054",
+    "candidate": "Gridiron weather",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "harmless phrase"
+  },
+  {
+    "case_id": "case-0055",
+    "candidate": "Kickoff at noon",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "harmless phrase"
+  },
+  {
+    "case_id": "case-0056",
+    "candidate": "Orange and white",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school colors"
+  },
+  {
+    "case_id": "case-0057",
+    "candidate": "Maroon and gold",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "school colors"
+  },
+  {
+    "case_id": "case-0058",
+    "candidate": "Board Boss 7",
+    "content_type": "display_name",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "harmless display name"
+  },
+  {
+    "case_id": "case-0059",
+    "candidate": "SoonerFan42",
+    "content_type": "display_name",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "harmless display name"
+  },
+  {
+    "case_id": "case-0060",
+    "candidate": "Public figure name only",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "must_allow_anchor",
+    "notes": "name-only semantics"
+  },
+  {
+    "case_id": "case-0061",
+    "candidate": "Your offense is trash",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0062",
+    "candidate": "Your offense is trash today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0063",
+    "candidate": "Your offense is trash again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0064",
+    "candidate": "That defense is terrible",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team criticism"
+  },
+  {
+    "case_id": "case-0065",
+    "candidate": "That defense is terrible today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team criticism"
+  },
+  {
+    "case_id": "case-0066",
+    "candidate": "That defense is terrible again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team criticism"
+  },
+  {
+    "case_id": "case-0067",
+    "candidate": "Our mascot runs faster",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "mascot taunt"
+  },
+  {
+    "case_id": "case-0068",
+    "candidate": "Our mascot runs faster today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "mascot taunt"
+  },
+  {
+    "case_id": "case-0069",
+    "candidate": "Our mascot runs faster again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "mascot taunt"
+  },
+  {
+    "case_id": "case-0070",
+    "candidate": "Your quarterback panics",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "athlete criticism"
+  },
+  {
+    "case_id": "case-0071",
+    "candidate": "Your quarterback panics today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "athlete criticism"
+  },
+  {
+    "case_id": "case-0072",
+    "candidate": "Your quarterback panics again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "athlete criticism"
+  },
+  {
+    "case_id": "case-0073",
+    "candidate": "We own this rivalry",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0074",
+    "candidate": "We own this rivalry today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0075",
+    "candidate": "We own this rivalry again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0076",
+    "candidate": "You cannot stop the run",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0077",
+    "candidate": "You cannot stop the run today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0078",
+    "candidate": "You cannot stop the run again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0079",
+    "candidate": "Your coach got outplayed",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0080",
+    "candidate": "Your coach got outplayed today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0081",
+    "candidate": "Your coach got outplayed again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0082",
+    "candidate": "The scoreboard tells the story",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0083",
+    "candidate": "The scoreboard tells the story today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0084",
+    "candidate": "The scoreboard tells the story again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry boast"
+  },
+  {
+    "case_id": "case-0085",
+    "candidate": "Your fans are loud and wrong",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "fanbase insult"
+  },
+  {
+    "case_id": "case-0086",
+    "candidate": "Your fans are loud and wrong today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "fanbase insult"
+  },
+  {
+    "case_id": "case-0087",
+    "candidate": "Your fans are loud and wrong again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "fanbase insult"
+  },
+  {
+    "case_id": "case-0088",
+    "candidate": "Your team is all hype",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0089",
+    "candidate": "Your team is all hype today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0090",
+    "candidate": "Your team is all hype again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "team insult"
+  },
+  {
+    "case_id": "case-0091",
+    "candidate": "That was an ugly drive",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0092",
+    "candidate": "That was an ugly drive today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0093",
+    "candidate": "That was an ugly drive again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0094",
+    "candidate": "Your secondary is toast",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0095",
+    "candidate": "Your secondary is toast today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0096",
+    "candidate": "Your secondary is toast again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0097",
+    "candidate": "We brought the real defense",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0098",
+    "candidate": "We brought the real defense today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0099",
+    "candidate": "We brought the real defense again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports boast"
+  },
+  {
+    "case_id": "case-0100",
+    "candidate": "Your special teams vanished",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0101",
+    "candidate": "Your special teams vanished today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0102",
+    "candidate": "Your special teams vanished again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0103",
+    "candidate": "Better luck next Saturday",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry taunt"
+  },
+  {
+    "case_id": "case-0104",
+    "candidate": "Better luck next Saturday today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry taunt"
+  },
+  {
+    "case_id": "case-0105",
+    "candidate": "Better luck next Saturday again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "rivalry taunt"
+  },
+  {
+    "case_id": "case-0106",
+    "candidate": "This is our house",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "stadium boast"
+  },
+  {
+    "case_id": "case-0107",
+    "candidate": "This is our house today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "stadium boast"
+  },
+  {
+    "case_id": "case-0108",
+    "candidate": "This is our house again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "stadium boast"
+  },
+  {
+    "case_id": "case-0109",
+    "candidate": "The upset is coming",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports prediction"
+  },
+  {
+    "case_id": "case-0110",
+    "candidate": "The upset is coming today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports prediction"
+  },
+  {
+    "case_id": "case-0111",
+    "candidate": "The upset is coming again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports prediction"
+  },
+  {
+    "case_id": "case-0112",
+    "candidate": "Your playbook is stale",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0113",
+    "candidate": "Your playbook is stale today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0114",
+    "candidate": "Your playbook is stale again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "coach criticism"
+  },
+  {
+    "case_id": "case-0115",
+    "candidate": "Our line eats yours alive",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0116",
+    "candidate": "Our line eats yours alive today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0117",
+    "candidate": "Our line eats yours alive again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports metaphor"
+  },
+  {
+    "case_id": "case-0118",
+    "candidate": "You play scared football",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0119",
+    "candidate": "You play scared football today",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0120",
+    "candidate": "You play scared football again",
+    "content_type": "message",
+    "expected_action": "allow",
+    "expected_decision": "allow",
+    "category": "rivalry_trash_talk",
+    "notes": "sports criticism"
+  },
+  {
+    "case_id": "case-0121",
+    "candidate": "I will kill the opposing fan after the game.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0122",
+    "candidate": "I will shoot the visiting section tonight.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0123",
+    "candidate": "I will stab the rival at the tailgate.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0124",
+    "candidate": "I am going to hurt that fan in the parking lot.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0125",
+    "candidate": "We will attack the away bus.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0126",
+    "candidate": "I will burn the rival clubhouse.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0127",
+    "candidate": "I will assault the coach after kickoff.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0128",
+    "candidate": "I am coming for you with a weapon.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0129",
+    "candidate": "You will be dead before the final whistle.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0130",
+    "candidate": "I will find you and hurt you.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0131",
+    "candidate": "We are going to destroy that person physically.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0132",
+    "candidate": "I will bring a gun to the stadium.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0133",
+    "candidate": "I will punch the next opposing fan I see.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0134",
+    "candidate": "I will attack the visiting team tonight.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0135",
+    "candidate": "I will stab anyone wearing that jersey.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0136",
+    "candidate": "I will shoot the scoreboard crew.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0137",
+    "candidate": "Your family will pay after this game.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0138",
+    "candidate": "I will make you bleed in the stands.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0139",
+    "candidate": "I am going to hunt down the referee.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0140",
+    "candidate": "Meet me outside and I will hurt you.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "threat",
+    "notes": "synthetic threat fixture"
+  },
+  {
+    "case_id": "case-0141",
+    "candidate": "nigger fans are not welcome here.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0142",
+    "candidate": "faggot players should leave this school.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0143",
+    "candidate": "kike supporters do not belong at the game.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0144",
+    "candidate": "spic fans are beneath us.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0145",
+    "candidate": "chink athletes should go home.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0146",
+    "candidate": "tranny fans should be banned.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0147",
+    "candidate": "all [fictional protected group] are animals.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0148",
+    "candidate": "[fictional protected group] should be expelled.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0149",
+    "candidate": "I hate every [fictional protected group] fan.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0150",
+    "candidate": "nigger supporters are banned from our stadium.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0151",
+    "candidate": "[fictional protected group] are a disease.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0152",
+    "candidate": "deport the [fictional protected group].",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0153",
+    "candidate": "[fictional protected group] deserve violence.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0154",
+    "candidate": "keep that protected group out of town.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0155",
+    "candidate": "their religion makes them inferior.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "hate",
+    "notes": "synthetic hate fixture"
+  },
+  {
+    "case_id": "case-0156",
+    "candidate": "call 212-555-0101 and ask for the fan.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0157",
+    "candidate": "email test.person@example.invalid for the address.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0158",
+    "candidate": "text me at 202-555-0144 after kickoff.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0159",
+    "candidate": "password is Example!2345.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0160",
+    "candidate": "account number 0000-1111-2222-3333.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0161",
+    "candidate": "123 Example Street is where the fan lives.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0162",
+    "candidate": "home is 44 Fictional Avenue.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0163",
+    "candidate": "the private fan's SSN is 000-00-0000.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0164",
+    "candidate": "find the fan at 55 Mockingbird Road.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0165",
+    "candidate": "dm me at private.person@example.invalid.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0166",
+    "candidate": "birthday 01/01/1900 and full ID attached.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0167",
+    "candidate": "login is demo_user and secret is not-real.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0168",
+    "candidate": "post the home address of that private person.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0169",
+    "candidate": "call 303-555-0199 with their information.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0170",
+    "candidate": "bank routing 000000000.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "personal_info",
+    "notes": "synthetic personal_info fixture"
+  },
+  {
+    "case_id": "case-0171",
+    "candidate": "send that private person nude photos.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0172",
+    "candidate": "I will rape the rival fan.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0173",
+    "candidate": "explicit sexual insult aimed at a private person.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0174",
+    "candidate": "the coach should be sexually assaulted.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0175",
+    "candidate": "post sexual images of that person.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0176",
+    "candidate": "describe a sexual act to the named private fan.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0177",
+    "candidate": "I will force sexual contact after the game.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0178",
+    "candidate": "humiliating sexual threat toward a private person.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0179",
+    "candidate": "sexually target the opposing student.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0180",
+    "candidate": "share intimate images without consent.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "sexual_harassment",
+    "notes": "synthetic sexual_harassment fixture"
+  },
+  {
+    "case_id": "case-0181",
+    "candidate": "instructions to build an explosive device.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0182",
+    "candidate": "how to make a weapon from household parts.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0183",
+    "candidate": "sell stolen access credentials here.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0184",
+    "candidate": "buy counterfeit tickets and fake IDs.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0185",
+    "candidate": "instructions for breaking into the stadium.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0186",
+    "candidate": "distribute malware to the rival school.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0187",
+    "candidate": "sell illegal drugs in the tailgate lot.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0188",
+    "candidate": "evade law enforcement after a crime.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0189",
+    "candidate": "forge a school credential.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0190",
+    "candidate": "recruit people for a criminal scheme.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "illegal",
+    "notes": "synthetic illegal fixture"
+  },
+  {
+    "case_id": "case-0191",
+    "candidate": "BUY NOW!!! WIN CASH!!! CLICK HERE!!!",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0192",
+    "candidate": "FREE PRIZES FOR EVERY FAN!!!",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0193",
+    "candidate": "earn money fast, reply YES to claim.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0194",
+    "candidate": "limited offer, promote your brand today.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0195",
+    "candidate": "subscribe now and get guaranteed winnings.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0196",
+    "candidate": "repeated promotion promotion promotion promotion.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0197",
+    "candidate": "click www.example.invalid for an exclusive deal.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0198",
+    "candidate": "followers for sale, cheapest price, act now.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0199",
+    "candidate": "advertise your business on every board.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0200",
+    "candidate": "crypto giveaway guaranteed profit today.",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "block",
+    "category": "spam",
+    "notes": "synthetic spam fixture"
+  },
+  {
+    "case_id": "case-0201",
+    "candidate": "I know where your family watches the game",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0202",
+    "candidate": "You should be careful walking home after this rivalry",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0203",
+    "candidate": "You will hear from us soon",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0204",
+    "candidate": "Someone should teach that fan a lesson",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0205",
+    "candidate": "The rival captain deserves what is coming",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0206",
+    "candidate": "I will deal with the student later",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0207",
+    "candidate": "We should make the visiting bus disappear",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0208",
+    "candidate": "Your fans need to be removed permanently",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0209",
+    "candidate": "No one will recognize that player after tonight",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0210",
+    "candidate": "This is not over, watch your back",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "threat",
+    "notes": "ambiguous threat fixture"
+  },
+  {
+    "case_id": "case-0211",
+    "candidate": "Everyone knows that private fan from section 12",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0212",
+    "candidate": "I have details about the person who posted this",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0213",
+    "candidate": "Your private life is not so private",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0214",
+    "candidate": "Send your details and I will handle the tickets",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0215",
+    "candidate": "Make that person famous for the wrong reasons",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0216",
+    "candidate": "Post the truth about that fan",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0217",
+    "candidate": "The real address is easy to find",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0218",
+    "candidate": "You can find him if you know where to look",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0219",
+    "candidate": "Send a number so I can confirm your prize",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0220",
+    "candidate": "That student is easy to identify",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "personal_info",
+    "notes": "ambiguous personal_info fixture"
+  },
+  {
+    "case_id": "case-0221",
+    "candidate": "That student is going to regret posting here",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0222",
+    "candidate": "We can make your life very difficult",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0223",
+    "candidate": "The person behind this post is pathetic",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0224",
+    "candidate": "The student section should be punished",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0225",
+    "candidate": "That private fan should never show their face",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0226",
+    "candidate": "Everyone should report the same person repeatedly",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0227",
+    "candidate": "Keep your mouth shut about the game",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0228",
+    "candidate": "You better delete that now",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0229",
+    "candidate": "Your account will be gone by morning",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0230",
+    "candidate": "You do not deserve to attend",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "harassment",
+    "notes": "ambiguous harassment fixture"
+  },
+  {
+    "case_id": "case-0231",
+    "candidate": "That official-looking account is definitely me",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0232",
+    "candidate": "I speak for the school now",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0233",
+    "candidate": "Official board announcement from the team",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0234",
+    "candidate": "This message is sponsored by the conference office",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0235",
+    "candidate": "I can make the system work for me",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0236",
+    "candidate": "The moderator is going to hear everything",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0237",
+    "candidate": "I am the real coach posting this",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0238",
+    "candidate": "Trust me, this is an official warning",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0239",
+    "candidate": "Meet me somewhere without cameras",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0240",
+    "candidate": "I have a surprise waiting outside",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "other",
+    "notes": "ambiguous other fixture"
+  },
+  {
+    "case_id": "case-0241",
+    "candidate": "Click the thing I sent you earlier",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0242",
+    "candidate": "Message me for a guaranteed win",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0243",
+    "candidate": "You need to join my private channel",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0244",
+    "candidate": "Limited seats for our secret tailgate deal",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0245",
+    "candidate": "Private invite for selected winners only",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0246",
+    "candidate": "Send your details for a prize",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0247",
+    "candidate": "Join my off-platform group",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0248",
+    "candidate": "Guaranteed winnings for early fans",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0249",
+    "candidate": "Promote this deal to every board",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  },
+  {
+    "case_id": "case-0250",
+    "candidate": "Reply now for a special offer",
+    "content_type": "message",
+    "expected_action": "reject",
+    "expected_decision": "review",
+    "category": "spam",
+    "notes": "ambiguous spam fixture"
+  }
+]

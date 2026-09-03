@@ -210,6 +210,19 @@ The first implementation should use a model interface in
 `apps/moderation/services/`, keeping AWS SDK calls inside a Bedrock adapter. The
 current `nova_classifier.py` placeholder is the intended boundary.
 
+The prompt must explicitly treat a standalone first name, public athlete or
+coach reference, team, mascot, school tradition, cheer, or rivalry slogan as a
+public sports reference rather than personal information. Personal information
+means contact details or uniquely identifying private-person information. A
+prompt or policy change must bump `TAKEBOARD_MODERATION_POLICY_VERSION` so the
+decision cache cannot reuse a result produced under older semantics.
+
+The explicit developer command `python manage.py evaluate_bedrock_moderation`
+runs the 250-case synthetic regression suite described in
+`docs/moderation_bedrock_evaluation.md`. It bypasses deterministic validation
+and the decision cache, persists no moderation records, and reports only
+aggregate/per-case-ID normalized results.
+
 ### Layer 4: Durable Decision And Action Binding
 
 An allowed message creates a short-lived `MessageValidation` record. The record

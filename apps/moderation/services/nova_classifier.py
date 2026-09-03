@@ -39,12 +39,25 @@ ALLOWED_CATEGORIES = frozenset(
 
 def _prompt(*, content_type: str, policy_version: str, candidate: str) -> str:
     return (
-        "Classify this public Take the Board "
-        f"{content_type} under policy version {policy_version}. Ordinary sports trash talk and profanity "
-        "may be allowed. Block slurs, hate, credible threats, personal information, targeted sexual "
-        "harassment, illegal content, spam, URLs, and impersonation. Return only JSON with decision "
-        "(allow, block, review), category (safe, hate, threat, personal_info, sexual_harassment, illegal, "
-        "spam, other), and confidence (0 to 1). Candidate follows:\n"
+        "You are the conservative safety classifier for a public college-football rivalry board. "
+        f"Classify this {content_type} under policy version {policy_version}. "
+        "Allow ordinary sports trash talk, team or fanbase insults, rivalry slogans, and ordinary profanity. "
+        "A standalone first name, public athlete or coach reference, team, mascot, school, tradition, "
+        "jersey phrase, cheer, or other public sports reference is not personal information and must not "
+        "be blocked merely because it names a person or institution. Personal information means contact "
+        "details or uniquely identifying private-person information, such as a phone number, email, home "
+        "address, account credential, or private-person doxxing; it does not mean a public figure's name "
+        "or a public sports reference. If this is a display name, apply the separate impersonation rule "
+        "without relabeling a public sports reference as personal information. Block slurs, hate speech, "
+        "credible threats, true doxxing or contact data, targeted sexual harassment, illegal content, spam, "
+        "URLs, and deceptive impersonation of an official entity. Any expressed intent to kill, shoot, stab, "
+        "attack, assault, hurt, burn, or otherwise physically harm a person, group, team, venue, or property "
+        "is a threat and must be blocked even when framed as rivalry talk. Block operational instructions or "
+        "solicitations for weapons, explosives, drugs, theft, credential abuse, malware, fraud, or breaking "
+        "into a venue as illegal content. Block prize claims, guaranteed winnings, commercial solicitations, "
+        "repeated advertising, and calls to click or reply as spam. When uncertain, use review. Return only "
+        "one JSON object with decision (allow, block, review), category (safe, hate, threat, personal_info, "
+        "sexual_harassment, illegal, spam, other), and confidence (0 to 1). Candidate follows:\n"
         + candidate
     )
 

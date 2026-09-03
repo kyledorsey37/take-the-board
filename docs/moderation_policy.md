@@ -1,7 +1,9 @@
 # Moderation Policy
 
 Implementation detail and rollout order are defined in
-`docs/moderation_and_abuse_controls_design.md`.
+`docs/moderation_and_abuse_controls_design.md`. The live Bedrock/Nova
+regression workflow and acceptance gates are defined in
+`docs/moderation_bedrock_evaluation.md`.
 
 Moderation is implemented as a deterministic validation, Redis-cost-control, and
 optional Bedrock/Nova classifier gate. The Bedrock adapter is isolated to one
@@ -70,6 +72,15 @@ request procedure.
 Raw Bedrock responses are not persisted or logged. Application logs should use
 validation type, user ID, decision, and timing/error metadata only; they must not
 include candidate text, prompts, or provider payloads.
+
+The Nova prompt explicitly distinguishes public sports semantics from personal
+information. A standalone first name, public athlete or coach reference, team,
+mascot, school tradition, or rivalry slogan is not personal information. The
+personal-information category is reserved for contact details or uniquely
+identifying private-person information, including doxxing. The prompt change
+is versioned by `TAKEBOARD_MODERATION_POLICY_VERSION`; the current default is
+`2026-09-3`, which invalidates prior decision-cache entries without a broad
+Redis flush.
 
 ## Admin Operations
 

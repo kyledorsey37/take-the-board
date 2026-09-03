@@ -12,6 +12,7 @@ from apps.moderation.services.nova_classifier import (
     Classification,
     ClassifierMalformedResponse,
     ClassifierUnavailable,
+    _prompt,
     _parse,
 )
 from apps.moderation.services.rate_limits import RateLimitExceeded, ValidationBusy, candidate_hash
@@ -34,6 +35,15 @@ class DeterministicValidatorTests(TestCase):
     def test_normal_rivalry_trash_talk_and_profanity_are_allowed_locally(self) -> None:
         candidate = validate_message_deterministically("Texas played like crap. Boomer Sooner!")
         self.assertEqual(candidate.original, "Texas played like crap. Boomer Sooner!")
+
+    def test_nova_prompt_protects_public_sports_references_from_personal_info_false_positives(self) -> None:
+        prompt = _prompt(content_type="message", policy_version="2026-09-3", candidate="RUDY")
+        self.assertIn("standalone first name", prompt)
+        self.assertIn("public athlete or coach reference", prompt)
+        self.assertIn("not personal information", prompt)
+        self.assertIn("contact details or uniquely identifying private-person information", prompt)
+        self.assertNotIn("user ID", prompt)
+        self.assertNotIn("fan@example.com", prompt)
 
     def test_messages_with_contact_data_threats_and_urls_are_rejected(self) -> None:
         for candidate in (
@@ -92,6 +102,39 @@ class ModerationServiceTests(TestCase):
         self.assertEqual(first.decision, MessageValidation.Decision.ALLOW)
         self.assertEqual(second.decision, MessageValidation.Decision.ALLOW)
         classify.assert_called_once()
+
+    @patch(
+        "apps.moderation.services.validation.classify_message",
+        return_value=Classification("allow", "safe", 0.99),
+    )
+    def test_rudy_is_a_must_allow_regression_case(self, classify) -> None:
+        validation = validate_message(
+            user=self.user,
+            board=self.board,
+            represented_entity=self.represented_entity,
+            message="RUDY",
+            remote_addr="127.0.0.1",
+        )
+        self.assertEqual(validation.decision, MessageValidation.Decision.ALLOW)
+        self.assertEqual(validation.category, "safe")
+        classify.assert_called_once()
+
+    @patch(
+        "apps.moderation.services.validation.classify_message",
+        return_value=Classification("allow", "safe", 0.99),
+    )
+    @override_settings(TAKEBOARD_MODERATION_POLICY_VERSION="cache-policy-a")
+    def test_policy_version_change_invalidates_decision_cache(self, classify) -> None:
+        validate_message(
+            user=self.user, board=self.board, represented_entity=self.represented_entity,
+            message="Cache version football phrase", remote_addr="127.0.0.1",
+        )
+        with self.settings(TAKEBOARD_MODERATION_POLICY_VERSION="cache-policy-b"):
+            validate_message(
+                user=self.user, board=self.board, represented_entity=self.represented_entity,
+                message="Cache version football phrase", remote_addr="127.0.0.1",
+            )
+        self.assertEqual(classify.call_count, 2)
 
     @patch("apps.moderation.services.validation.classify_message", side_effect=ClassifierUnavailable)
     @override_settings(TAKEBOARD_RATE_LIMITING_ENABLED=True)

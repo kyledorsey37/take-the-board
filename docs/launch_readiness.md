@@ -57,8 +57,9 @@ from you:
 - The final logo/brand assets, preferred brand treatment, and production domain.
 - The X/Twitter account, X developer/app access, API credentials, tweet copy,
   posting frequency, and whether every successful takeover should be posted.
-- The Resend account/API key, verified sender domain, sender address, and email
-  copy. Later, decide whether to stay on Resend or move to SES.
+- The production Resend sender/domain, bounce and complaint handling, and
+  monitored sender mailbox. Resend is the selected provider; do not introduce
+  SES unless that decision changes.
 - The Sentry project/DSN, alert recipients, free-tier volume budget, and which
   expected errors should be filtered versus retained.
 - The AWS account/permissions, SNS email recipients, and thresholds for signup,
@@ -73,7 +74,8 @@ from you:
 Codex can implement the application side, tests, and deployment instructions;
 you then complete or approve the external setup and production verification:
 
-- Resend/SES domain authentication and deliverability testing.
+- Resend production-sender monitoring, bounce/complaint handling, and a final
+  production delivery check after the production sender/domain is configured.
 - Sentry DSN wiring, alert rules, error-volume review, and free-tier tuning.
 - X/Twitter credentials, account authorization, post preview, rate-limit test,
   and operational retry/disable verification.
@@ -129,8 +131,8 @@ support and moderation operations, reconciliation/alerting, and the security gat
 | Ledger and capture snapshots | Done | Successful captures, refunds, chargebacks, and adjustments have durable ledger records; capture fee data can arrive later. |
 | Refunds for moderated paid messages | Done | Admin actions create retryable, idempotent cancellation/refund work and use actual recorded Stripe fees. |
 | Dispute intake | Done | `charge.dispute.created` is stored idempotently, records a chargeback entry, and suspends paid bidding while open. A live/test-mode operational response runbook is still needed. |
-| Transactional customer email | Verify/configure | Provider abstraction, Resend adapter, templates, sender settings, durable idempotent outbox, retry-safe worker delivery, and support/policy links are implemented. Email remains disabled until Resend/SES is selected and sender/domain configuration is complete. |
-| Email delivery foundation | Verify/configure | Follow up with SES setup or a deliberate decision to stay on Resend. Configure domain verification, SPF/DKIM/DMARC, bounce/complaint handling, and a monitored sender address. Do not operate two providers casually. |
+| Transactional customer email | Done | Resend is the selected provider. The refund/message-removal notification template, sender configuration, durable idempotent outbox, retry-safe worker delivery, and support/policy links are implemented; a real Resend delivery was validated on 2026-09-03. |
+| Email delivery foundation | Verify/configure | Keep the production Resend sender/domain authenticated and monitored. Before public paid traffic, confirm the launch sender identity, SPF/DKIM/DMARC as applicable, bounce/complaint handling, a monitored sender mailbox, and one production-environment delivery. Do not operate two providers casually. |
 | Reconciliation command | Verify/configure | `python manage.py reconcile_payment_captures` exists and is idempotent. Schedule it, alert on failures or unresolved fee snapshots, and assign an owner. |
 | Stripe production configuration | Verify/configure | Configure live keys and webhook endpoint only after staging/test-mode smoke tests, support coverage, and the security checklist are complete. |
 
@@ -139,7 +141,7 @@ support and moderation operations, reconciliation/alerting, and the security gat
 | Item | Status | Notes |
 | --- | --- | --- |
 | Deterministic validation | Done | Runs before any provider call and blocks URLs, contact information, control-character abuse, and other configured policy violations. |
-| Bedrock/Nova adapter | Verify/configure | Adapter, normalized response parsing, caching, rate limits, and fail-closed behavior are implemented. Configure scoped dev/staging IAM and model access, then run allowed, blocked, malformed-response, timeout, and provider-outage tests. See [moderation policy](moderation_policy.md). |
+| Bedrock/Nova adapter | Verify/configure | Adapter, normalized response parsing, versioned caching, rate limits, fail-closed behavior, and the 250-case synthetic live regression command are implemented. Configure scoped dev/staging IAM/model access, then require zero false blocks in must-allow anchors (including RUDY) and zero false allows in clear blocks. See [moderation policy](moderation_policy.md) and the [Bedrock evaluation design](moderation_bedrock_evaluation.md). |
 | Reporting and admin review | Done | Reports, cases, resolution actions, moderation audits, board controls, bans, and payment remediation actions exist. Assign an operator and response expectations before public traffic. |
 | Moderation raw-content purge | Verify/configure | `python manage.py purge_moderation_content` clears expired blocked/review text after the current 30-day retention window. Put it on a monitored production schedule and document the owner. |
 | Moderation privacy procedure | Verify/configure | Document the practical MVP account-deletion and privacy-request process; it can be manual, but someone must own and execute it. |
@@ -206,6 +208,13 @@ production configuration evidence with the launch review.
    external smoke-test plans.
 5. Complete the applicable items in [security TODOs](security_todo.md), record
    any explicit risk acceptance, and only then enable live payment credentials.
+
+## Recent validation evidence
+
+| Date | Capability | Evidence and remaining gate |
+| --- | --- | --- |
+| 2026-09-03 | Transactional customer email | Resend was configured and a customer notification delivery was validated. The application notification/outbox path is complete; production sender monitoring, bounce/complaint handling, and a final production-environment delivery check remain launch operations work. |
+| 2026-09-03 | Bedrock/Nova moderation evaluation | Added a 250-case synthetic stratified regression suite, an uncached explicit live-dev evaluator, and the public-sports/personal-information prompt correction. The final live run completed all 250 cases with no provider failures, 0/60 must-allow false blocks, and 0/80 clear-block false allows. Quality gates passed; the ambiguous review set remains a separate operator/policy review gate. |
 
 ## Source documents
 
