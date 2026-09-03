@@ -18,7 +18,7 @@ from apps.bidding.services.create_bid import TakeoverError
 from apps.bidding.services.finalize_bid import finalize_due_board
 from apps.bidding.services.risk import RiskReason, validate_bid_risk
 from apps.bidding.services.rules import current_board_rules
-from apps.boards.models import Board
+from apps.boards.models import Board, BoardTakeover
 from apps.core.models import GameConfig
 from apps.moderation.models import MessageValidation
 from apps.moderation.services.nova_classifier import Classification
@@ -251,6 +251,22 @@ class StripeBidFlowTests(TestCase):
             classifier_version=settings.TAKEBOARD_MODERATION_CLASSIFIER_MODEL_VERSION,
             expires_at=timezone.now() + timedelta(minutes=10),
         )
+
+    def create_active_current_bid(self) -> Bid:
+        current_bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="CURRENT MESSAGE.",
+            amount_cents=100,
+            status=Bid.Status.WON,
+            captured_at=timezone.now(),
+        )
+        self.board.current_bid = current_bid
+        self.board.current_amount_cents = current_bid.amount_cents
+        self.board.guaranteed_until = timezone.now() + timedelta(seconds=30)
+        self.board.save(update_fields=["current_bid", "current_amount_cents", "guaranteed_until"])
+        return current_bid
 
     @patch("apps.payments.services.create_checkout.stripe.checkout.Session.create")
     def test_checkout_uses_the_server_side_bid_amount_and_manual_capture(self, create_session) -> None:
@@ -538,12 +554,13 @@ class StripeBidFlowTests(TestCase):
         self.assertEqual(response.json()["amount_cents"], 1700)
 
     def test_authorization_event_makes_the_bid_the_only_pending_challenger(self) -> None:
+        self.create_active_current_bid()
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
             represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
-            amount_cents=100,
+            amount_cents=200,
             status=Bid.Status.CHECKOUT_CREATED,
             stripe_checkout_session_id="cs_test_123",
         )
@@ -570,13 +587,59 @@ class StripeBidFlowTests(TestCase):
         self.assertEqual(self.board.pending_bid_id, bid.id)
 
     @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
+    @patch("apps.payments.services.capture_payment.stripe.PaymentIntent.capture")
+    def test_authorization_event_immediately_captures_and_publishes_on_an_open_board(
+        self, capture, enqueue
+    ) -> None:
+        capture.return_value = {
+            "id": "pi_open_board_123",
+            "status": "succeeded",
+            "amount_received": 100,
+            "currency": "usd",
+            "latest_charge": {"id": "ch_open_board_123"},
+        }
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.profile,
+            represented_entity=self.represented_entity,
+            message="TAKE THE OPEN BOARD.",
+            amount_cents=100,
+            status=Bid.Status.CHECKOUT_CREATED,
+            stripe_checkout_session_id="cs_open_board_123",
+        )
+        StripeEvent.objects.create(
+            event_id="evt_open_board_authorized",
+            event_type="payment_intent.amount_capturable_updated",
+            payload={
+                "data": {
+                    "object": {
+                        "id": "pi_open_board_123",
+                        "metadata": {"bid_id": str(bid.public_id)},
+                    }
+                }
+            },
+        )
+
+        self.assertEqual(process_pending_stripe_events(), 1)
+
+        bid.refresh_from_db()
+        self.board.refresh_from_db()
+        self.assertEqual(bid.status, Bid.Status.WON)
+        self.assertEqual(self.board.current_bid_id, bid.id)
+        self.assertIsNone(self.board.pending_bid_id)
+        self.assertEqual(BoardTakeover.objects.filter(board=self.board).count(), 1)
+        capture.assert_called_once()
+        enqueue.assert_not_called()
+
+    @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
     def test_failed_attempts_keep_one_payment_intent_retryable_until_authorization(self, enqueue) -> None:
+        self.create_active_current_bid()
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
             represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
-            amount_cents=100,
+            amount_cents=200,
             status=Bid.Status.CHECKOUT_CREATED,
             stripe_checkout_session_id="cs_retry_123",
         )
@@ -623,7 +686,7 @@ class StripeBidFlowTests(TestCase):
             capture.return_value = {
                 "id": "pi_retry_123",
                 "status": "succeeded",
-                "amount_received": 100,
+                "amount_received": 200,
                 "currency": "usd",
                 "latest_charge": {"id": "ch_retry_123"},
             }
@@ -639,12 +702,13 @@ class StripeBidFlowTests(TestCase):
 
     @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
     def test_duplicate_authorization_processing_does_not_enqueue_twice(self, enqueue) -> None:
+        self.create_active_current_bid()
         bid = Bid.objects.create(
             board=self.board,
             bidder=self.profile,
             represented_entity=self.represented_entity,
             message="TAKE THE BOARD.",
-            amount_cents=100,
+            amount_cents=200,
             status=Bid.Status.CHECKOUT_CREATED,
         )
         event = StripeEvent.objects.create(

@@ -242,9 +242,23 @@ class FinalizationQueueTests(TestCase):
 
     @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
     def test_authorization_transition_enqueues_inside_the_payment_event_boundary(self, enqueue):
+        current_bid = Bid.objects.create(
+            board=self.board,
+            bidder=self.player,
+            represented_entity=self.other_school,
+            message="CURRENT MESSAGE",
+            amount_cents=100,
+            status=Bid.Status.WON,
+            captured_at=timezone.now(),
+        )
+        self.board.current_bid = current_bid
+        self.board.current_amount_cents = current_bid.amount_cents
+        self.board.guaranteed_until = timezone.now() + timedelta(seconds=30)
+        self.board.save(update_fields=["current_bid", "current_amount_cents", "guaranteed_until"])
         bid = self.bid()
+        bid.amount_cents = 200
         bid.status = Bid.Status.CHECKOUT_CREATED
-        bid.save(update_fields=["status"])
+        bid.save(update_fields=["amount_cents", "status"])
         StripeEvent.objects.create(
             event_id="evt_queue_authorized",
             event_type="payment_intent.amount_capturable_updated",

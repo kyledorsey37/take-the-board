@@ -77,7 +77,9 @@ def _authorize_bid(bid_id: int, payment_intent_id: str, now: datetime) -> list[B
 
     board = Board.objects.select_for_update().get(pk=bid.board_id)
     rules = current_board_rules()
-    if board.pending_bid_id and board.guaranteed_until and board.guaranteed_until <= now:
+    if board.pending_bid_id and (
+        not board.guaranteed_until or board.guaranteed_until <= now
+    ):
         finalize_locked_pending_bid(
             board=board,
             rules=rules,
@@ -113,10 +115,26 @@ def _authorize_bid(bid_id: int, payment_intent_id: str, now: datetime) -> list[B
     bid.save(update_fields=["stripe_payment_intent_id", "status", "authorized_at"])
     board.pending_bid = bid
     board.save(update_fields=["pending_bid", "updated_at"])
-    # Publishing is delayed until the protected window ends.  In SQS mode this
-    # send is part of the same transaction: a provider failure rolls back the
-    # authorization so the Stripe event can be retried safely.
-    enqueue_bid_finalization(bid=bid, due_at=board.guaranteed_until, now=now)
+    active_guarantee = bool(
+        board.current_bid_id
+        and board.guaranteed_until
+        and board.guaranteed_until > now
+    )
+    if active_guarantee:
+        # Publishing is delayed until the protected window ends.  In SQS mode
+        # this send is part of the same transaction: a provider failure rolls
+        # back the authorization so the Stripe event can be retried safely.
+        enqueue_bid_finalization(bid=bid, due_at=board.guaranteed_until, now=now)
+    else:
+        # An open board has no protected takeover to wait behind. Capture and
+        # publish immediately so the browser observes the real won state rather
+        # than briefly presenting a queue that does not exist.
+        finalize_locked_pending_bid(
+            board=board,
+            rules=rules,
+            now=now,
+            capture_pending_bid=capture_payment,
+        )
     return canceled_bids
 
 

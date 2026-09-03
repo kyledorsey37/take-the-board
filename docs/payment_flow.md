@@ -46,10 +46,14 @@ the local Stripe sandbox retain Postgres polling when queue mode is not selected
    creating a `Bid` and Stripe Embedded Checkout Session using manual capture.
 5. Stripe authorizes the card and sends webhooks through the local Stripe CLI.
 6. Django verifies the webhook, stores a `StripeEvent`, and the local worker processes it.
-7. Authorization processing enqueues `{"bid_id": "<opaque UUID>"}` with
-   `MessageGroupId=board-<board id>` and a stable per-bid deduplication ID. No
-   message text, display name, payment payload, token, or other user data is sent.
-8. The FIFO worker keeps only the highest authorized challenger during the current guarantee.
+7. Authorization processing checks whether the board has a current takeover
+   inside an active guarantee. For a protected board it enqueues
+   `{"bid_id": "<opaque UUID>"}` with `MessageGroupId=board-<board id>` and a stable
+   per-bid deduplication ID. No message text, display name, payment payload,
+   token, or other user data is sent.
+8. If the board has no current takeover inside an active guarantee, the worker
+   captures and publishes the authorized bid immediately. Otherwise, it keeps
+   only the highest authorized challenger during the current guarantee.
 9. The worker captures the pending payment only after the guarantee expires, and only if it is still valid.
 10. Board state and takeover history update only after successful capture. Publication starts a new 30-second guarantee.
 11. The worker processes `charge.updated` and periodically reconciles pending capture
@@ -58,8 +62,10 @@ the local Stripe sandbox retain Postgres polling when queue mode is not selected
 
 After Embedded Checkout reports completion, the browser only observes the bidder's
 safe status endpoint. `authorized` means the card authorization succeeded and the
-bid is the current pending challenger; it is rendered as “You're up next,” not as
-a win. The browser stops polling in that state and returns to the board with
+bid is the current pending challenger behind an active protected takeover; it is
+rendered as “You're up next,” not as a win. An open board is captured and published
+in the worker transaction, so the browser observes `won` instead. The browser stops
+polling in the authorized state and returns to the board with
 `move=pending` after the visible ten-second return window unless the user stays.
 Only a server-observed `won` state renders the success treatment and uses
 `move=live`. A short or unavailable status poll renders a non-claiming delayed
