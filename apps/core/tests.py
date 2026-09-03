@@ -2,9 +2,11 @@ from django.core.management import call_command
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
+from urllib.parse import parse_qs, urlparse
 from datetime import timedelta
 from decimal import Decimal
 import os
+from pathlib import Path
 
 from apps.bidding.models import Bid
 from apps.bidding.services.create_bid import BidTooLowError, create_bid
@@ -266,6 +268,32 @@ class PublicNavigationTests(BoardTestCase):
         )
         self.assertContains(response, 'data-share-board')
         self.assertContains(response, 'data-analytics-event="board_share_clicked"')
+        self.assertContains(response, 'data-share-url="http://testserver/schools/oklahoma/"')
+        self.assertContains(
+            response,
+            'data-share-text="See the Oklahoma board: THIS BOARD IS OPEN."',
+        )
+        self.assertContains(response, 'data-share-x')
+        self.assertContains(response, "Share on X")
+        self.assertContains(response, 'target="_blank"')
+        self.assertContains(response, 'rel="noopener noreferrer"')
+        self.assertContains(response, "(opens in a new tab)")
+        x_share_url = response.context["x_share_url"]
+        parsed_x_share_url = urlparse(x_share_url)
+        self.assertEqual(parsed_x_share_url.scheme, "https")
+        self.assertEqual(parsed_x_share_url.netloc, "x.com")
+        self.assertEqual(parsed_x_share_url.path, "/intent/post")
+        self.assertEqual(
+            parse_qs(parsed_x_share_url.query),
+            {
+                "text": ["See the Oklahoma board on Take the Board."],
+                "url": [response.context["board_url"]],
+            },
+        )
+        self.assertContains(
+            response,
+            'href="' + x_share_url.replace("&", "&amp;") + '"',
+        )
         self.assertEqual(response.content.count(b'class="round-status-rail"'), 1)
         self.assertContains(response, "data-round-status")
         self.assertContains(response, "data-round-reset-at=")
@@ -288,6 +316,21 @@ class PublicNavigationTests(BoardTestCase):
             response,
             reverse("boards:social_image", kwargs={"slug": "oklahoma"}) + "?v=0",
         )
+
+    def test_board_x_share_reuses_the_existing_low_cardinality_analytics_contract(self) -> None:
+        app_js = (Path(__file__).resolve().parents[2] / "static/js/app.js").read_text()
+        x_share_handler = app_js[
+            app_js.index('function trackXBoardShare') : app_js.index(
+                "async function copyTextToClipboard"
+            )
+        ]
+
+        self.assertIn('event.target.closest("[data-share-x]")', x_share_handler)
+        self.assertIn('window.takeTheBoard.trackEvent("board_share_result"', x_share_handler)
+        self.assertIn('result: "shared"', x_share_handler)
+        self.assertIn('share_method: "x_twitter"', x_share_handler)
+        self.assertNotIn("shareText", x_share_handler)
+        self.assertNotIn("shareUrl", x_share_handler)
 
     def test_stale_pending_marker_does_not_override_a_published_board(self) -> None:
         profile = UserProfile.objects.create(

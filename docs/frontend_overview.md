@@ -30,12 +30,14 @@ content area grows with its message while the footer stays directly beneath it.
 
 ## Board Sharing and Social Previews
 
-Each school board has one canonical public URL and a Share button. Browsers with the
-Web Share API open the native share sheet; desktop browsers copy the canonical URL
-to the clipboard. A separate board-level X/Twitter intent button is planned in
-addition to that generic share control; the post-takeover success state already
-offers an X/Twitter share link. Both paths must use canonical URLs and escaped,
-low-risk share text.
+Each school board has one canonical public URL, a general Share button, and a
+separate board-level Share on X intent button. Browsers with the Web Share API
+open the native share sheet; desktop browsers copy the canonical URL to the
+clipboard. Share on X opens a server-built, URL-encoded `https://x.com/intent/post`
+link in a new tab with concise, low-risk copy and the canonical board URL. It does
+not post automatically or require X API credentials. The post-takeover success
+state also offers its own X/Twitter share link. Both paths use canonical URLs and
+escaped public-content rules.
 
 Board pages emit Open Graph and X/Twitter Card metadata. Their `summary_large_image`
 card points to the versioned `social/boards/<slug>/card.png` endpoint, which renders

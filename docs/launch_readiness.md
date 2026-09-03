@@ -33,7 +33,6 @@ These are good remote handoffs that do not need your credentials first:
 
 - Review the implemented first-paid-bid 18+ checkbox, server-side enforcement,
   and purchase evidence in staging.
-- Build the board-level X/Twitter button and its analytics markers.
 - Build the automatic takeover-posting workflow with an outbox/idempotency
   boundary, retry behavior, disable controls, and a mocked X provider.
 - Build Resend email templates and the refund/message-removal notification
@@ -170,7 +169,7 @@ support and moderation operations, reconciliation/alerting, and the security gat
 | --- | --- | --- |
 | Public SEO review | Verify/configure | Verify titles, descriptions, canonical URLs, sitemap/robots behavior, internal links, and that admin, payment, auth, and transient workflow pages are not indexable. |
 | Accessibility and responsive UX | Verify/configure | Run keyboard, focus, dialog, form-error, mobile, and reduced-motion checks across the public board, bidding, policy, contact, and consent flows. |
-| Board sharing | Build | Keep the existing native-share/clipboard control and add a separate board-level X/Twitter intent button. Use the canonical URL and safe, escaped share text; track it with the existing low-cardinality share events. The post-takeover X/Twitter link already exists. |
+| Board sharing | Done | Public school boards keep the existing native-share/clipboard control and now include a separate board-level X intent button. The server builds a safe, encoded intent URL from the canonical board URL and concise copy; analytics reuse the existing low-cardinality share events. The post-takeover X/Twitter link remains separate. Validate the live X card preview after the production domain and social-card image are configured. |
 | Browser consent behavior | Done | Accept/Decline and Cookie settings are implemented, stored only in the browser, and tested in the local preview mode. |
 | Automated application tests | Done | Full Django suite passed 130 tests locally on 2026-09-02; production provider and external-network checks remain separate gates. |
 | External HTTP smoke tests | Verify/configure | ALB-routed HTTPS smoke passed for `/`, `/healthz/`, and `/schools/alabama/`; add the apex and `www` DNS aliases, then run the remaining invalid-host, sensitive-file, error-response, XSS, and unauthorized-access checks against the public names. |
@@ -185,8 +184,9 @@ The highest-priority items are:
 - Admin application protection, MFA, login throttling, and audit coverage are implemented; edge allowlist/VPN/SSO, staff enrollment/recovery, and alert destinations remain external deployment tasks;
 - immutable payment/history records in Admin;
 - fail-closed production settings, secret handling, and production-like
-  integration checks; local secret scanning, pinned dependency installation, and
-  pip-audit are implemented, while hosted dependency alerts and the one-time
+  integration checks; local pre-commit and GitHub secret scanning, pinned
+  dependency installation, and pip-audit are implemented, while the required
+  GitHub status-check rule, hosted dependency alerts, and the one-time
   Git-history scan remain operator launch gates;
 - CSP, security headers, authentication response caching, and request-ID
   validation;

@@ -1,4 +1,5 @@
 from decimal import Decimal
+from urllib.parse import urlencode
 
 from django.conf import settings
 from django.http import HttpRequest, HttpResponse
@@ -152,6 +153,10 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
     board_url = request.build_absolute_uri(
         reverse("schools:detail", kwargs={"slug": board.entity.slug})
     )
+    x_share_text = f"See the {board.entity.name} board on Take the Board."
+    x_share_url = "https://x.com/intent/post?" + urlencode(
+        {"text": x_share_text, "url": board_url}
+    )
     social_image_url = request.build_absolute_uri(
         reverse("boards:social_image", kwargs={"slug": board.entity.slug})
     ) + f"?v={board.version}"
@@ -191,6 +196,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
             "move_result": request.GET.get("move"),
             "selected_represented_entity": selected_represented_entity,
             "board_url": board_url,
+            "x_share_url": x_share_url,
             "social_image_url": social_image_url,
             "social_title": social_title,
             "social_description": social_description,

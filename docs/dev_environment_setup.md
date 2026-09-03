@@ -16,6 +16,22 @@ python3.12 -m venv .security-venv
 .security-venv/bin/pip-compile --output-file=requirements.lock requirements.txt
 ```
 
+Install the repository-managed pre-commit hook after creating the environment:
+
+```bash
+.security-venv/bin/python -m pre_commit install
+```
+
+The hook is used by Git regardless of whether a commit is created from VS Code
+or a terminal. It invokes the pinned Gitleaks container declared in
+`.pre-commit-config.yaml`, mounts the repository read-only, and does not scan
+untracked local `.env` files. Docker Desktop must be running for the hook.
+Use the following command for an explicit all-files check:
+
+```bash
+.security-venv/bin/python -m pre_commit run --all-files
+```
+
 Review the resulting diff, run the application tests, and commit the lock file
 with the compatible range change in `requirements.txt` when one is needed.
 Never put credentials in a requirements file or command-line argument.
@@ -28,6 +44,13 @@ Run the safe, current-worktree checks locally or from CI:
 ./scripts/scan_secrets.sh
 ./scripts/audit_dependencies.sh
 ```
+
+GitHub Actions runs these same checks on every pull request and every push to
+the default branch. The workflow uses only read permission, immutable action
+SHAs, a digest-pinned public Gitleaks image, redacted scanner output, and no
+repository secrets or uploaded findings. Treat the local hook as convenience
+and the GitHub status check as the merge backstop; configure that check as
+required in branch protection or a repository ruleset.
 
 Gitleaks is a separate binary; install it from the official Gitleaks release or
 package manager before running the scanner. The committed `.gitleaks.toml`

@@ -1,3 +1,4 @@
 # Pinned developer tools for lock generation and dependency auditing.
+pre-commit==4.3.0
 pip-tools==7.6.1
 pip-audit==2.9.0

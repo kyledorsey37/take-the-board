@@ -1,0 +1,11 @@
+minimum_pre_commit_version: "3.0.0"
+
+repos:
+  - repo: local
+    hooks:
+      - id: gitleaks
+        name: Gitleaks secret scan
+        entry: env GITLEAKS_DOCKER_IMAGE=ghcr.io/gitleaks/gitleaks:v8.29.1@sha256:aa036a2f4bdfe3cc3c55fa4326308efabb4a6be498c883c864fd1d0d5585438a ./scripts/scan_secrets.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]

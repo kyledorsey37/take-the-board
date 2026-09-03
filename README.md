@@ -99,6 +99,34 @@ The local settings use `DATABASE_URL` when provided. The canonical LAN and Docke
 development paths both use PostgreSQL; SQLite is retained only as a fallback for
 isolated framework checks when no database service is available.
 
+## Security checks
+
+Install the repository-managed security tools once in a local virtual
+environment, then install the Git hook:
+
+```bash
+python3.12 -m venv .security-venv
+.security-venv/bin/python -m pip install -r requirements-security.txt
+.security-venv/bin/python -m pre_commit install
+```
+
+The hook runs for commits made from both VS Code and the terminal. It uses the
+pinned Gitleaks container in `.pre-commit-config.yaml`, scans the current
+repository safely, and does not scan untracked local `.env` files. Run the
+checks manually when needed:
+
+```bash
+.security-venv/bin/python -m pre_commit run --all-files
+./scripts/audit_dependencies.sh
+```
+
+GitHub Actions runs the same secret scan and dependency audit for every pull
+request and every push to `main`. The local hook is a fast developer
+convenience; require the `Security / Secret and dependency checks` status check
+in the repository's branch protection or ruleset before merging. A separate,
+full Git-history scan remains a launch-time operator gate; see
+`docs/dev_environment_setup.md`.
+
 ## Architecture Guardrails
 
 - Django monolith.

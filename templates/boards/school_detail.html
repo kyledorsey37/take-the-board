@@ -48,6 +48,22 @@
           </svg>
           <span data-share-label>Share</span>
         </button>
+        <a
+          class="share-button share-button-x"
+          href="{{ x_share_url }}"
+          target="_blank"
+          rel="noopener noreferrer"
+          data-share-x
+          data-analytics-event="board_share_clicked"
+          data-analytics-surface="entity_board"
+          data-analytics-school-slug="{{ board.entity.slug }}"
+        >
+          <svg class="share-button-icon" aria-hidden="true" viewBox="0 0 24 24" focusable="false">
+            <path d="M5 4 19 20M19 4 5 20" />
+          </svg>
+          <span>Share on X</span>
+          <span class="visually-hidden"> (opens in a new tab)</span>
+        </a>
         <span class="share-status" data-share-status role="status" aria-live="polite" hidden></span>
       </div>
     </div>

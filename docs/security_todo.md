@@ -27,7 +27,7 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 - [ ] Ensure production and staging use Gunicorn, never `runserver` or `--insecure`.
 - [ ] Set secret files to owner-readable only: `chmod 600 .env` and equivalent server files.
 - [ ] Keep `.env*`, database dumps, backups, private keys, and cloud credentials excluded from Git and Docker build contexts.
-- [x] Add a secret scanner to pre-commit/CI. `scripts/scan_secrets.sh` runs Gitleaks against the current worktree and is CI-friendly.
+- [x] Add a secret scanner to pre-commit/CI. `scripts/scan_secrets.sh` runs Gitleaks against the current worktree; `.pre-commit-config.yaml` provides the local hook and `.github/workflows/security.yml` runs the redacted, read-only checks on pull requests and pushes to `main`.
 - [ ] Run the one-time Git-history secret scan before the first public launch, using the process in `docs/dev_environment_setup.md`.
 - [x] Pin dependencies with a lock file or hashes and add dependency vulnerability checking. `requirements.lock` is generated from `requirements.txt`; `scripts/audit_dependencies.sh` runs pip-audit without credentials.
 - [ ] Enable hosted repository dependency alerts as an operator configuration gate.

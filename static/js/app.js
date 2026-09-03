@@ -195,6 +195,19 @@ document.addEventListener("click", function trackAnalyticsClick(event) {
   trackElementEvent(target);
 });
 
+document.addEventListener("click", function trackXBoardShare(event) {
+  const link = event.target.closest("[data-share-x]");
+
+  if (!link) {
+    return;
+  }
+
+  window.takeTheBoard.trackEvent("board_share_result", Object.assign({}, analyticsParams(link), {
+    result: "shared",
+    share_method: "x_twitter",
+  }));
+});
+
 async function copyTextToClipboard(text) {
   if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
     await navigator.clipboard.writeText(text);
