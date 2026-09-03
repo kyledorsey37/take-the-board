@@ -35,8 +35,8 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 ## Browser and HTTP hardening
 
 - [x] Add a tight Content Security Policy in report-only mode.
-- [ ] Self-host or integrity-pin third-party frontend assets where practical, especially HTMX.
-- [ ] Keep Stripe.js loaded only from Stripe's official origin.
+- [x] Self-host or integrity-pin third-party frontend assets where practical, especially HTMX. HTMX 1.9.12 is vendored under `static/vendor/` with release provenance, a preserved license, and a recorded SHA-256 checksum.
+- [x] Keep Stripe.js loaded only from Stripe's official origin. It remains conditional and is loaded only from `https://js.stripe.com`.
 - [x] Add application-owned `Permissions-Policy` and baseline security headers; edge headers remain external.
 - [x] Add `Cache-Control: no-store` to authentication start, verify, resend, and OAuth callback responses.
 - [x] Validate or replace malformed/oversized client-supplied `X-Request-ID` values.

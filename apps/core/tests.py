@@ -5,6 +5,7 @@ from django.utils import timezone
 from urllib.parse import parse_qs, urlparse
 from datetime import timedelta
 from decimal import Decimal
+import hashlib
 import os
 from pathlib import Path
 
@@ -69,6 +70,63 @@ class BoardTestCase(TestCase):
             entity_a=cls.oklahoma,
             entity_b=cls.texas,
         )
+
+
+class FrontendAssetDeliveryTests(BoardTestCase):
+    htmx_asset = Path(__file__).resolve().parents[2] / "static/vendor/htmx-1.9.12.min.js"
+    htmx_provenance = Path(__file__).resolve().parents[2] / "static/vendor/README.md"
+
+    def test_vendored_htmx_artifact_has_recorded_version_source_checksum_and_license(self) -> None:
+        self.assertTrue(self.htmx_asset.is_file())
+        asset_checksum = hashlib.sha256(self.htmx_asset.read_bytes()).hexdigest()
+        provenance = self.htmx_provenance.read_text()
+
+        self.assertIn("HTMX 1.9.12", provenance)
+        self.assertIn(
+            "https://github.com/bigskysoftware/htmx/releases/download/v1.9.12/htmx.min.js",
+            provenance,
+        )
+        self.assertIn(f"SHA-256: `{asset_checksum}`", provenance)
+        self.assertIn("Zero-Clause BSD", provenance)
+
+    @override_settings(
+        TAKEBOARD_DEMO_BIDDING_ENABLED=True,
+        TAKEBOARD_STRIPE_ENABLED=False,
+        TAKEBOARD_COGNITO_AUTH_ENABLED=False,
+        TAKEBOARD_AUTH_MODAL_PREVIEW=False,
+        TAKEBOARD_REQUIRE_AUTH_FOR_BIDDING=False,
+    )
+    def test_public_pages_load_local_htmx_before_app_handlers_and_keep_htmx_markup(self) -> None:
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        body = response.content.decode()
+
+        self.assertRegex(
+            body,
+            r'<script src="/static/vendor/htmx-1\.9\.12\.min(?:\.[a-f0-9]+)?\.js\?v=1\.9\.12" defer></script>',
+        )
+        self.assertNotIn("unpkg.com", body)
+        self.assertLess(body.index("/static/vendor/htmx-1.9.12"), body.index("/static/js/app"))
+        self.assertContains(response, 'hx-post="/bids/take/"')
+
+        app_js = (Path(__file__).resolve().parents[2] / "static/js/app.js").read_text()
+        self.assertIn("htmx:afterSwap", app_js)
+
+    @override_settings(
+        TAKEBOARD_STRIPE_ENABLED=True,
+        STRIPE_PUBLISHABLE_KEY="pk_test_frontend_asset_delivery",
+    )
+    def test_stripe_js_is_conditional_and_uses_only_the_official_origin(self) -> None:
+        response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        self.assertContains(response, '<script src="https://js.stripe.com/clover/stripe.js" defer></script>')
+        self.assertContains(
+            response,
+            'window.takeTheBoardStripePublishableKey = "pk_test_frontend_asset_delivery";',
+        )
+
+        with override_settings(TAKEBOARD_STRIPE_ENABLED=False):
+            response = self.client.get(reverse("schools:detail", kwargs={"slug": "oklahoma"}))
+        self.assertNotContains(response, "https://js.stripe.com/clover/stripe.js")
+        self.assertNotContains(response, "takeTheBoardStripePublishableKey")
 
 
 class ProductionRosterCommandTests(TestCase):
@@ -282,7 +340,7 @@ class PublicNavigationTests(BoardTestCase):
         parsed_x_share_url = urlparse(x_share_url)
         self.assertEqual(parsed_x_share_url.scheme, "https")
         self.assertEqual(parsed_x_share_url.netloc, "x.com")
-        self.assertEqual(parsed_x_share_url.path, "/intent/post")
+        self.assertEqual(parsed_x_share_url.path, "/intent/tweet")
         self.assertEqual(
             parse_qs(parsed_x_share_url.query),
             {

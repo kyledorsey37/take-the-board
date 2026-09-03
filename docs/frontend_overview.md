@@ -20,6 +20,11 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
 
 - `static/css/app.css`: starter CSS.
 - `static/js/app.js`: minimal JavaScript namespace and fail-silent analytics helper.
+- `static/vendor/htmx-1.9.12.min.js`: the exact official HTMX 1.9.12 release,
+  served locally with a versioned path and query string. Provenance, checksum,
+  and license text are recorded beside the asset. Stripe.js is intentionally
+  not vendored and remains conditional on the official Stripe origin; Google
+  Analytics remains consent-gated as described below.
 
 The visual system should be independent from official school brands. Use plain school names and generic accent colors. Do not use official logos, mascot art, seals, athletics typography, or university lockups.
 
@@ -33,7 +38,7 @@ content area grows with its message while the footer stays directly beneath it.
 Each school board has one canonical public URL, a general Share button, and a
 separate board-level Share on X intent button. Browsers with the Web Share API
 open the native share sheet; desktop browsers copy the canonical URL to the
-clipboard. Share on X opens a server-built, URL-encoded `https://x.com/intent/post`
+clipboard. Share on X opens a server-built, URL-encoded `https://x.com/intent/tweet`
 link in a new tab with concise, low-risk copy and the canonical board URL. It does
 not post automatically or require X API credentials. The post-takeover success
 state also offers its own X/Twitter share link. Both paths use canonical URLs and

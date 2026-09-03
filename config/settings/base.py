@@ -179,7 +179,7 @@ SESSION_COOKIE_SAMESITE = "Lax"
 CSRF_COOKIE_SAMESITE = "Lax"
 X_FRAME_OPTIONS = "DENY"
 PERMISSIONS_POLICY = "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(self \"https://js.stripe.com\"), usb=()"
-CSP_REPORT_ONLY = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://unpkg.com https://www.googletagmanager.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com; img-src 'self' data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'"
+CSP_REPORT_ONLY = "default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; script-src 'self' 'unsafe-inline' https://js.stripe.com https://www.googletagmanager.com; connect-src 'self' https://api.stripe.com https://www.google-analytics.com https://region1.google-analytics.com; frame-src 'self' https://js.stripe.com https://hooks.stripe.com; img-src 'self' data: https://www.google-analytics.com; style-src 'self' 'unsafe-inline'; font-src 'self'; form-action 'self'"
 
 TAKEBOARD_DEFAULT_BOARD_MESSAGE = "THIS BOARD IS OPEN."
 TAKEBOARD_DEFAULT_COMPETITION_SLUG = os.environ.get(

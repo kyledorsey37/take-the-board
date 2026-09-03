@@ -41,6 +41,12 @@ authentication responses, and validated request IDs. Admin payment/history
 records are view-only; non-local staff sessions require django-otp TOTP MFA and
 shared-cache login throttling. See [the Admin runbook](admin_security_runbook.md).
 
+HTMX 1.9.12 is served as a versioned, application-owned static asset from
+`static/vendor/`; its official release source, Zero-Clause BSD license, and
+SHA-256 checksum are recorded in `static/vendor/README.md`. Stripe.js remains a
+conditional browser dependency from only `https://js.stripe.com`, and consent-
+gated Google Analytics retains its existing official Google origins.
+
 ## CSRF And Webhooks
 
 Use CSRF protection for browser mutation endpoints, including message validation, checkout creation, profile updates, and future bid interactions.

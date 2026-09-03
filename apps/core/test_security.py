@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib.auth.models import AnonymousUser, User
 from django.http import HttpResponse
 from django.test import RequestFactory, SimpleTestCase, TestCase, override_settings
@@ -22,6 +23,16 @@ class SecurityHeaderTests(SimpleTestCase):
         self.assertEqual(response["Cache-Control"], "no-store")
         self.assertEqual(response["Content-Security-Policy-Report-Only"], "default-src 'self'")
         self.assertEqual(response["Permissions-Policy"], "camera=()")
+
+    def test_default_csp_keeps_required_third_party_origins_without_unpkg(self):
+        csp = settings.CSP_REPORT_ONLY
+
+        self.assertNotIn("https://unpkg.com", csp)
+        self.assertIn("script-src 'self' 'unsafe-inline' https://js.stripe.com", csp)
+        self.assertIn("https://api.stripe.com", csp)
+        self.assertIn("https://hooks.stripe.com", csp)
+        self.assertIn("https://www.googletagmanager.com", csp)
+        self.assertIn("https://www.google-analytics.com", csp)
 
 
 class HealthCheckHostMiddlewareTests(SimpleTestCase):

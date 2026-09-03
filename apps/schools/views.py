@@ -154,7 +154,7 @@ def school_detail(request: HttpRequest, slug: str) -> HttpResponse:
         reverse("schools:detail", kwargs={"slug": board.entity.slug})
     )
     x_share_text = f"See the {board.entity.name} board on Take the Board."
-    x_share_url = "https://x.com/intent/post?" + urlencode(
+    x_share_url = "https://x.com/intent/tweet?" + urlencode(
         {"text": x_share_text, "url": board_url}
     )
     social_image_url = request.build_absolute_uri(
