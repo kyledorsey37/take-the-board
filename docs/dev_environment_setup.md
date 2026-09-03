@@ -36,7 +36,7 @@ EC2
 
 Cognito dev user pool
 Stripe test-mode webhook endpoint
-Sentry dev environment
+Structured application logs (CloudWatch-ready)
 CloudWatch logs
 ```
 
@@ -238,9 +238,6 @@ STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
 
-SENTRY_DSN=<dev-sentry-dsn>
-SENTRY_ENVIRONMENT=dev
-SENTRY_RELEASE=<git-sha>
 DJANGO_LOG_LEVEL=INFO
 ```
 
@@ -363,8 +360,9 @@ The first dev environment is done when:
 - Outbidding cancels the losing pending authorization.
 - A winning takeover publishes and survives container restart.
 - Database state survives app container restart and full `docker compose down && docker compose up -d`.
-- Basic errors reach Sentry with `SENTRY_ENVIRONMENT=dev`.
-- Logs are visible through `docker compose logs` and, once configured, CloudWatch.
+- Dev does not send errors to Sentry.
+- Structured JSON logs are visible through `docker compose logs` and can be
+  forwarded to CloudWatch when that integration is configured.
 
 ## What Dev Intentionally Skips
 

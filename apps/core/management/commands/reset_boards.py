@@ -2,6 +2,7 @@ from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 
 from apps.boards.services.reset_boards import WeeklyResetError, reset_boards
+from apps.core.sentry import capture_critical_exception
 from apps.payments.services.cancel_authorization import cancel_authorization
 from apps.schools.services import default_competition
 
@@ -18,6 +19,7 @@ class Command(BaseCommand):
                 ),
             )
         except WeeklyResetError as error:
+            capture_critical_exception("scheduled_board_reset_failure", error)
             raise CommandError(str(error)) from error
 
         if result.already_reset:

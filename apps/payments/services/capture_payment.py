@@ -6,6 +6,7 @@ import stripe
 from django.conf import settings
 
 from apps.bidding.models import Bid
+from apps.core.sentry import capture_critical_exception
 
 from .capture_records import record_capture_from_payment_intent
 
@@ -36,6 +37,7 @@ def capture_payment(bid: Bid) -> bool:
         # not label an already-captured card as a failed payment. The succeeding
         # PaymentIntent/charge webhooks provide a second, idempotent recording path.
         record_capture_from_payment_intent(bid=bid, payment_intent=payment_intent)
-    except Exception:
+    except Exception as error:
         logger.exception("stripe_capture_recording_failed", extra={"bid_id": bid.id})
+        capture_critical_exception("payment_capture_recording_failure", error)
     return True

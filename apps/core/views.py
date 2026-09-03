@@ -1,4 +1,4 @@
-from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.conf import settings
 from django.shortcuts import render
 
@@ -88,10 +88,3 @@ def contact(request: HttpRequest) -> HttpResponse:
 
 def healthz(request: HttpRequest) -> JsonResponse:
     return JsonResponse({"status": "ok"})
-
-
-def sentry_debug(request: HttpRequest) -> HttpResponse:
-    """Raise a deterministic exception for local Sentry connectivity checks."""
-    if not settings.DEBUG or settings.TAKEBOARD_ENVIRONMENT != "local":
-        raise Http404
-    raise RuntimeError("Sentry debug route triggered")

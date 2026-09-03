@@ -400,6 +400,7 @@ class PublicNavigationTests(BoardTestCase):
 
         self.assertContains(response, 'id="analytics-consent-banner"')
         self.assertContains(response, 'data-analytics-consent-choice="accepted"')
+        self.assertContains(response, 'class="analytics-consent-title-compact">Cookies</span>')
         self.assertContains(response, 'class="analytics-consent-description-compact"')
         self.assertNotContains(response, "googletagmanager.com/gtag/js")
 
@@ -484,22 +485,6 @@ class PublicNavigationTests(BoardTestCase):
                 self.assertIn("test-request-123", body)
                 self.assertNotIn("internal detail", body)
                 self.assertNotIn("Traceback", body)
-
-
-class SentryDebugTests(TestCase):
-    @override_settings(DEBUG=True, TAKEBOARD_ENVIRONMENT="local")
-    def test_local_sentry_debug_route_returns_server_error(self) -> None:
-        client = Client(raise_request_exception=False)
-
-        response = client.get("/sentry-debug/")
-
-        self.assertEqual(response.status_code, 500)
-
-    @override_settings(DEBUG=False, TAKEBOARD_ENVIRONMENT="production")
-    def test_sentry_debug_route_is_disabled_outside_local_debug(self) -> None:
-        response = self.client.get("/sentry-debug/")
-
-        self.assertEqual(response.status_code, 404)
 
 
 @override_settings(

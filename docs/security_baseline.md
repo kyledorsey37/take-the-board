@@ -79,14 +79,30 @@ raw IP addresses, raw request bodies, or payment-provider payloads.
 
 ## Error Monitoring
 
-Server-side Sentry is wired by `SENTRY_DSN`, with `SENTRY_ENVIRONMENT` and
-optional `SENTRY_RELEASE` tags. Default PII collection is disabled. The
-`/sentry-debug/` verification route is registered only in the local
-environment and returns 404 unless `DEBUG=True`; it must not expose an error
-trigger in staging or production. Browser-side
-Sentry should be added before public launch. Alerts should cover webhook
-failures, capture/cancel/refund failures, SQS worker failures, moderation
-failures, weekly reset failures, and database integrity errors.
+Server-side Sentry initializes only when `TAKEBOARD_ENVIRONMENT=production`
+and a production `SENTRY_DSN` is present; optional `SENTRY_RELEASE` tags the
+release. Local and staging environments do not send Sentry events and retain
+structured JSON logs on stdout for Docker and CloudWatch collection.
+
+Sentry is an incident signal, not a second log sink. The SDK disables automatic
+logging events, Sentry Logs, performance tracing, profiles, breadcrumbs, local
+variables, and default PII collection. `before_send` removes request, user,
+context, breadcrumb, extra, transaction, server-name, exception-value, and
+frame-local data. It admits only explicit, allowlisted critical incidents or
+unexpected server exceptions. Shared Redis reserves atomic hourly slots: at
+most three critical events and one unhandled 5xx event per hour, with a
+six-hour fingerprint cooldown. That is at most 2,976 events in a 31-day month,
+leaving headroom below the 5,000-event free-tier allowance. A Redis/cache
+failure fails closed for Sentry and remains visible in structured application
+logs.
+
+Allowed critical incidents are payment-capture/refund integrity mismatches,
+payment capture-recording failures, exhausted SQS bid-finalization retries,
+sustained worker provider outages (three occurrences within 60 seconds), and
+failed scheduled board resets. Expected 4xx responses, unknown URLs,
+validation/moderation outcomes, rate limits, duplicate messages, payment
+declines, and ordinary retryable provider failures stay out of Sentry. Browser
+Sentry should be added only after a separate volume and privacy review.
 
 ## Public Error Pages
 

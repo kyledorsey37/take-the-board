@@ -9,6 +9,7 @@ from django.db.models import F
 from django.utils import timezone
 
 from apps.bidding.models import Bid
+from apps.core.sentry import capture_critical_message
 from apps.moderation.models import ModerationPaymentAction
 from apps.payments.models import LedgerEntry, PaymentCapture
 from apps.payments.services.cancel_authorization import cancel_authorization
@@ -36,9 +37,11 @@ def _refund_amount_after_processing_fee(bid: Bid) -> int | None:
         return None
     if capture.gross_amount_cents != bid.amount_cents:
         logger.error("moderation_refund_capture_amount_mismatch", extra={"bid_id": bid.id})
+        capture_critical_message("payment_refund_integrity_mismatch")
         return None
     if capture.net_amount_cents != capture.gross_amount_cents - capture.stripe_fee_cents:
         logger.error("moderation_refund_capture_net_mismatch", extra={"bid_id": bid.id})
+        capture_critical_message("payment_refund_integrity_mismatch")
         return None
     return capture.net_amount_cents
 

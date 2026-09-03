@@ -20,6 +20,7 @@ from django.conf import settings
 from django.utils import timezone
 
 from apps.bidding.models import Bid
+from apps.core.sentry import capture_critical_exception
 from apps.bidding.services.finalize_bid import FinalizationResult, finalize_due_board
 from apps.bidding.services.rules import current_board_rules
 from apps.payments.services.capture_payment import capture_payment
@@ -222,11 +223,12 @@ class SqsBidFinalizationConsumer:
             ):
                 return 1
             _finalize_message(bid=bid, group_id=group_id)
-        except Exception:
+        except Exception as error:
             attributes = message.get("MessageSystemAttributes") or message.get("Attributes") or {}
             receive_count = int(attributes.get("ApproximateReceiveCount") or 1)
             if receive_count >= self.config.max_receive_count:
                 logger.error("sqs_bid_finalization_retry_limit_reached", extra={"bid_id": bid.id})
+                capture_critical_exception("bid_finalization_retry_exhausted", error)
             else:
                 visibility = min(
                     900,

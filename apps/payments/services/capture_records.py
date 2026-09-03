@@ -14,12 +14,17 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.bidding.models import Bid
+from apps.core.sentry import capture_critical_message
 
 from ..models import LedgerEntry, PaymentCapture
 
 
 logger = logging.getLogger(__name__)
 FEE_RECONCILIATION_INTERVAL = timedelta(seconds=30)
+
+
+def _report_capture_integrity_mismatch() -> None:
+    capture_critical_message("payment_capture_integrity_mismatch")
 
 
 def _value(stripe_object: Any, key: str, default: Any = None) -> Any:
@@ -79,6 +84,7 @@ def _apply_charge_details(capture: PaymentCapture, charge: Any) -> bool:
             "stripe_capture_amount_mismatch",
             extra={"capture_id": capture.id, "bid_id": capture.bid_id},
         )
+        _report_capture_integrity_mismatch()
         if update_fields:
             capture.save(update_fields=update_fields)
         return False
@@ -89,6 +95,7 @@ def _apply_charge_details(capture: PaymentCapture, charge: Any) -> bool:
             "stripe_capture_currency_mismatch",
             extra={"capture_id": capture.id, "bid_id": capture.bid_id},
         )
+        _report_capture_integrity_mismatch()
         if update_fields:
             capture.save(update_fields=update_fields)
         return False
@@ -113,6 +120,7 @@ def record_capture_from_payment_intent(*, bid: Bid, payment_intent: Any) -> Paym
         return None
     if bid.stripe_payment_intent_id and payment_intent_id != bid.stripe_payment_intent_id:
         logger.error("stripe_capture_payment_intent_mismatch", extra={"bid_id": bid.id})
+        _report_capture_integrity_mismatch()
         return None
 
     gross_amount_cents = int(
@@ -122,6 +130,7 @@ def record_capture_from_payment_intent(*, bid: Bid, payment_intent: Any) -> Paym
     currency = str(_value(payment_intent, "currency", "usd") or "usd").lower()
     if gross_amount_cents != bid.amount_cents:
         logger.error("stripe_capture_amount_mismatch", extra={"bid_id": bid.id})
+        _report_capture_integrity_mismatch()
         return None
 
     capture, created = PaymentCapture.objects.get_or_create(
@@ -134,6 +143,7 @@ def record_capture_from_payment_intent(*, bid: Bid, payment_intent: Any) -> Paym
     )
     if not created and capture.stripe_payment_intent_id != payment_intent_id:
         logger.error("stripe_capture_duplicate_bid_mismatch", extra={"bid_id": bid.id})
+        _report_capture_integrity_mismatch()
         return None
 
     if created:

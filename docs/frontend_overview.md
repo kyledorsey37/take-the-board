@@ -127,10 +127,11 @@ Escape user-generated board messages and display names everywhere, including pag
 
 Analytics loads only in production when `GOOGLE_ANALYTICS_MEASUREMENT_ID` contains a valid GA4 measurement ID (`G-...`) and the visitor has accepted optional analytics. The standard Google tag sits in the shared document head, so GA4 receives page views for public pages after consent. A first-party `ttb_analytics_consent` cookie stores only the accepted/declined choice; it is not tied to an account or database record. It is deliberately absent in local and staging settings.
 
-On narrow screens, the first-load consent prompt is a compact bottom bar with
+On narrow screens, the first-load cookie prompt is a compact bottom bar with
 equally prominent Accept and Decline actions. It keeps the initial board CTA
-visible while presenting the analytics choice. Local development can render the
-prompt without loading GA4 by setting `TAKEBOARD_ANALYTICS_CONSENT_PREVIEW=true`.
+visible while presenting the optional analytics-cookie choice. Local development
+can render the prompt without loading GA4 by setting
+`TAKEBOARD_ANALYTICS_CONSENT_PREVIEW=true`.
 
 The `window.takeTheBoard.trackEvent()` helper fails silently when analytics is unavailable. Event attributes cover public navigation and discovery, board shares, modal open/close behavior, authentication steps, backing and amount choices, bid validation, paid checkout, takeover outcomes, reporting, FAQs, and leaderboard/rivalry periods. The complete event catalog and GA4 setup checklist live in `docs/analytics_tracking.md`.
 

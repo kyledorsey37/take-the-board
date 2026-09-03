@@ -1,6 +1,7 @@
 from pathlib import Path
 from typing import List, Optional
 from urllib.parse import parse_qs, unquote, urlparse
+import logging
 import os
 
 
@@ -320,18 +321,37 @@ TAKEBOARD_ANALYTICS_CONSENT_PREVIEW = env_bool(
     "TAKEBOARD_ANALYTICS_CONSENT_PREVIEW", False
 )
 
-SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
-SENTRY_ENVIRONMENT = os.environ.get("SENTRY_ENVIRONMENT", TAKEBOARD_ENVIRONMENT)
+# Sentry is reserved for production incidents. Local and staging environments
+# keep structured JSON logs on stdout for Docker and CloudWatch collection.
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "") if TAKEBOARD_ENVIRONMENT == "production" else ""
 SENTRY_RELEASE = os.environ.get("SENTRY_RELEASE", "")
 if SENTRY_DSN:
     try:
         import sentry_sdk
+        from sentry_sdk.integrations.logging import LoggingIntegration
+
+        from apps.core.sentry import before_send
 
         sentry_sdk.init(
             dsn=SENTRY_DSN,
-            environment=SENTRY_ENVIRONMENT,
+            environment="production",
             release=SENTRY_RELEASE or None,
             send_default_pii=False,
+            include_local_variables=False,
+            max_breadcrumbs=0,
+            enable_logs=False,
+            traces_sample_rate=0.0,
+            profiles_sample_rate=0.0,
+            integrations=[
+                # Keep application logs in stdout/CloudWatch.  Error-level log
+                # records must never become Sentry events automatically.
+                LoggingIntegration(
+                    level=logging.INFO,
+                    event_level=None,
+                    sentry_logs_level=None,
+                ),
+            ],
+            before_send=before_send,
         )
     except ImportError:
         pass

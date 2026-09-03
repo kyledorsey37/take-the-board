@@ -147,8 +147,6 @@ Resources:
               Value: '5'
             - Name: TAKEBOARD_BEDROCK_ENABLED
               Value: 'false'
-            - Name: SENTRY_ENVIRONMENT
-              Value: production
             - Name: GOOGLE_ANALYTICS_MEASUREMENT_ID
               Value: G-X054N05H9C
           Secrets:
@@ -160,6 +158,8 @@ Resources:
               ValueFrom: !Sub '${AppSecretArn}:DATABASE_URL::'
             - Name: REDIS_URL
               ValueFrom: !Sub '${AppSecretArn}:REDIS_URL::'
+            - Name: SENTRY_DSN
+              ValueFrom: !Sub '${AppSecretArn}:SENTRY_DSN::'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -246,6 +246,8 @@ Resources:
               ValueFrom: !Sub '${AppSecretArn}:DATABASE_URL::'
             - Name: REDIS_URL
               ValueFrom: !Sub '${AppSecretArn}:REDIS_URL::'
+            - Name: SENTRY_DSN
+              ValueFrom: !Sub '${AppSecretArn}:SENTRY_DSN::'
           LogConfiguration:
             LogDriver: awslogs
             Options:

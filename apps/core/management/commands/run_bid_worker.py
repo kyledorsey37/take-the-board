@@ -14,6 +14,7 @@ from apps.bidding.services.finalization_queue import (
     sqs_finalization_enabled,
 )
 from apps.bidding.services.rules import current_board_rules
+from apps.core.sentry import capture_critical_exception
 from apps.payments.services.capture_payment import capture_payment
 from apps.payments.services.capture_records import reconcile_pending_capture_fees
 from apps.payments.services.process_webhooks import process_pending_stripe_events
@@ -74,10 +75,16 @@ class Command(BaseCommand):
             except (OperationalError, ProgrammingError):
                 # The local worker can start before the web service has run migrations.
                 logger.info("demo_bid_finalizer_waiting_for_database")
-            except (BotoCoreError, ClientError):
+            except (BotoCoreError, ClientError) as error:
                 # Queue/provider outages are retried by the next worker pass; no
                 # message is acknowledged until the consumer completes safely.
                 logger.exception("bid_finalization_queue_unavailable")
+                capture_critical_exception(
+                    "worker_provider_outage",
+                    error,
+                    minimum_occurrences=3,
+                    window_seconds=60,
+                )
                 if not options["once"]:
                     time.sleep(options["poll_seconds"])
 

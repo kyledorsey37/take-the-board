@@ -217,6 +217,29 @@ class FinalizationQueueTests(TestCase):
         self.assertEqual(client.deleted, [])
         self.assertEqual(client.visibility_changes[0]["VisibilityTimeout"], 60)
 
+    def test_retry_limit_reports_one_critical_incident(self):
+        bid = self.bid()
+        message = {
+            "Body": json.dumps({"bid_id": str(bid.public_id)}),
+            "ReceiptHandle": "receipt-terminal-fail",
+            "Attributes": {"MessageGroupId": f"board-{self.board.id}", "ApproximateReceiveCount": "2"},
+        }
+        client = FakeSqsClient([message])
+        consumer = SqsBidFinalizationConsumer(
+            client=client,
+            config=FinalizationQueueConfig("https://sqs.example/bids.fifo", "us-east-1", 20, 120, 30, 2),
+        )
+
+        with (
+            patch("apps.bidding.services.finalization_queue._finalize_message", side_effect=RuntimeError("transient")),
+            patch("apps.bidding.services.finalization_queue.capture_critical_exception") as capture_critical,
+        ):
+            consumer.consume_once()
+
+        self.assertEqual(client.deleted, [])
+        capture_critical.assert_called_once()
+        self.assertEqual(capture_critical.call_args.args[0], "bid_finalization_retry_exhausted")
+
     @patch("apps.payments.services.process_webhooks.enqueue_bid_finalization")
     def test_authorization_transition_enqueues_inside_the_payment_event_boundary(self, enqueue):
         bid = self.bid()
