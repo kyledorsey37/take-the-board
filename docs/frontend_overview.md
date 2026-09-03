@@ -76,9 +76,14 @@ This is intentionally guarded by `TAKEBOARD_DEMO_BIDDING_ENABLED`, which default
 The authenticated flow replaces the local player identity with Cognito, accepts
 whole-dollar bid amounts, validates a board message before payment, rechecks the
 price, and creates Stripe Embedded Checkout with manual capture. After Stripe
-reports completion, the checkout instance is destroyed, the browser polls the
-bidder-owned status endpoint while the webhook worker finalizes the bid, and the
-user returns to the board with a live, pending, or still-processing state.
+reports completion, the checkout instance is destroyed, and the browser briefly
+polls the bidder-owned status endpoint while the webhook worker finalizes the bid.
+An `authorized` response is shown as a queued challenger immediately; it is never
+shown as a completed takeover while the current message's guaranteed window is
+active. Only a server-observed `won` response receives the success treatment. A
+short polling timeout becomes a non-claiming delayed state, and queued, won, and
+delayed states link back to the safe board URL with `move=pending`, `move=live`, or
+`move=processing` respectively.
 
 ## HTMX Contract
 

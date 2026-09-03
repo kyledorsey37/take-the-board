@@ -1,9 +1,10 @@
 import json
 from datetime import timedelta
 from decimal import Decimal
+from pathlib import Path
 from unittest.mock import patch
 
-from django.test import Client, TestCase, override_settings
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import reverse
 from django.utils import timezone
 from django.conf import settings
@@ -30,6 +31,86 @@ from .services.capture_payment import capture_payment
 from .services.create_checkout import create_checkout
 from .services.evidence import record_purchase_evidence
 from .services.process_webhooks import process_pending_stripe_events, process_stripe_event
+
+
+class CheckoutUxContractTests(SimpleTestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        super().setUpClass()
+        cls.app_js = (Path(__file__).resolve().parents[2] / "static/js/app.js").read_text()
+        cls.school_detail_template = (
+            Path(__file__).resolve().parents[2] / "templates/boards/school_detail.html"
+        ).read_text()
+
+    def test_authorized_is_a_queued_state_without_success_treatment(self) -> None:
+        authorized_branch = self.app_js[
+            self.app_js.index('if (status === "authorized")') : self.app_js.index('if (status === "won")')
+        ]
+
+        self.assertIn('trackTakeoverStatus(container, "authorized")', authorized_branch)
+        self.assertIn("showTakeoverQueued(container, payload)", authorized_branch)
+        self.assertNotIn("showTakeoverSuccess", authorized_branch)
+        self.assertNotIn("stripe-status-spin", authorized_branch)
+        self.assertIn("Bid received", self.app_js)
+        self.assertIn("You’re up next.", self.app_js)
+        self.assertIn("You’ll only be charged if your takeover wins.", self.app_js)
+        self.assertNotIn("data-takeover-share", authorized_branch)
+
+    def test_won_is_the_only_success_path_and_failure_has_no_return_timer(self) -> None:
+        won_branch = self.app_js[
+            self.app_js.index('if (status === "won")') : self.app_js.index('if (terminalFailures.includes(status))')
+        ]
+        failure_branch = self.app_js[
+            self.app_js.index('if (terminalFailures.includes(status))') : self.app_js.index("    } catch (error)")
+        ]
+
+        self.assertIn("showTakeoverSuccess(container, payload)", won_branch)
+        self.assertIn("takeover_won", won_branch)
+        self.assertIn("Takeover complete", self.app_js)
+        self.assertIn('viewBoard.dataset.takeoverMove = "live"', self.app_js)
+        self.assertIn("Payment not completed.", failure_branch)
+        self.assertIn("Your card was not charged for this takeover.", failure_branch)
+        self.assertNotIn("scheduleAutoReturn", failure_branch)
+
+    def test_timeout_is_delayed_and_never_claims_payment_or_a_win(self) -> None:
+        delayed_copy = self.app_js[
+            self.app_js.index("function showTakeoverDelayed") : self.app_js.index("async function waitForBidStatus")
+        ]
+
+        self.assertIn("We’re confirming your bid.", delayed_copy)
+        self.assertIn("This is taking a little longer than usual.", delayed_copy)
+        self.assertIn('move: "processing"', delayed_copy)
+        self.assertIn('trackTakeoverStatus(container, "processing_timeout")', self.app_js)
+        self.assertNotIn("Payment successful", delayed_copy)
+        self.assertNotIn("Your payment was accepted", delayed_copy)
+
+    def test_outcome_navigation_and_timer_controls_use_safe_low_cardinality_contracts(self) -> None:
+        self.assertIn('url.searchParams.set("move", move)', self.app_js)
+        self.assertIn('viewBoard.dataset.takeoverMove = "pending"', self.app_js)
+        self.assertIn('move: "processing"', self.app_js)
+        self.assertIn('scheduleAutoReturn(container, "pending", "queued")', self.app_js)
+        self.assertIn('scheduleAutoReturn(container, "live", "success")', self.app_js)
+        self.assertIn('closeMethod, modalStep', self.app_js)
+        self.assertIn('navigateToBoard(container, move, "auto_return", modalStep)', self.app_js)
+        self.assertIn("data-takeover-stay-here", self.app_js)
+        self.assertIn("data-takeover-share", self.app_js)
+        self.assertIn("clearAutoReturn(container)", self.app_js)
+        self.assertIn("__statusPollingCancelled", self.app_js)
+
+    def test_dynamic_outcome_content_uses_text_nodes_and_unknown_status_stays_unknown(self) -> None:
+        self.assertNotIn("container.innerHTML", self.app_js)
+        self.assertIn("textContent", self.app_js)
+        self.assertIn("const status = payload && payload.status", self.app_js)
+        self.assertIn("showTakeoverDelayed(container)", self.app_js)
+        self.assertIn('trackTakeoverStatus(container, "authorized")', self.app_js)
+        self.assertIn('trackTakeoverStatus(container, "processing_timeout")', self.app_js)
+        self.assertNotIn("payment_intent", self.app_js[self.app_js.index("function showTakeoverQueued") :])
+
+        processing_banner = self.school_detail_template[
+            self.school_detail_template.index('{% elif move_result == "processing" %}') :
+        ]
+        self.assertIn("We’re confirming your bid.", processing_banner)
+        self.assertNotIn("Payment received", processing_banner)
 
 
 @override_settings(STRIPE_WEBHOOK_SECRET="whsec_test")

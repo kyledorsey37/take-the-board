@@ -325,6 +325,7 @@ function setModalStep(dialog, step) {
 document.addEventListener("cancel", function trackDialogEscape(event) {
   const dialog = event.target.closest("dialog");
   if (dialog) {
+    cancelCheckoutAutoReturn(dialog);
     dialog.dataset.analyticsCloseMethod = "escape";
   }
 }, true);
@@ -333,6 +334,7 @@ document.addEventListener("click", function trackDialogCloseButton(event) {
   const button = event.target.closest("form[method='dialog'] button");
   const dialog = button && button.closest("dialog");
   if (dialog) {
+    cancelCheckoutAutoReturn(dialog);
     dialog.dataset.analyticsCloseMethod = "button";
   }
 }, true);
@@ -614,36 +616,152 @@ function wait(milliseconds) {
   });
 }
 
-function showCheckoutStatus(container, heading, message, isError) {
-  const mountPoint = container.querySelector("[data-stripe-checkout-mount]");
-  if (!mountPoint) {
+const CHECKOUT_POLL_ATTEMPTS = 20;
+const CHECKOUT_POLL_DELAY = 750;
+const CHECKOUT_AUTO_RETURN_DELAY = 10000;
+
+function createCheckoutElement(tagName, className, text) {
+  const element = document.createElement(tagName);
+  if (className) {
+    element.className = className;
+  }
+  if (text !== undefined) {
+    element.textContent = text;
+  }
+  return element;
+}
+
+function createDialogCloseButton(label) {
+  const form = document.createElement("form");
+  form.setAttribute("method", "dialog");
+  const button = createCheckoutElement("button", "icon-button", "×");
+  button.type = "submit";
+  button.setAttribute("aria-label", label);
+  form.appendChild(button);
+  return form;
+}
+
+function safeBoardUrl(rawUrl) {
+  const fallback = new URL(window.location.pathname, window.location.origin);
+  try {
+    const candidate = new URL(rawUrl || fallback.pathname, window.location.origin);
+    if (candidate.origin !== window.location.origin || !candidate.pathname.startsWith("/schools/")) {
+      return fallback;
+    }
+    return candidate;
+  } catch (error) {
+    return fallback;
+  }
+}
+
+function boardUrlWithMove(container, move) {
+  const rawUrl = container && (container.dataset.boardUrl || container.__boardUrl);
+  const url = safeBoardUrl(rawUrl);
+  url.searchParams.set("move", move);
+  return url.toString();
+}
+
+function rememberBoardUrl(container, payload) {
+  const rawUrl = payload && typeof payload.board_url === "string" ? payload.board_url : "";
+  if (!rawUrl) {
     return;
   }
+  const url = safeBoardUrl(rawUrl);
+  container.__boardUrl = url.pathname + url.search + url.hash;
+  container.dataset.boardUrl = container.__boardUrl;
+}
 
-  mountPoint.innerHTML = "";
-  const status = document.createElement("div");
-  status.className = "stripe-checkout-status" + (isError ? " is-error" : "");
+function clearAutoReturn(containerOrDialog) {
+  const container = containerOrDialog && containerOrDialog.matches && containerOrDialog.matches("[data-stripe-checkout]")
+    ? containerOrDialog
+    : containerOrDialog && containerOrDialog.querySelector && containerOrDialog.querySelector("[data-stripe-checkout]");
+  if (!container) {
+    return;
+  }
+  if (container.__autoReturnTimer) {
+    window.clearTimeout(container.__autoReturnTimer);
+    container.__autoReturnTimer = null;
+  }
+  container.dataset.autoReturnPending = "false";
+}
+
+function cancelCheckoutAutoReturn(dialog) {
+  if (dialog) {
+    const container = dialog.querySelector("[data-stripe-checkout]");
+    if (container) {
+      container.__statusPollingCancelled = true;
+    }
+    clearAutoReturn(dialog);
+  }
+}
+
+function closeOutcomeDialog(container, closeMethod, modalStep) {
+  const dialog = container.closest("dialog");
+  if (!dialog) {
+    return;
+  }
+  clearAutoReturn(container);
+  dialog.dataset.analyticsCloseMethod = closeMethod;
+  setModalStep(dialog, modalStep);
+  if (dialog.open && typeof dialog.close === "function") {
+    dialog.close();
+  }
+}
+
+function navigateToBoard(container, move, closeMethod, modalStep) {
+  closeOutcomeDialog(container, closeMethod, modalStep);
+  window.location.assign(boardUrlWithMove(container, move));
+}
+
+function scheduleAutoReturn(container, move, modalStep) {
+  clearAutoReturn(container);
+  container.dataset.autoReturnPending = "true";
+  container.__autoReturnTimer = window.setTimeout(function returnToBoard() {
+    navigateToBoard(container, move, "auto_return", modalStep);
+  }, CHECKOUT_AUTO_RETURN_DELAY);
+}
+
+function renderStatusActions(status, container, move, modalStep) {
+  if (!move) {
+    return;
+  }
+  const actions = createCheckoutElement("div", "stripe-checkout-status-actions");
+  const viewBoard = createCheckoutElement("button", "button button-primary", "View board");
+  viewBoard.type = "button";
+  viewBoard.dataset.takeoverViewBoard = "true";
+  viewBoard.dataset.takeoverMove = move;
+  viewBoard.dataset.takeoverModalStep = modalStep || "processing";
+  actions.appendChild(viewBoard);
+  status.appendChild(actions);
+}
+
+function showCheckoutStatus(container, heading, message, isError, options) {
+  const config = options || {};
+  clearAutoReturn(container);
+
+  const status = createCheckoutElement(
+    "section",
+    "stripe-checkout-status" + (isError ? " is-error" : "") + (config.delayed ? " is-delayed" : "") + (config.loading ? " is-loading" : ""),
+  );
   status.setAttribute("role", isError ? "alert" : "status");
+  status.setAttribute("aria-live", isError ? "assertive" : "polite");
 
-  const marker = document.createElement("span");
-  marker.className = "stripe-checkout-status-marker";
+  const header = createCheckoutElement("header", "stripe-checkout-status-header");
+  const headingGroup = createCheckoutElement("div", "stripe-checkout-status-heading");
+  const marker = createCheckoutElement("span", "stripe-checkout-status-marker", isError ? "!" : "");
   marker.setAttribute("aria-hidden", "true");
-  marker.textContent = isError ? "!" : "";
-  status.appendChild(marker);
+  headingGroup.appendChild(marker);
+  const headingCopy = createCheckoutElement("div");
+  headingCopy.appendChild(createCheckoutElement("p", "eyebrow", config.eyebrow || (isError ? "Try again" : "Confirming your bid")));
+  headingCopy.appendChild(createCheckoutElement("h4", "", heading));
+  headingGroup.appendChild(headingCopy);
+  header.appendChild(headingGroup);
+  header.appendChild(createDialogCloseButton("Close takeover confirmation"));
+  status.appendChild(header);
 
-  const eyebrow = document.createElement("p");
-  eyebrow.className = "eyebrow";
-  eyebrow.textContent = isError ? "Try again" : "Take the board";
-  status.appendChild(eyebrow);
-
-  const title = document.createElement("h4");
-  title.textContent = heading;
-  status.appendChild(title);
-
-  const copy = document.createElement("p");
-  copy.textContent = message;
-  status.appendChild(copy);
-  mountPoint.appendChild(status);
+  status.appendChild(createCheckoutElement("p", "stripe-checkout-status-copy", message));
+  renderStatusActions(status, container, config.move, config.modalStep);
+  container.replaceChildren(status);
 }
 
 function checkoutAnalyticsParams(container) {
@@ -661,6 +779,7 @@ function trackTakeoverStatus(container, status) {
 
 function showTakeoverSuccess(container, payload) {
   setModalStep(container.closest("dialog"), "success");
+  rememberBoardUrl(container, payload);
   const boardName = payload.board_name || "this board";
   const message = payload.message || "";
   const representedEntityName = payload.represented_entity_name || "Your team";
@@ -668,83 +787,149 @@ function showTakeoverSuccess(container, payload) {
   const amount = Number.isFinite(amountCents)
     ? `$${(amountCents / 100).toFixed(2)}`
     : "your bid";
-  const boardUrl = new URL(payload.board_url || window.location.pathname, window.location.origin).toString();
+  const boardUrl = safeBoardUrl(container.dataset.boardUrl).toString();
 
-  container.innerHTML = `
-    <section class="takeover-success" role="status" aria-labelledby="takeover-success-title">
-      <header class="takeover-success-header">
-        <div class="takeover-success-heading">
-          <span class="takeover-success-check" aria-hidden="true">✓</span>
-          <div>
-            <p class="eyebrow">Payment successful</p>
-            <h3 id="takeover-success-title">The board is yours.</h3>
-          </div>
-        </div>
-        <form method="dialog">
-          <button class="icon-button" type="submit" aria-label="Close takeover confirmation">&times;</button>
-        </form>
-      </header>
-      <p class="takeover-success-copy"></p>
-      <article class="takeover-success-message" aria-label="Your board message">
-        <p class="current-message-label"><span aria-hidden="true"></span>Your message</p>
-        <p class="takeover-success-message-text"></p>
-        <p class="takeover-success-message-meta"></p>
-      </article>
-      <div class="takeover-success-actions">
-        <a class="button button-primary" data-takeover-share target="_blank" rel="noopener noreferrer">Share on Twitter</a>
-        <form method="dialog"><button class="button button-secondary" type="submit">Done</button></form>
-      </div>
-      <p class="takeover-success-trust">Payment confirmed <span aria-hidden="true">·</span> Your message is live for the guaranteed display window</p>
-    </section>
-  `;
+  const success = createCheckoutElement("section", "takeover-success");
+  success.setAttribute("role", "status");
+  success.setAttribute("aria-live", "polite");
+  const header = createCheckoutElement("header", "takeover-success-header");
+  const heading = createCheckoutElement("div", "takeover-success-heading");
+  const successMarker = createCheckoutElement("span", "takeover-success-check", "✓");
+  successMarker.setAttribute("aria-hidden", "true");
+  heading.appendChild(successMarker);
+  const headingCopy = createCheckoutElement("div");
+  headingCopy.appendChild(createCheckoutElement("p", "eyebrow", "Takeover complete"));
+  headingCopy.appendChild(createCheckoutElement("h3", "", "The board is yours."));
+  heading.appendChild(headingCopy);
+  header.appendChild(heading);
+  header.appendChild(createDialogCloseButton("Close takeover confirmation"));
+  success.appendChild(header);
 
-  container.querySelector(".takeover-success-copy").textContent = `You now control the ${boardName} board.`;
-  container.querySelector(".takeover-success-message-text").textContent = message;
-  container.querySelector(".takeover-success-message-meta").textContent = `Backing ${representedEntityName} · ${amount}`;
+  success.appendChild(createCheckoutElement("p", "takeover-success-copy", `You now control the ${boardName} board.`));
+  const messageCard = createCheckoutElement("article", "takeover-success-message");
+  messageCard.setAttribute("aria-label", "Your board message");
+  messageCard.appendChild(createCheckoutElement("p", "current-message-label", "Current message"));
+  messageCard.appendChild(createCheckoutElement("p", "takeover-success-message-text", message));
+  messageCard.appendChild(createCheckoutElement("p", "takeover-success-message-meta", `Backing ${representedEntityName} · ${amount}`));
+  success.appendChild(messageCard);
 
-  const shareLink = container.querySelector("[data-takeover-share]");
+  const actions = createCheckoutElement("div", "takeover-success-actions");
+  const viewBoard = createCheckoutElement("button", "button button-primary", "View board");
+  viewBoard.type = "button";
+  viewBoard.dataset.takeoverViewBoard = "true";
+  viewBoard.dataset.takeoverMove = "live";
+  viewBoard.dataset.takeoverModalStep = "success";
+  actions.appendChild(viewBoard);
+  const shareLink = createCheckoutElement("a", "button button-secondary", "Share on Twitter");
+  shareLink.dataset.takeoverShare = "true";
+  shareLink.target = "_blank";
+  shareLink.rel = "noopener noreferrer";
+  actions.appendChild(shareLink);
+  const stayButton = createCheckoutElement("button", "button button-secondary", "Stay here");
+  stayButton.type = "button";
+  stayButton.dataset.takeoverStayHere = "true";
+  actions.appendChild(stayButton);
+  success.appendChild(actions);
+  success.appendChild(createCheckoutElement("p", "takeover-success-return-notice", "Returning to the board shortly."));
+  success.appendChild(createCheckoutElement("p", "takeover-success-trust", "Payment captured · Your message is live for the guaranteed display window"));
+
   const shareText = `I just took the ${boardName} board: “${message}”`;
   shareLink.href = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(boardUrl)}`;
+  container.replaceChildren(success);
+  scheduleAutoReturn(container, "live", "success");
+}
+
+function showTakeoverQueued(container, payload) {
+  rememberBoardUrl(container, payload);
+  setModalStep(container.closest("dialog"), "queued");
+  const queued = createCheckoutElement("section", "takeover-queued");
+  queued.setAttribute("role", "status");
+  queued.setAttribute("aria-live", "polite");
+  const header = createCheckoutElement("header", "takeover-queued-header");
+  const heading = createCheckoutElement("div", "takeover-queued-heading");
+  const queuedMarker = createCheckoutElement("span", "takeover-queued-marker");
+  queuedMarker.setAttribute("aria-hidden", "true");
+  heading.appendChild(queuedMarker);
+  const headingCopy = createCheckoutElement("div");
+  headingCopy.appendChild(createCheckoutElement("p", "eyebrow", "Bid received"));
+  headingCopy.appendChild(createCheckoutElement("h3", "", "You’re up next."));
+  heading.appendChild(headingCopy);
+  header.appendChild(heading);
+  header.appendChild(createDialogCloseButton("Close takeover confirmation"));
+  queued.appendChild(header);
+  queued.appendChild(createCheckoutElement("p", "takeover-queued-copy", "The current message is still in its guaranteed time. Your bid is queued to take the board unless a higher bid moves ahead first."));
+  queued.appendChild(createCheckoutElement("p", "takeover-queued-note", "You’ll only be charged if your takeover wins."));
+  const actions = createCheckoutElement("div", "takeover-queued-actions");
+  const viewBoard = createCheckoutElement("button", "button button-primary", "View board");
+  viewBoard.type = "button";
+  viewBoard.dataset.takeoverViewBoard = "true";
+  viewBoard.dataset.takeoverMove = "pending";
+  viewBoard.dataset.takeoverModalStep = "queued";
+  actions.appendChild(viewBoard);
+  const stayButton = createCheckoutElement("button", "button button-secondary", "Stay here");
+  stayButton.type = "button";
+  stayButton.dataset.takeoverStayHere = "true";
+  actions.appendChild(stayButton);
+  queued.appendChild(actions);
+  queued.appendChild(createCheckoutElement("p", "takeover-queued-return-notice", "Returning to the board shortly."));
+  container.replaceChildren(queued);
+  scheduleAutoReturn(container, "pending", "queued");
+}
+
+function showTakeoverDelayed(container) {
+  setModalStep(container.closest("dialog"), "processing");
+  showCheckoutStatus(
+    container,
+    "We’re confirming your bid.",
+    "This is taking a little longer than usual. Check the board shortly for the latest status.",
+    false,
+    { delayed: true, eyebrow: "Still confirming", move: "processing", modalStep: "processing" },
+  );
 }
 
 async function waitForBidStatus(container) {
   const statusUrl = container.dataset.statusUrl;
-  if (!statusUrl) {
-    trackTakeoverStatus(container, "processing");
-    showCheckoutStatus(
-      container,
-      "Payment successful.",
-      "Your payment was accepted. Your takeover is still processing; you can close this window and check the board shortly.",
-      false,
-    );
-    return;
-  }
-
   const terminalFailures = ["payment_failed", "auth_canceled"];
-  let latestStatus = "checkout_created";
-  for (let attempt = 0; attempt < 20; attempt += 1) {
+  for (let attempt = 0; attempt < CHECKOUT_POLL_ATTEMPTS; attempt += 1) {
+    if (container.__statusPollingCancelled) {
+      return;
+    }
     try {
-      const response = await fetch(statusUrl, {
-        credentials: "same-origin",
-        headers: { "X-Requested-With": "XMLHttpRequest" },
-      });
-      if (response.ok) {
+      if (statusUrl) {
+        const response = await fetch(statusUrl, {
+          credentials: "same-origin",
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        if (!response.ok) {
+          await wait(CHECKOUT_POLL_DELAY);
+          continue;
+        }
         const payload = await response.json();
-        latestStatus = payload.status || latestStatus;
+        if (container.__statusPollingCancelled) {
+          return;
+        }
+        const status = payload && payload.status;
 
-        if (latestStatus === "won") {
+        if (status === "authorized") {
+          trackTakeoverStatus(container, "authorized");
+          showTakeoverQueued(container, payload);
+          return;
+        }
+        if (status === "won") {
+          rememberBoardUrl(container, payload);
           trackTakeoverStatus(container, "won");
           window.takeTheBoard.trackEvent("takeover_won", checkoutAnalyticsParams(container));
           showTakeoverSuccess(container, payload);
           return;
         }
-        if (terminalFailures.includes(latestStatus)) {
-          trackTakeoverStatus(container, latestStatus);
+        if (terminalFailures.includes(status)) {
+          trackTakeoverStatus(container, status);
           showCheckoutStatus(
             container,
             "Payment not completed.",
             "Your card was not charged for this takeover. You can close this window and try again.",
             true,
+            { eyebrow: "Payment not completed" },
           );
           return;
         }
@@ -753,19 +938,50 @@ async function waitForBidStatus(container) {
       // Keep polling. Webhook processing can briefly race the status request.
     }
 
-    await wait(750);
+    await wait(CHECKOUT_POLL_DELAY);
   }
 
-  showCheckoutStatus(
-    container,
-    "Payment successful.",
-    latestStatus === "authorized"
-      ? "Your payment was accepted. Your takeover is still processing; you can close this window and check the board shortly."
-      : "Your payment was accepted and your takeover is still processing.",
-    false,
-  );
+  if (container.__statusPollingCancelled) {
+    return;
+  }
+  showTakeoverDelayed(container);
   trackTakeoverStatus(container, "processing_timeout");
 }
+
+document.addEventListener("click", function handleCheckoutOutcomeActions(event) {
+  const viewBoard = event.target.closest("[data-takeover-view-board]");
+  if (viewBoard) {
+    const container = viewBoard.closest("[data-stripe-checkout]");
+    if (container) {
+      navigateToBoard(
+        container,
+        viewBoard.dataset.takeoverMove || "processing",
+        "button",
+        viewBoard.dataset.takeoverModalStep || "processing",
+      );
+    }
+    return;
+  }
+
+  const stayHere = event.target.closest("[data-takeover-stay-here]");
+  if (stayHere) {
+    const container = stayHere.closest("[data-stripe-checkout]");
+    if (!container) {
+      return;
+    }
+    clearAutoReturn(container);
+    const notice = container.querySelector("[class*='return-notice']");
+    if (notice) {
+      notice.textContent = "You’ll stay here.";
+    }
+    return;
+  }
+
+  const share = event.target.closest("[data-takeover-share]");
+  if (share) {
+    clearAutoReturn(share.closest("[data-stripe-checkout]"));
+  }
+});
 
 async function mountEmbeddedCheckout(event) {
   const target = event.target;
@@ -804,9 +1020,10 @@ async function mountEmbeddedCheckout(event) {
       window.takeTheBoard.trackEvent("checkout_completed", checkoutAnalyticsParams(container));
       showCheckoutStatus(
         container,
-        "Payment received.",
-        "We are updating the board now. This should only take a moment.",
+        "Confirming your bid.",
+        "We’re confirming your payment and placing your bid.",
         false,
+        { loading: true },
       );
       await waitForBidStatus(container);
     };
