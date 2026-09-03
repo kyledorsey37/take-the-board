@@ -54,7 +54,7 @@
 
     {% if move_result == "live" %}
       <div class="takeover-confirmation" role="status" data-analytics-event="takeover_result_viewed" data-analytics-surface="entity_board" data-analytics-school-slug="{{ board.entity.slug }}" data-analytics-result="live">The board is yours.</div>
-    {% elif move_result == "pending" %}
+    {% elif move_result == "pending" and board.pending_bid %}
       <div class="takeover-confirmation takeover-confirmation-pending" role="status" data-analytics-event="takeover_result_viewed" data-analytics-surface="entity_board" data-analytics-school-slug="{{ board.entity.slug }}" data-analytics-result="pending">You're up next. Your message will appear shortly.</div>
     {% elif move_result == "processing" %}
       <div class="takeover-confirmation takeover-confirmation-pending" role="status" data-analytics-event="takeover_result_viewed" data-analytics-surface="entity_board" data-analytics-school-slug="{{ board.entity.slug }}" data-analytics-result="processing">We’re confirming your bid. Check the board shortly for the latest status.</div>

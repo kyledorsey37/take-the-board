@@ -292,6 +292,42 @@ class PublicNavigationTests(BoardTestCase):
             reverse("boards:social_image", kwargs={"slug": "oklahoma"}) + "?v=0",
         )
 
+    def test_stale_pending_marker_does_not_override_a_published_board(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="stale-pending-marker-fan",
+            email="stale-pending-marker@example.com",
+            display_name="PublishedFan",
+        )
+        bid = Bid.objects.create(
+            board=self.board,
+            bidder=profile,
+            represented_entity=self.oklahoma,
+            message="LIVE MESSAGE.",
+            amount_cents=500,
+            status=Bid.Status.WON,
+        )
+        self.board.current_bid = bid
+        self.board.current_controller = profile
+        self.board.current_amount_cents = bid.amount_cents
+        self.board.current_message = bid.message
+        self.board.save(
+            update_fields=[
+                "current_bid",
+                "current_controller",
+                "current_amount_cents",
+                "current_message",
+                "updated_at",
+            ]
+        )
+
+        response = self.client.get(
+            reverse("schools:detail", kwargs={"slug": "oklahoma"}),
+            {"move": "pending"},
+        )
+
+        self.assertContains(response, "LIVE MESSAGE.")
+        self.assertNotContains(response, "You're up next. Your message will appear shortly.")
+
     def test_school_board_groups_takeover_history_by_week(self) -> None:
         now = timezone.now()
         current_period = CompetitionPeriod.objects.create(
