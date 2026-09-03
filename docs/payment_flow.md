@@ -56,6 +56,15 @@ the local Stripe sandbox retain Postgres polling when queue mode is not selected
     snapshots so delayed Stripe balance-transaction fee data is attached without
     changing the original captured amount.
 
+After Embedded Checkout reports completion, the browser only observes the bidder's
+safe status endpoint. `authorized` means the card authorization succeeded and the
+bid is the current pending challenger; it is rendered as “You're up next,” not as
+a win. The browser stops polling in that state and returns to the board with
+`move=pending` after the visible ten-second return window unless the user stays.
+Only a server-observed `won` state renders the success treatment and uses
+`move=live`. A short or unavailable status poll renders a non-claiming delayed
+message with `move=processing`; browser state never triggers capture or publishing.
+
 In local settings the worker deliberately polls Postgres, so free-play tests do
 not require AWS. Select `TAKEBOARD_BID_FINALIZATION_MODE=sqs_fifo` only in an
 environment with a valid FIFO queue configuration. Production Stripe settings

@@ -71,6 +71,14 @@ without a measurement ID. Preview mode never loads the Google tag.
 | `takeover_history_week_toggled` | A takeover-history week is opened or closed | `surface`, `period` |
 | `sign_out` | Sign-out form submits | `surface` |
 
+For `takeover_status`, the checkout flow may report the existing low-cardinality
+states `authorized`, `won`, `payment_failed`, `auth_canceled`, and
+`processing_timeout`. `authorized` records that the queued panel was observed; it
+does not mean the takeover was captured. The queued and success auto-return paths
+use the existing `modal_closed` event with `close_method=auto_return` and
+`modal_step=queued` or `modal_step=success` when the dialog close is observed.
+No timer value, message, payment identifier, bid identifier, or URL is sent.
+
 ## Recommended GA4 setup before launch
 
 1. Create the production web data stream and put its `G-...` measurement ID in
