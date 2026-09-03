@@ -53,7 +53,7 @@ These are good remote handoffs that do not need your credentials first:
 These require an account, a secret, an external approval, or a product decision
 from you:
 
-- The final logo/brand assets, preferred brand treatment, and production domain.
+- Approval of the proposed brand treatment and the production domain.
 - The X/Twitter account, X developer/app access, API credentials, tweet copy,
   posting frequency, and whether every successful takeover should be posted.
 - The production Resend sender/domain, bounce and complaint handling, and
@@ -113,8 +113,8 @@ support and moderation operations, reconciliation/alerting, and the security gat
 | Community Guidelines | Done | Public page matches deterministic and classifier moderation categories. |
 | Contact page | Done | The published support address must be monitored before enabling live payments. |
 | Analytics consent | Done | GA4 is gated by the browser consent cookie; no analytics-consent row is written to the database. See [analytics tracking](analytics_tracking.md). |
-| Brand asset package | Build | Turn the existing basic logo into the approved SVG/PNG set, favicon and browser/app icons, social-card mark, light/dark variants if needed, and accessible alt text. Keep it independent from official school marks. |
-| SEO and branded social metadata | Verify/configure | Apply the logo and final brand name consistently to site metadata, Open Graph/X cards, default share images, favicon links, and any structured data; then verify previews on public board pages. |
+| Brand asset package | Done | Added the local canonical SVG lockups, separately simplified square mark, ICO/32px PNG/180px Apple touch icon exports, palette/usage notes, and accessible header/error-page treatment. The system is generic and independent from official school marks. |
+| SEO and branded social metadata | Verify/configure | Favicon and Apple touch links, theme color, existing canonical URLs, and existing escaped Open Graph/X board-card semantics are wired. The board social card intentionally keeps text-only generic branding so the current message hierarchy is unchanged. Validate live previews after the production domain and social-card cache are configured. |
 | Automatic takeover posts | Build | Connect the Take the Board X/Twitter account so a successfully captured and published takeover can generate one automatic public post. Trigger only from the server-side published outcome, make delivery idempotent, keep posting failures from blocking the game, and provide an operational retry/disable path. |
 | Post-purchase account history and support | Done | Authenticated `/account/` shows active and historical takeovers, bid/payment status, safe account references, refund/dispute state, and plain-language failed, delayed, and outbid outcomes. The bidder-owned status endpoint remains checkout polling only. |
 | 18+ acknowledgement for paid bidding | Done | The first paid-bid form collects a versioned 18+ acknowledgement, the confirmation and Checkout service boundaries enforce it, and captured purchase evidence preserves the timestamp and version. |
@@ -215,6 +215,7 @@ production configuration evidence with the launch review.
 
 | Date | Capability | Evidence and remaining gate |
 | --- | --- | --- |
+| 2026-09-03 | Brand asset package | Added canonical local SVG lockups and a separately simplified favicon/app mark with ICO, 32px PNG, and 180px Apple touch exports. The public header and error pages use the mark without duplicate spoken content; the existing board social card was reviewed and left text-branded to protect message hierarchy. Live social-preview cache validation remains external. |
 | 2026-09-03 | Transactional customer email | Resend was configured and a customer notification delivery was validated. The application notification/outbox path is complete; production sender monitoring, bounce/complaint handling, and a final production-environment delivery check remain launch operations work. |
 | 2026-09-03 | Bedrock/Nova moderation evaluation | Added a 250-case synthetic stratified regression suite, an uncached explicit live-dev evaluator, and the public-sports/personal-information prompt correction. The final live run completed all 250 cases with no provider failures, 0/60 must-allow false blocks, and 0/80 clear-block false allows. Quality gates passed; the ambiguous review set remains a separate operator/policy review gate. |
 | 2026-09-03 | Authentication session and supply-chain hardening | Cognito tokens are used only during in-memory profile hydration; authenticated sessions retain local identity and server expiry, with legacy token scrubbing and regression tests. Added Gitleaks worktree scanning, a generated pinned dependency lock, and pip-audit tooling. Before launch, run the documented Git-history scan, configure hosted dependency alerts, and resolve or rotate any discovered secret. |

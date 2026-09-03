@@ -5,11 +5,17 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ error_code }} | Take the Board</title>
-  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <meta name="theme-color" content="#171A1E">
+  <link rel="icon" href="{% static 'brand/ttb-mark.svg' %}?v=20260903-2" type="image/svg+xml" sizes="any">
+  <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}?v=20260903-2" type="image/x-icon" sizes="16x16 32x32 48x48">
+  <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}?v=20260903-2" sizes="180x180">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260903-2">
 </head>
 <body class="error-page-body">
   <main class="error-page">
-    <a class="error-brand" href="/">Take the Board</a>
+    <a class="error-brand" href="/" aria-label="Take the Board">
+      <img class="error-brand-lockup" src="{% static 'brand/ttb-lockup-reversed.svg' %}?v=20260903-2" alt="" aria-hidden="true" width="180" height="40">
+    </a>
     <p class="error-code" aria-hidden="true">{{ error_code }}</p>
     <p class="eyebrow">{{ error_label }}</p>
     <h1>{{ error_title }}</h1>

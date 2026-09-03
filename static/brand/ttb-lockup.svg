@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="56 56 562 200" role="img" aria-labelledby="title desc">
+  <title id="title">Take the Board — Claim Marker identity</title>
+  <desc id="desc">A charcoal message board with a white T and a red takeover tab, followed by the Take the Board wordmark.</desc>
+  <!-- Trimmed viewBox preserves the supplied artwork while making the lockup practical in a header. -->
+  <rect width="760" height="360" fill="#FBFAF7"/>
+  <rect x="56" y="56" width="248" height="248" rx="48" fill="#171A1E"/>
+  <path d="M96 96h168v48h-60v112h-48V144H96z" fill="#FBFAF7"/>
+  <path d="M236 56h68v160l-34-29-34 29z" fill="#D63A46"/>
+  <path d="M236 56h68v48h-68z" fill="#D63A46"/>
+  <path d="M236 96h28v48h-28z" fill="#171A1E"/>
+  <g fill="#171A1E" font-family="Arial Narrow, Arial, Helvetica, sans-serif">
+    <text x="352" y="163" font-size="32" font-weight="700" letter-spacing="5">TAKE THE</text>
+    <text x="350" y="222" font-size="64" font-weight="900" letter-spacing="-2">BOARD</text>
+    <rect x="354" y="244" width="264" height="8" rx="4" fill="#D63A46"/>
+  </g>
+</svg>

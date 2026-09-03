@@ -248,19 +248,25 @@ TAKEBOARD_MODERATION_CIRCUIT_SECONDS = int(
 )
 TAKEBOARD_MODERATION_CONCURRENCY = int(os.environ.get("TAKEBOARD_MODERATION_CONCURRENCY", "3"))
 TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS = int(
-    os.environ.get("TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS", "60")
+    os.environ.get("TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS", "30")
+)
+TAKEBOARD_MODERATION_REJECTION_THRESHOLD = int(
+    os.environ.get("TAKEBOARD_MODERATION_REJECTION_THRESHOLD", "8")
+)
+TAKEBOARD_MODERATION_REJECTION_MAX_SECONDS = int(
+    os.environ.get("TAKEBOARD_MODERATION_REJECTION_MAX_SECONDS", "300")
 )
 TAKEBOARD_RATE_LIMITING_ENABLED = env_bool("TAKEBOARD_RATE_LIMITING_ENABLED", True)
 TAKEBOARD_AUTO_MIGRATE_ON_RUNSERVER = env_bool("TAKEBOARD_AUTO_MIGRATE_ON_RUNSERVER", False)
 DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.environ.get("DJANGO_DATA_UPLOAD_MAX_MEMORY_SIZE", "16384"))
 TAKEBOARD_RATE_LIMITS = {
-    "message_request": (20, 600),
-    "message_user_uncached": (5, 600),
-    "message_ip_uncached": (15, 600),
-    "display_name_request": (12, 3600),
-    "display_name_user_uncached": (3, 3600),
-    "display_name_ip_uncached": (10, 3600),
-    "candidate_uncached": (10, 600),
+    "message_request": (60, 600),
+    "message_user_uncached": (20, 600),
+    "message_ip_uncached": (60, 600),
+    "display_name_request": (30, 3600),
+    "display_name_user_uncached": (10, 3600),
+    "display_name_ip_uncached": (30, 3600),
+    "candidate_uncached": (20, 600),
     "moderation_global_uncached": (30, 60),
     "checkout_user": (3, 600),
     "checkout_ip": (10, 600),

@@ -13,6 +13,43 @@ function clearAnalyticsConsent() {
   document.cookie = `${ANALYTICS_CONSENT_COOKIE}=; Max-Age=0; Path=/; SameSite=Lax${secure}`;
 }
 
+document.addEventListener("DOMContentLoaded", function initializeMobileNavigation() {
+  const toggle = document.querySelector("[data-nav-toggle]");
+  const nav = document.querySelector(".site-nav");
+  const links = document.getElementById(toggle && toggle.getAttribute("aria-controls"));
+  const label = toggle && toggle.querySelector("[data-nav-toggle-label]");
+
+  if (!toggle || !nav || !links || !label) {
+    return;
+  }
+
+  document.documentElement.classList.add("nav-menu-ready");
+
+  function setMenuOpen(isOpen) {
+    nav.classList.toggle("is-open", isOpen);
+    toggle.setAttribute("aria-expanded", String(isOpen));
+    toggle.setAttribute("aria-label", isOpen ? "Close navigation menu" : "Open navigation menu");
+    label.textContent = isOpen ? "Close" : "Menu";
+  }
+
+  toggle.addEventListener("click", function toggleMobileNavigation() {
+    setMenuOpen(!nav.classList.contains("is-open"));
+  });
+
+  links.addEventListener("click", function closeNavigationAfterSelection(event) {
+    if (event.target.closest("a, button")) {
+      setMenuOpen(false);
+    }
+  });
+
+  document.addEventListener("keydown", function closeNavigationOnEscape(event) {
+    if (event.key === "Escape" && nav.classList.contains("is-open")) {
+      setMenuOpen(false);
+      toggle.focus();
+    }
+  });
+});
+
 document.addEventListener("click", function handleAnalyticsConsent(event) {
   const choiceButton = event.target.closest("[data-analytics-consent-choice]");
   const settingsButton = event.target.closest("[data-open-cookie-settings]");

@@ -26,6 +26,25 @@ Take the Board uses Django templates, HTMX, and minimal vanilla JavaScript. Do n
   not vendored and remains conditional on the official Stripe origin; Google
   Analytics remains consent-gated as described below.
 
+## Brand system
+
+The canonical brand source is `static/brand/`. `ttb-lockup.svg` is the supplied
+Claim Marker concept in a trimmed light-background full lockup;
+`ttb-lockup-reversed.svg` is the dark-surface variant used by branded error
+pages; and `ttb-mark.svg` is the square board-panel crop for constrained spaces. `favicon.ico`,
+`ttb-mark-32.png`, and `apple-touch-icon.png` are local exports of that small
+mark. The package README records the charcoal/signal-red/paper palette,
+trademark-conscious usage rules, and replacement guidance.
+
+`templates/base.html` uses the small mark beside a real HTML “Take the Board”
+wordmark so the header remains responsive, selectable, and semantically named.
+The decorative image has an empty alt and the link has the accessible name
+“Take the Board”; no duplicate spoken logo text is introduced. Asset URLs use
+stable logical static paths plus a version query string and therefore remain
+compatible with WhiteNoise manifest hashing. There is intentionally no web
+manifest or 192/512px PWA icon set because the current site is not an
+installable PWA.
+
 The visual system should be independent from official school brands. Use plain school names and generic accent colors. Do not use official logos, mascot art, seals, athletics typography, or university lockups.
 
 The board directory uses each entity's validated accent as a compact card masthead
@@ -52,9 +71,24 @@ version is included in the image URL so a newly published or reset board gets a 
 social-image cache key. Social-card text follows the same public, escaped-content
 rules as the board page and must not include official school logos or lockups.
 
+The current social card keeps the board message as its largest visual element
+and retains generic text branding rather than embedding the small mark. This is
+intentional: adding a second graphic would reduce the message hierarchy in the
+1200x630 layout without adding useful school-independent context. Revisit that
+choice only as part of a deliberate social-card redesign, not as a passive
+asset swap.
+
 ## Pre-Launch Navigation
 
-The public header links to Boards, Rivalries, Leaderboard, and How it works. Django Admin remains available only at its direct operational URL and must not be linked in fan-facing navigation.
+The public header links to Boards, Rivalries, Leaderboard, and How it works on
+desktop. At the mobile breakpoint, the horizontal links collapse into an
+accessible labeled Menu button. The expanded menu groups destinations as Play
+(All boards, Rivalries, Leaderboard), Learn (How it works), and Account (Sign
+in/My account as appropriate). Django Admin remains available only at its
+direct operational URL and must not be linked in fan-facing navigation. The
+homepage also keeps a direct Browse all boards route immediately beneath the
+featured board card; school-board pages retain their existing All boards back
+link.
 
 The current board and rivalry content is public, while the local environment can also run the authenticated Stripe sandbox takeover flow.
 
@@ -72,7 +106,8 @@ sees the same copy while their session is active. A `hero_viewed` event records 
 low-cardinality `hero_variant` assignment, and hero navigation events carry that same
 parameter. The featured “Take over this board” link emits `takeover_cta_clicked`
 with `surface`, `school_slug`, `cta`, and `hero_variant` parameters for GA4
-conversion analysis.
+conversion analysis. The featured-card Browse all boards link reuses the
+existing low-cardinality `navigation_click` contract.
 
 ## Local Free-Play Takeovers
 

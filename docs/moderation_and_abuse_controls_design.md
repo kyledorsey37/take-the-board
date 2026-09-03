@@ -254,17 +254,24 @@ and the existing database uniqueness constraint both succeed.
 ## Rate Limiting And Cost Controls
 
 All limits are configuration values, not magic constants embedded in views.
-Initial values below are intentionally conservative and should be load-tested
-with real dev usage before public launch.
+These values leave room for normal trial-and-error while retaining a hard global
+cap on uncached model calls.
 
 | Surface | User limit | IP limit | Global protection |
 | --- | --- | --- | --- |
 | Auth email start | Existing 5/minute | Existing 5/minute | Existing Redis availability |
-| Display-name validation | 3 uncached/hour | 10 uncached/hour | 30 uncached/minute |
-| Message moderation | 5 uncached/10 minutes | 15 uncached/10 minutes | 30 uncached/minute |
-| Rejected message/name attempts | escalating cooldown after 3 failures | escalating cooldown | counted in alert metric |
+| Display-name validation | 10 uncached/hour | 30 uncached/hour | 30 uncached/minute |
+| Message moderation | 20 uncached/10 minutes | 60 uncached/10 minutes | 30 uncached/minute |
+| Rejected message/name attempts | escalating cooldown after 8 failures | escalating cooldown | counted in alert metric |
 | Checkout creation | 3/10 minutes | 10/10 minutes | 50/minute |
 | Bid-status polling | 30/minute | 60/minute | 500/minute |
+
+The basic moderation endpoint quota is 60 message requests per user and IP per
+10 minutes, and 30 display-name requests per user and IP per hour. Rejection
+backoff starts at 30 seconds after the eighth rejection and doubles only up to
+five minutes. These controls are intentionally separate from the uncached model
+quota, so a user can correct a rejected message without immediately exhausting
+the Bedrock budget.
 
 Cached moderation decisions do not consume an uncached Bedrock-call quota, but
 they still pass through a basic HTTP endpoint rate limit. This prevents a cache

@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="56 56 248 248" role="img" aria-labelledby="title desc">
+  <title id="title">Take the Board mark</title>
+  <desc id="desc">A charcoal message board with a white T and a red takeover tab.</desc>
+  <rect x="56" y="56" width="248" height="248" rx="48" fill="#171A1E"/>
+  <path d="M96 96h168v48h-60v112h-48V144H96z" fill="#FBFAF7"/>
+  <path d="M236 56h68v160l-34-29-34 29z" fill="#D63A46"/>
+  <path d="M236 56h68v48h-68z" fill="#D63A46"/>
+  <path d="M236 96h28v48h-28z" fill="#171A1E"/>
+</svg>

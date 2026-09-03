@@ -1,6 +1,8 @@
 .env
 .env.*
 !.env.example
+.postgres.env
+.postgres.env.*
 .resend-dev-key
 *.py[cod]
 __pycache__/

@@ -20,7 +20,8 @@
       </div>
 
       {% if featured_board %}
-        <article class="landing-featured-card" style="--board-accent: {{ featured_board_accent }};" aria-labelledby="featured-board-title">
+        <div class="landing-featured-wrap">
+          <article class="landing-featured-card" style="--board-accent: {{ featured_board_accent }};" aria-labelledby="featured-board-title">
           <div class="landing-card-topline">
             <p class="landing-card-kicker">{{ featured_reason }}</p>
             <span class="landing-card-status">{% if featured_board.bidding_enabled %}Live{% else %}Paused{% endif %}</span>
@@ -44,7 +45,9 @@
           </div>
           <a class="button button-primary landing-card-cta" href="{% url 'schools:detail' slug=featured_board.entity.slug %}" data-analytics-event="takeover_cta_clicked" data-analytics-surface="home_featured_board" data-analytics-school-slug="{{ featured_board.entity.slug }}" data-analytics-cta="take_over_this_board" data-analytics-hero-variant="{{ hero_variant.key }}">Take over this board <span aria-hidden="true">&rarr;</span></a>
           <p class="landing-card-hint">Change the message. Start the next fight.</p>
-        </article>
+          </article>
+          <a class="landing-all-boards-link" href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="home_featured_board" data-analytics-destination="boards">Browse all boards <span aria-hidden="true">&rarr;</span></a>
+        </div>
       {% endif %}
     </div>
   </section>

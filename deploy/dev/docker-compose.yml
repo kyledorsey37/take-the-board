@@ -45,7 +45,7 @@ services:
     image: postgres:17
     restart: unless-stopped
     env_file:
-      - ${TAKEBOARD_ENV_FILE:-.env}
+      - ${TAKEBOARD_POSTGRES_ENV_FILE:-.postgres.env}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     expose:

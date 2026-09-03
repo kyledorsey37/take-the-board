@@ -120,6 +120,15 @@ checks manually when needed:
 ./scripts/audit_dependencies.sh
 ```
 
+## Production deployment
+
+Deploy committed application releases directly through ECR and ECS with
+[`deploy/aws/deploy_prod_ecs.sh`](deploy/aws/deploy_prod_ecs.sh). The script
+verifies the production account, preserves the live ECS task configuration,
+waits for service stability, and runs a public board smoke check. See the
+[production ECS deployment runbook](docs/production_ecs_deployment_runbook.md)
+for prerequisites and rollback.
+
 GitHub Actions runs the same secret scan and dependency audit for every pull
 request and every push to `main`. The local hook is a fast developer
 convenience; require the `Security / Secret and dependency checks` status check

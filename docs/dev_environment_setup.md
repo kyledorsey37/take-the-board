@@ -212,14 +212,29 @@ and persistence across app container restarts.
 Use a named Docker volume for the database data and do not expose port `5432` to
 the public internet.
 
-Use:
+The application and PostgreSQL containers use separate environment files:
 
 ```text
-DATABASE_URL=postgres://ttb:<password>@postgres:5432/ttb
+/opt/ttb/.env
+/opt/ttb/.postgres.env
+```
+
+The application file is the Compose interpolation file and the `env_file` for
+`web` and `worker`. It contains `DATABASE_URL` and the Django, auth, payment,
+moderation, email, and other application settings. It must not be used as the
+PostgreSQL container's `env_file`.
+
+The PostgreSQL file is used only by `postgres` and must contain exactly these
+three non-empty settings (comments and blank lines are allowed):
+
+```text
 POSTGRES_DB=ttb
 POSTGRES_USER=ttb
 POSTGRES_PASSWORD=<password>
 ```
+
+Keep the password in `DATABASE_URL` synchronized with `POSTGRES_PASSWORD`, but
+do not copy `DATABASE_URL` into the PostgreSQL file.
 
 ### Redis
 
@@ -294,15 +309,13 @@ Required variables:
 TAKEBOARD_DEV_DOMAIN=dev.taketheboard.com
 TAKEBOARD_IMAGE=<dev-account-id>.dkr.ecr.us-east-1.amazonaws.com/ttb-dev:initial-tag
 TAKEBOARD_ENV_FILE=.env
+TAKEBOARD_POSTGRES_ENV_FILE=.postgres.env
 
 DJANGO_SETTINGS_MODULE=config.settings.staging
 DJANGO_SECRET_KEY=<dev-secret-key>
 DJANGO_ALLOWED_HOSTS=dev.taketheboard.com
 DJANGO_CSRF_TRUSTED_ORIGINS=https://dev.taketheboard.com
 DATABASE_URL=postgres://ttb:<password>@postgres:5432/ttb
-POSTGRES_DB=ttb
-POSTGRES_USER=ttb
-POSTGRES_PASSWORD=<same-password-used-in-DATABASE_URL>
 REDIS_URL=redis://redis:6379/0
 
 TAKEBOARD_DEMO_BIDDING_ENABLED=false
@@ -349,6 +362,7 @@ Recommended layout:
 ```text
 /opt/ttb/
   .env
+  .postgres.env
   Caddyfile
   docker-compose.yml
   staticfiles/
@@ -360,10 +374,67 @@ Copy the templates from:
 deploy/dev/Caddyfile
 deploy/dev/docker-compose.yml
 deploy/dev/env.example
+deploy/dev/postgres.env.example
 ```
 
-Use `deploy/dev/env.example` as the starting point for `/opt/ttb/.env`.
-Do not commit real secret values.
+Use `deploy/dev/env.example` as the starting point for `/opt/ttb/.env` and
+`deploy/dev/postgres.env.example` as the starting point for
+`/opt/ttb/.postgres.env`. Do not commit real secret values. Both files must be
+owner-readable only:
+
+```bash
+chmod 600 /opt/ttb/.env /opt/ttb/.postgres.env
+```
+
+`TAKEBOARD_POSTGRES_ENV_FILE` is resolved relative to `/opt/ttb` by the remote
+deployment script and by Compose, defaulting to `.postgres.env`. An absolute
+path is also supported when the host has already provisioned that file. A
+relative path must remain under the deployment directory. If the application
+file is stored somewhere else, set `TTB_APPLICATION_ENV_FILE` when invoking
+`remote_deploy.sh`; the default remains `/opt/ttb/.env`. For the one-command
+deploy, use `TTB_REMOTE_APPLICATION_ENV_FILE=/opt/ttb/application.env`.
+When using a custom application path, set `TAKEBOARD_ENV_FILE` in that file to
+the same relative path from `/opt/ttb` (or an absolute path) so Compose gives
+`web` and `worker` the same file.
+
+### Migrating an existing combined `.env`
+
+The next `deploy/dev/deploy_dev.sh` run (or a direct `remote_deploy.sh` run)
+performs a safe one-time split:
+
+1. It validates an existing dedicated file, or extracts the three PostgreSQL
+   settings from the legacy application file into a new `.postgres.env`.
+2. It sets both files to mode `0600` and removes only the three legacy
+   `POSTGRES_*` lines from the application file.
+3. It refuses to continue if a required setting is missing, duplicated,
+   malformed, or differs between the two files. No database credentials or
+   environment values are printed.
+4. It then runs the normal migration and image rollout.
+
+This migration never initializes, renames, deletes, or rebuilds the database
+volume or database. The existing Compose named volume is reattached unchanged;
+only the app containers are recreated by the normal deploy path. The existing
+`POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` values are preserved.
+If the dedicated file is missing or malformed, fix it from the operator's
+secret store or an approved backup and rerun the deployment; the script fails
+before Compose starts. Do not use `docker compose down -v`, remove
+`postgres_data`, or change the database settings during recovery.
+
+If a pre-split image must be rolled back after a successful split, restore the
+three settings to the application file from the dedicated file using a
+credential-safe editor or deployment secret store, set `TAKEBOARD_IMAGE` to the
+previous image tag, and redeploy. The previous image will still reattach the
+same `postgres_data` volume. After the rollback, restore the split contract
+before deploying a split-aware image again.
+
+To validate or perform the split on a host without pulling up containers, run
+the image's script with the validation flag. It still makes only the
+owner-readable environment-file migration described above, then exits before
+any Docker deployment action:
+
+```bash
+TTB_VALIDATE_DEPLOYMENT_ENV_ONLY=1 /opt/ttb/remote_deploy.sh ignored-image-reference
+```
 
 Keep `TAKEBOARD_DEV_DOMAIN=dev.taketheboard.com` and an initial
 `TAKEBOARD_IMAGE` in `/opt/ttb/.env`. The deployment script updates the image
@@ -381,8 +452,9 @@ The script builds and pushes a uniquely tagged `linux/amd64` image, finds the
 running dev instance tagged `Name=ttb-dev-ec2`, and uses SSM Run Command to pull
 the image, refresh Compose and static files, run migrations, and recreate only
 the web and Caddy services. PostgreSQL and Redis remain running with their
-named volumes untouched. It starts the worker when Stripe or demo bidding is
-enabled, and stops it when both are disabled.
+named volumes untouched. The remote bootstrap creates or validates the
+PostgreSQL-only environment file before Compose starts. It starts the worker
+when Stripe or demo bidding is enabled, and stops it when both are disabled.
 
 If the instance has a different `Name` tag, run:
 
@@ -414,6 +486,10 @@ docker push <dev-account-id>.dkr.ecr.us-east-1.amazonaws.com/ttb-dev:<git-sha>
 
 Deploy on the EC2 host:
 
+This manual flow assumes the split files already exist. On a legacy host, run
+the one-command deploy or the validation-only migration above before this
+flow; do not start PostgreSQL from the combined `.env` contract.
+
 ```bash
 cd /opt/ttb
 
@@ -424,6 +500,8 @@ docker pull "$TAKEBOARD_IMAGE"
 docker run --rm "$TAKEBOARD_IMAGE" tar -C /app/staticfiles -cf - . \
   | tar -C /opt/ttb/staticfiles -xf -
 
+chmod 600 /opt/ttb/.env /opt/ttb/.postgres.env
+# The one-command deploy performs the legacy combined-.env migration when needed.
 docker compose pull
 docker compose run --rm web python manage.py migrate --noinput
 docker compose run --rm web python manage.py seed_demo_data
@@ -449,6 +527,10 @@ The first dev environment is done when:
 - Outbidding cancels the losing pending authorization.
 - A winning takeover publishes and survives container restart.
 - Database state survives app container restart and full `docker compose down && docker compose up -d`.
+- PostgreSQL receives only `POSTGRES_DB`, `POSTGRES_USER`, and
+  `POSTGRES_PASSWORD`; existing users, content, and database state remain on
+  the unchanged `postgres_data` volume after the split and a container
+  recreation.
 - Dev does not send errors to Sentry.
 - Structured JSON logs are visible through `docker compose logs` and can be
   forwarded to CloudWatch when that integration is configured.

@@ -16,6 +16,11 @@ This document is the source of truth for the initial Take the Board security pos
 - `.env*` files are excluded from Git and Docker build context.
 - Production secrets belong in AWS Secrets Manager or SSM Parameter Store.
 - ECS task roles should be used for AWS service access instead of static AWS credentials.
+- Hosted dev uses separate owner-readable files: the application env file is
+  supplied to `web` and `worker`, while the PostgreSQL container receives only
+  `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD` from its dedicated
+  env file. The split migration preserves the existing named database volume
+  and credentials.
 - Expected production secrets include `DJANGO_SECRET_KEY`, `DATABASE_URL`, Cognito configuration, Stripe keys, Sentry DSN, and Bedrock configuration. If Resend is selected and email is enabled, `TAKEBOARD_EMAIL_RESEND_API_KEY` belongs in Secrets Manager/SSM as well.
 
 ## Django Defaults

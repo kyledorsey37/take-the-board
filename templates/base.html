@@ -6,6 +6,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="{% block meta_description %}Take the Board is an independent fan-made college football rivalry game.{% endblock %}">
   <title>{% block title %}Take the Board{% endblock %}</title>
+  <meta name="theme-color" content="#171A1E">
+  <link rel="icon" href="{% static 'brand/ttb-mark.svg' %}?v=20260903-2" type="image/svg+xml" sizes="any">
+  <link rel="alternate icon" href="{% static 'brand/favicon.ico' %}?v=20260903-2" type="image/x-icon" sizes="16x16 32x32 48x48">
+  <link rel="icon" href="{% static 'brand/ttb-mark-32.png' %}?v=20260903-2" type="image/png" sizes="32x32">
+  <link rel="apple-touch-icon" href="{% static 'brand/apple-touch-icon.png' %}?v=20260903-2" sizes="180x180">
   <meta property="og:site_name" content="Take the Board">
   <meta property="og:locale" content="en_US">
   <meta property="og:type" content="{% block og_type %}website{% endblock %}">
@@ -39,30 +44,46 @@
       window.takeTheBoardStripePublishableKey = "{{ stripe_publishable_key }}";
     </script>
   {% endif %}
-  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260902-28">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260903-3">
   <script src="{% static 'vendor/htmx-1.9.12.min.js' %}?v=1.9.12" defer></script>
-  <script src="{% static 'js/app.js' %}?v=20260902-6" defer></script>
+  <script src="{% static 'js/app.js' %}?v=20260903-3" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to content</a>
   <header class="site-header">
     <nav class="site-nav" aria-label="Main navigation">
-        <a class="brand" href="{% url 'core:home' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="home">Take the Board</a>
-      <div class="nav-links">
-        <a href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="boards">Boards</a>
-        <a href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="rivalries">Rivalries</a>
-        <a href="{% url 'leaderboard:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="leaderboard">Leaderboard</a>
-        <a href="{% url 'core:how_it_works' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="how_it_works">How it works</a>
+        <a class="brand" href="{% url 'core:home' %}" aria-label="Take the Board" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="home">
+          <img class="brand-mark" src="{% static 'brand/ttb-mark.svg' %}?v=20260903-2" alt="" aria-hidden="true" width="32" height="32">
+          <span class="brand-name">Take the Board</span>
+        </a>
+      <button class="nav-menu-toggle" type="button" data-nav-toggle aria-controls="primary-nav-links" aria-expanded="false" aria-label="Open navigation menu">
+        <span class="nav-menu-icon" aria-hidden="true"><span></span><span></span><span></span></span>
+        <span data-nav-toggle-label>Menu</span>
+      </button>
+      <div class="nav-links" id="primary-nav-links">
+        <div class="nav-menu-group">
+          <p class="nav-group-label">Play</p>
+          <a href="{% url 'boards:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="boards"><span class="nav-link-label-full">Boards</span><span class="nav-link-label-mobile">All boards</span></a>
+          <a href="{% url 'rivalries:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="rivalries">Rivalries</a>
+          <a href="{% url 'leaderboard:index' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="leaderboard">Leaderboard</a>
+        </div>
+        <div class="nav-menu-group">
+          <p class="nav-group-label">Learn</p>
+          <a href="{% url 'core:how_it_works' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="how_it_works">How it works</a>
+        </div>
         {% if auth_modal_enabled %}
-          {% if auth_profile %}
-            <a href="{% url 'accounts:account_detail' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="account">My account</a>
-            <form class="nav-auth-form" method="post" action="{% url 'accounts:logout' %}">
-              {% csrf_token %}
-              <button type="submit" data-analytics-event="sign_out" data-analytics-surface="header">Sign out</button>
-            </form>
-          {% else %}
-            <button class="nav-auth-button" type="button" data-open-dialog="auth-modal" data-analytics-event="auth_modal_opened" data-analytics-surface="header" data-analytics-modal-id="auth" data-analytics-auth-context="header">Sign in</button>
-          {% endif %}
+          <div class="nav-menu-group">
+            <p class="nav-group-label">Account</p>
+            {% if auth_profile %}
+              <a href="{% url 'accounts:account_detail' %}" data-analytics-event="navigation_click" data-analytics-surface="header" data-analytics-destination="account">My account</a>
+              <form class="nav-auth-form" method="post" action="{% url 'accounts:logout' %}">
+                {% csrf_token %}
+                <button type="submit" data-analytics-event="sign_out" data-analytics-surface="header">Sign out</button>
+              </form>
+            {% else %}
+              <button class="nav-auth-button" type="button" data-open-dialog="auth-modal" data-analytics-event="auth_modal_opened" data-analytics-surface="header" data-analytics-modal-id="auth" data-analytics-auth-context="header">Sign in</button>
+            {% endif %}
+          </div>
         {% endif %}
       </div>
     </nav>

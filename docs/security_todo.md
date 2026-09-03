@@ -11,7 +11,7 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 - [ ] Protect Django Admin at `/admin/` with an edge allowlist, VPN, or SSO.
 - [x] Require MFA for every staff/admin account in non-local deployments using django-otp TOTP; enrollment and external access controls remain deployment tasks.
 - [x] Add shared-cache admin login throttling with safe outage behavior; alert routing remains an external deployment task.
-- [ ] Split deployment environment files so Postgres receives only `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
+- [x] Split deployment environment files so Postgres receives only `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`. Hosted dev Compose now uses a dedicated owner-readable database env file and the remote deploy path migrates legacy combined `.env` files without changing the named database volume.
 - [x] Remove Cognito access, ID, and refresh tokens from Django sessions unless they are genuinely needed. Profile hydration is the only post-exchange token use; the session now stores only local identity and expiry, and legacy token fields are scrubbed on read.
 - [x] If tokens must remain in sessions, encrypt the session values and document the key-rotation procedure. Not applicable: no Cognito tokens remain in Django sessions.
 - [x] Make payment and historical records view-only in Admin: `StripeEvent`, `LedgerEntry`, `Bid`, `BoardTakeover`, `BidConfirmation`, `PaymentCapture`, and `PurchaseEvidence`.

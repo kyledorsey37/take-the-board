@@ -8,6 +8,12 @@ ecr_repository="${TTB_ECR_REPOSITORY:-ttb-dev}"
 instance_name="${TTB_DEV_INSTANCE_NAME:-ttb-dev-ec2}"
 instance_id="${TTB_DEV_INSTANCE_ID:-}"
 local_env_file="${TTB_LOCAL_ENV_FILE:-.env}"
+remote_application_env_file="${TTB_REMOTE_APPLICATION_ENV_FILE:-/opt/ttb/.env}"
+
+if [[ ! "${remote_application_env_file}" =~ ^[A-Za-z0-9_./-]+$ ]]; then
+  echo "TTB_REMOTE_APPLICATION_ENV_FILE contains unsupported path characters." >&2
+  exit 1
+fi
 
 read_local_setting() {
   local setting="$1"
@@ -94,6 +100,7 @@ image='${image_uri}'
 registry='${ecr_registry}'
 region='${aws_region}'
 deployment_dir='/opt/ttb'
+application_env_file='${remote_application_env_file}'
 bedrock_enabled='${bedrock_enabled}'
 bedrock_region='${bedrock_region}'
 bedrock_model_id='${bedrock_model_id}'
@@ -106,15 +113,20 @@ docker create --name ttb-deploy-script "\${image}" >/dev/null
 docker cp ttb-deploy-script:/app/deploy/dev/remote_deploy.sh "\${deployment_dir}/remote_deploy.sh"
 docker rm ttb-deploy-script >/dev/null
 chmod 700 "\${deployment_dir}/remote_deploy.sh"
+if [[ ! -f "\${application_env_file}" ]]; then
+  echo "Missing \${application_env_file}. Bootstrap the host before deploying." >&2
+  exit 1
+fi
+chmod 600 "\${application_env_file}"
 
 if [[ -n "\${bedrock_enabled}\${bedrock_region}\${bedrock_model_id}\${bedrock_timeout}" ]]; then
   upsert_setting() {
     local setting="\$1"
     local value="\$2"
-    if grep -q "^\${setting}=" "\${deployment_dir}/.env"; then
-      sed -i "s|^\${setting}=.*|\${setting}=\${value}|" "\${deployment_dir}/.env"
+    if grep -q "^\${setting}=" "\${application_env_file}"; then
+      sed -i "s|^\${setting}=.*|\${setting}=\${value}|" "\${application_env_file}"
     else
-      printf '\n%s=%s\n' "\${setting}" "\${value}" >> "\${deployment_dir}/.env"
+      printf '\n%s=%s\n' "\${setting}" "\${value}" >> "\${application_env_file}"
     fi
   }
   upsert_setting TAKEBOARD_BEDROCK_ENABLED "\${bedrock_enabled}"
@@ -124,7 +136,7 @@ if [[ -n "\${bedrock_enabled}\${bedrock_region}\${bedrock_model_id}\${bedrock_ti
   echo "Synchronized Bedrock moderation settings from ${local_env_file}."
 fi
 
-exec "\${deployment_dir}/remote_deploy.sh" "\${image}"
+exec env TTB_APPLICATION_ENV_FILE="\${application_env_file}" "\${deployment_dir}/remote_deploy.sh" "\${image}"
 EOF
 )"
 
@@ -154,7 +166,7 @@ if ! aws ssm wait command-executed \
     --region "${aws_region}" \
     --command-id "${command_id}" \
     --instance-id "${instance_id}" \
-    --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
+    --query '{Status:Status,StatusDetails:StatusDetails}' \
     --output json
   exit 1
 fi
@@ -164,7 +176,7 @@ aws ssm get-command-invocation \
   --region "${aws_region}" \
   --command-id "${command_id}" \
   --instance-id "${instance_id}" \
-  --query '{Status:Status,Output:StandardOutputContent,Error:StandardErrorContent}' \
+  --query '{Status:Status,StatusDetails:StatusDetails}' \
   --output json
 
 echo "Dev deployment completed: ${image_uri}"

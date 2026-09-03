@@ -99,9 +99,13 @@ def record_rejection(*, user_id: int, remote_addr: str) -> None:
     if not settings.TAKEBOARD_RATE_LIMITING_ENABLED:
         return
     count = _increment(_cache_key("moderation-rejections", f"user:{user_id}"), 3600)
-    if count < 3:
+    if count < settings.TAKEBOARD_MODERATION_REJECTION_THRESHOLD:
         return
-    cooldown = min(settings.TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS * (2 ** (count - 3)), 900)
+    cooldown = min(
+        settings.TAKEBOARD_MODERATION_REJECTION_COOLDOWN_SECONDS
+        * (2 ** (count - settings.TAKEBOARD_MODERATION_REJECTION_THRESHOLD)),
+        settings.TAKEBOARD_MODERATION_REJECTION_MAX_SECONDS,
+    )
     cache.set(_cache_key("moderation-cooldown", f"user:{user_id}"), True, timeout=cooldown)
     cache.set(
         _cache_key("moderation-cooldown", f"ip:{safe_key('ip', remote_addr)}"),

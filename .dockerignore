@@ -2,6 +2,8 @@
 .gitignore
 .env
 .env.*
+.postgres.env
+.postgres.env.*
 *.pyc
 __pycache__/
 .pytest_cache/

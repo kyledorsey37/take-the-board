@@ -75,6 +75,59 @@ class BoardTestCase(TestCase):
 class FrontendAssetDeliveryTests(BoardTestCase):
     htmx_asset = Path(__file__).resolve().parents[2] / "static/vendor/htmx-1.9.12.min.js"
     htmx_provenance = Path(__file__).resolve().parents[2] / "static/vendor/README.md"
+    brand_dir = Path(__file__).resolve().parents[2] / "static/brand"
+
+    def test_brand_assets_exist_and_the_mark_is_a_separate_small_use_asset(self) -> None:
+        for filename in (
+            "ttb-lockup.svg",
+            "ttb-lockup-reversed.svg",
+            "ttb-mark.svg",
+            "ttb-mark-32.png",
+            "apple-touch-icon.png",
+            "favicon.ico",
+            "README.md",
+        ):
+            with self.subTest(filename=filename):
+                self.assertTrue((self.brand_dir / filename).is_file())
+
+        mark = (self.brand_dir / "ttb-mark.svg").read_text()
+        lockup = (self.brand_dir / "ttb-lockup.svg").read_text()
+        self.assertIn('viewBox="56 56 248 248"', mark)
+        self.assertIn('viewBox="56 56 562 200"', lockup)
+        self.assertIn("#D63A46", mark)
+        self.assertIn("#171A1E", lockup)
+
+    def test_public_head_links_brand_icons_with_cache_busting_and_accessible_header_name(self) -> None:
+        response = self.client.get(reverse("core:home"))
+        body = response.content.decode()
+
+        self.assertContains(response, '<meta name="theme-color" content="#171A1E">')
+        self.assertContains(response, 'type="image/svg+xml" sizes="any"')
+        self.assertContains(response, 'type="image/x-icon" sizes="16x16 32x32 48x48"')
+        self.assertContains(response, 'sizes="180x180"')
+        self.assertIn("brand/ttb-mark.", body)
+        self.assertIn(".svg?v=20260903-2", body)
+        self.assertIn("brand/favicon.", body)
+        self.assertIn(".ico?v=20260903-2", body)
+        self.assertIn("brand/apple-touch-icon.", body)
+        self.assertIn(".png?v=20260903-2", body)
+        self.assertIn('aria-label="Take the Board"', body)
+        self.assertIn('class="brand-mark"', body)
+        self.assertIn('class="brand-name">Take the Board</span>', body)
+
+    def test_error_pages_include_the_same_brand_icon_treatment(self) -> None:
+        factory = RequestFactory()
+        request = factory.get("/missing-page/")
+        request.request_id = "brand-error-request"
+
+        response = page_not_found(request, ValueError("internal detail"))
+        body = response.content.decode()
+        self.assertIn("brand/ttb-mark.", body)
+        self.assertIn(".svg?v=20260903-2", body)
+        self.assertIn('class="error-brand-lockup"', body)
+        self.assertIn("brand/ttb-lockup-reversed.", body)
+        self.assertIn(".svg?v=20260903-2", body)
+        self.assertIn('aria-label="Take the Board"', body)
 
     def test_vendored_htmx_artifact_has_recorded_version_source_checksum_and_license(self) -> None:
         self.assertTrue(self.htmx_asset.is_file())
@@ -149,6 +202,51 @@ class PublicNavigationTests(BoardTestCase):
         self.assertContains(response, reverse("core:how_it_works"))
         self.assertContains(response, "Oklahoma")
         self.assertNotContains(response, 'href="/admin/"')
+
+    def test_home_features_a_direct_all_boards_route_after_the_featured_card(self) -> None:
+        response = self.client.get(reverse("core:home"))
+        body = response.content.decode()
+
+        featured_card_start = body.index('class="landing-featured-card"')
+        featured_card_end = body.index("</article>", featured_card_start)
+        all_boards_link = body.index('class="landing-all-boards-link"')
+
+        self.assertGreater(all_boards_link, featured_card_end)
+        self.assertContains(response, "Browse all boards")
+
+    @override_settings(TAKEBOARD_AUTH_MODAL_PREVIEW=True)
+    def test_mobile_menu_exposes_grouped_signed_out_navigation(self) -> None:
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, 'aria-controls="primary-nav-links"')
+        self.assertContains(response, 'aria-label="Open navigation menu"')
+        self.assertContains(response, '<p class="nav-group-label">Play</p>')
+        self.assertContains(response, '<p class="nav-group-label">Learn</p>')
+        self.assertContains(response, '<p class="nav-group-label">Account</p>')
+        self.assertContains(response, "All boards")
+        self.assertContains(response, ">Sign in</button>")
+        self.assertNotContains(response, "My account")
+
+    @override_settings(TAKEBOARD_AUTH_MODAL_PREVIEW=True)
+    def test_mobile_menu_exposes_signed_in_account_navigation(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="mobile-menu-signed-in-subject",
+            email="mobile-menu-signed-in@example.com",
+            display_name="MobileMenuFan",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        response = self.client.get(reverse("core:home"))
+
+        self.assertContains(response, "My account")
+        self.assertContains(response, ">Sign out</button>")
+        self.assertNotContains(response, 'data-analytics-auth-context="header"')
 
     def test_home_board_preview_uses_directory_card_contract(self) -> None:
         response = self.client.get(reverse("core:home"))
