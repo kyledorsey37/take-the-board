@@ -1,0 +1,151 @@
+{% extends "admin/base_site.html" %}
+{% load i18n static %}
+
+{% block extrastyle %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'css/admin_dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+  <main class="ttb-admin-home" aria-labelledby="admin-home-title">
+    <header class="ttb-admin-hero">
+      <div>
+        <p class="ttb-admin-kicker">Take the Board / Operations</p>
+        <h1 id="admin-home-title">Good morning, {{ user.get_short_name|default:user.username }}.</h1>
+        <p class="ttb-admin-intro">A clear view of what needs attention and what is moving across the boards.</p>
+      </div>
+      <div class="ttb-admin-meta">
+        <span class="ttb-live-dot" aria-hidden="true"></span>
+        <span>Live snapshot</span>
+        <time datetime="{{ admin_dashboard.generated_at|date:'c' }}">{{ admin_dashboard.generated_at|date:'M j, Y · g:i A' }}</time>
+      </div>
+    </header>
+
+    {% if admin_dashboard.has_action_items %}
+      <section class="ttb-admin-section ttb-action-section" aria-labelledby="action-needed-title">
+        <div class="ttb-section-heading">
+          <div>
+            <p class="ttb-admin-kicker">Operator queue</p>
+            <h2 id="action-needed-title">Action needed</h2>
+          </div>
+          <span class="ttb-section-note">Prioritized by operational risk</span>
+        </div>
+        <div class="ttb-action-grid">
+          {% for item in admin_dashboard.action_items %}
+            <a class="ttb-action-card ttb-action-{{ item.tone }}" href="{{ item.url }}">
+              <span class="ttb-action-card-top">
+                <span class="ttb-action-eyebrow">{{ item.eyebrow }}</span>
+                <span class="ttb-action-count">{{ item.count }}</span>
+              </span>
+              <strong>{{ item.title }}</strong>
+              <span class="ttb-action-detail">{{ item.detail }}</span>
+              <span class="ttb-action-link">Review {{ item.count_label }} <span aria-hidden="true">↗</span></span>
+            </a>
+          {% endfor %}
+        </div>
+      </section>
+    {% endif %}
+
+    {% if admin_dashboard.has_reporting %}
+      <section class="ttb-admin-section" aria-labelledby="highlights-title">
+        <div class="ttb-section-heading">
+          <div>
+            <p class="ttb-admin-kicker">Last {{ admin_dashboard.window_days }} days</p>
+            <h2 id="highlights-title">Highlights</h2>
+          </div>
+          <a class="ttb-refresh-link" href="{% url 'admin:index' %}">Refresh snapshot <span aria-hidden="true">↻</span></a>
+        </div>
+        <div class="ttb-metric-grid">
+          {% if admin_dashboard.permissions.payments %}
+            <article class="ttb-metric-card ttb-metric-dark">
+              <span class="ttb-metric-label">Captured volume</span>
+              <strong>{{ admin_dashboard.metrics.captured_volume }}</strong>
+              <span class="ttb-metric-change ttb-change-{{ admin_dashboard.metrics.captured_volume_change.tone }}">{{ admin_dashboard.metrics.captured_volume_change.label }}</span>
+            </article>
+          {% endif %}
+          {% if admin_dashboard.permissions.bids %}
+            <article class="ttb-metric-card">
+              <span class="ttb-metric-label">Bids placed</span>
+              <strong>{{ admin_dashboard.metrics.bid_count }}</strong>
+              <span class="ttb-metric-change ttb-change-{{ admin_dashboard.metrics.bid_count_change.tone }}">{{ admin_dashboard.metrics.bid_count_change.label }}</span>
+            </article>
+          {% endif %}
+          {% if admin_dashboard.permissions.takeovers %}
+            <article class="ttb-metric-card">
+              <span class="ttb-metric-label">Successful takeovers</span>
+              <strong>{{ admin_dashboard.metrics.takeover_count }}</strong>
+              <span class="ttb-metric-change ttb-change-{{ admin_dashboard.metrics.takeover_count_change.tone }}">{{ admin_dashboard.metrics.takeover_count_change.label }}</span>
+            </article>
+          {% endif %}
+          {% if admin_dashboard.permissions.users %}
+            <article class="ttb-metric-card">
+              <span class="ttb-metric-label">New users</span>
+              <strong>{{ admin_dashboard.metrics.new_users }}</strong>
+              <span class="ttb-metric-change ttb-change-{{ admin_dashboard.metrics.new_users_change.tone }}">{{ admin_dashboard.metrics.new_users_change.label }}</span>
+            </article>
+          {% endif %}
+        </div>
+      </section>
+
+      <section class="ttb-chart-grid" aria-label="Activity charts">
+        {% if admin_dashboard.permissions.payments %}
+          <article class="ttb-panel ttb-chart-panel ttb-chart-wide">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Money movement</p><h2>Captured volume</h2></div><span class="ttb-chart-max">Peak {{ admin_dashboard.charts.volume.maximum }}</span></div>
+            <figure class="ttb-chart-figure">
+              <svg viewBox="0 0 300 155" role="img" aria-label="Captured volume chart, {{ admin_dashboard.charts.volume.aria_label }}" preserveAspectRatio="none">
+                <line class="ttb-chart-gridline" x1="8" y1="20" x2="292" y2="20"></line><line class="ttb-chart-gridline" x1="8" y1="76" x2="292" y2="76"></line><line class="ttb-chart-gridline" x1="8" y1="132" x2="292" y2="132"></line>
+                <polyline class="ttb-chart-area" points="{{ admin_dashboard.charts.volume.points }} 292,132 8,132"></polyline>
+                <polyline class="ttb-chart-line" points="{{ admin_dashboard.charts.volume.points }}"></polyline>
+              </svg>
+              <figcaption><span>{{ admin_dashboard.charts.volume.start_label }}</span><span>Peak {{ admin_dashboard.charts.volume.peak_label }}</span><span>{{ admin_dashboard.charts.volume.end_label }}</span></figcaption>
+            </figure>
+          </article>
+        {% endif %}
+        {% if admin_dashboard.permissions.bids %}
+          <article class="ttb-panel ttb-chart-panel">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Demand</p><h2>Bids placed</h2></div><span class="ttb-chart-max">Peak {{ admin_dashboard.charts.bids.maximum }}</span></div>
+            <figure class="ttb-chart-figure"><svg viewBox="0 0 300 155" role="img" aria-label="Bids placed chart, {{ admin_dashboard.charts.bids.aria_label }}" preserveAspectRatio="none"><line class="ttb-chart-gridline" x1="8" y1="20" x2="292" y2="20"></line><line class="ttb-chart-gridline" x1="8" y1="76" x2="292" y2="76"></line><line class="ttb-chart-gridline" x1="8" y1="132" x2="292" y2="132"></line><polyline class="ttb-chart-area ttb-chart-area-warm" points="{{ admin_dashboard.charts.bids.points }} 292,132 8,132"></polyline><polyline class="ttb-chart-line ttb-chart-line-warm" points="{{ admin_dashboard.charts.bids.points }}"></polyline></svg><figcaption><span>{{ admin_dashboard.charts.bids.start_label }}</span><span>Peak {{ admin_dashboard.charts.bids.peak_label }}</span><span>{{ admin_dashboard.charts.bids.end_label }}</span></figcaption></figure>
+          </article>
+        {% endif %}
+        {% if admin_dashboard.permissions.users %}
+          <article class="ttb-panel ttb-chart-panel">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Audience</p><h2>New users</h2></div><span class="ttb-chart-max">Peak {{ admin_dashboard.charts.users.maximum }}</span></div>
+            <figure class="ttb-chart-figure"><svg viewBox="0 0 300 155" role="img" aria-label="New users chart, {{ admin_dashboard.charts.users.aria_label }}" preserveAspectRatio="none"><line class="ttb-chart-gridline" x1="8" y1="20" x2="292" y2="20"></line><line class="ttb-chart-gridline" x1="8" y1="76" x2="292" y2="76"></line><line class="ttb-chart-gridline" x1="8" y1="132" x2="292" y2="132"></line><polyline class="ttb-chart-area ttb-chart-area-green" points="{{ admin_dashboard.charts.users.points }} 292,132 8,132"></polyline><polyline class="ttb-chart-line ttb-chart-line-green" points="{{ admin_dashboard.charts.users.points }}"></polyline></svg><figcaption><span>{{ admin_dashboard.charts.users.start_label }}</span><span>Peak {{ admin_dashboard.charts.users.peak_label }}</span><span>{{ admin_dashboard.charts.users.end_label }}</span></figcaption></figure>
+          </article>
+        {% endif %}
+        {% if admin_dashboard.permissions.takeovers %}
+          <article class="ttb-panel ttb-chart-panel">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Board movement</p><h2>Takeovers</h2></div><span class="ttb-chart-max">Peak {{ admin_dashboard.charts.takeovers.maximum }}</span></div>
+            <figure class="ttb-chart-figure"><svg viewBox="0 0 300 155" role="img" aria-label="Takeovers chart, {{ admin_dashboard.charts.takeovers.aria_label }}" preserveAspectRatio="none"><line class="ttb-chart-gridline" x1="8" y1="20" x2="292" y2="20"></line><line class="ttb-chart-gridline" x1="8" y1="76" x2="292" y2="76"></line><line class="ttb-chart-gridline" x1="8" y1="132" x2="292" y2="132"></line><polyline class="ttb-chart-area ttb-chart-area-blue" points="{{ admin_dashboard.charts.takeovers.points }} 292,132 8,132"></polyline><polyline class="ttb-chart-line ttb-chart-line-blue" points="{{ admin_dashboard.charts.takeovers.points }}"></polyline></svg><figcaption><span>{{ admin_dashboard.charts.takeovers.start_label }}</span><span>Peak {{ admin_dashboard.charts.takeovers.peak_label }}</span><span>{{ admin_dashboard.charts.takeovers.end_label }}</span></figcaption></figure>
+          </article>
+        {% endif %}
+      </section>
+
+      <section class="ttb-bottom-grid">
+        {% if admin_dashboard.recent_cases %}
+          <article class="ttb-panel">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Needs a decision</p><h2>Latest reports</h2></div><a class="ttb-panel-link" href="{% url 'admin:moderation_messagereportcase_changelist' %}?status__exact=open">View all ↗</a></div>
+            <div class="ttb-case-list">
+              {% for case in admin_dashboard.recent_cases %}<a class="ttb-case-row" href="{{ case.url }}"><span class="ttb-status-mark ttb-status-red" aria-hidden="true"></span><span class="ttb-case-main"><strong>{{ case.school }}</strong><small>{{ case.report_count }} report{{ case.report_count|pluralize }} · {{ case.reported_at }}</small></span><span class="ttb-row-arrow" aria-hidden="true">↗</span></a>{% endfor %}
+            </div>
+          </article>
+        {% endif %}
+        {% if admin_dashboard.top_schools %}
+          <article class="ttb-panel">
+            <div class="ttb-panel-heading"><div><p class="ttb-admin-kicker">Board leaderboard</p><h2>Most active schools</h2></div><span class="ttb-panel-muted">30 days</span></div>
+            <div class="ttb-school-list">{% for school in admin_dashboard.top_schools %}<div class="ttb-school-row"><span class="ttb-school-rank">0{{ forloop.counter }}</span><span class="ttb-school-main"><strong>{{ school.name }}</strong><span class="ttb-school-bar"><i style="width: {{ school.height }}%"></i></span></span><span class="ttb-school-value"><strong>{{ school.volume }}</strong><small>{{ school.takeovers }} takeover{{ school.takeovers|pluralize }}</small></span></div>{% endfor %}</div>
+          </article>
+        {% endif %}
+      </section>
+    {% else %}
+      <section class="ttb-empty-state"><span class="ttb-empty-icon" aria-hidden="true">✦</span><h2>Your operations center is ready.</h2><p>Once activity arrives, this page will surface trends and review queues here.</p></section>
+    {% endif %}
+
+    <section class="ttb-admin-section ttb-quick-section" aria-labelledby="quick-links-title">
+      <div class="ttb-section-heading"><div><p class="ttb-admin-kicker">Navigation</p><h2 id="quick-links-title">Quick access</h2></div></div>
+      <div class="ttb-quick-grid">{% for link in admin_dashboard.quick_links %}<a class="ttb-quick-link" href="{{ link.url }}"><span><strong>{{ link.label }}</strong><small>{{ link.detail }}</small></span><span aria-hidden="true">↗</span></a>{% endfor %}</div>
+    </section>
+
+    <details class="ttb-data-rooms"><summary>Manage all data</summary>{% include "unfold/helpers/app_list_default.html" %}</details>
+  </main>
+{% endblock %}

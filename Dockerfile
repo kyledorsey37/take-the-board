@@ -10,9 +10,9 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends libpq5 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt pyproject.toml ./
+COPY requirements.txt requirements.lock pyproject.toml ./
 RUN pip install --upgrade pip \
-    && pip install -r requirements.txt
+    && pip install -r requirements.lock
 
 COPY . .
 

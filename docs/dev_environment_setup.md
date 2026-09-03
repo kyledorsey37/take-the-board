@@ -4,6 +4,54 @@ This document defines the first hosted development environment for Take the Boar
 The goal is to keep dev cheap while proving the same image, settings, auth,
 payment, webhook, and worker loop that production will use.
 
+## Security and dependency checks
+
+The application image and local launcher install the generated
+`requirements.lock`, not the unconstrained input file. Regenerate it after an
+intentional dependency update with the pinned security tools:
+
+```bash
+python3.12 -m venv .security-venv
+.security-venv/bin/python -m pip install -r requirements-security.txt
+.security-venv/bin/pip-compile --output-file=requirements.lock requirements.txt
+```
+
+Review the resulting diff, run the application tests, and commit the lock file
+with the compatible range change in `requirements.txt` when one is needed.
+Never put credentials in a requirements file or command-line argument.
+Validate an existing lock without changing the environment with
+`python3.12 -m pip install --dry-run -r requirements.lock`.
+
+Run the safe, current-worktree checks locally or from CI:
+
+```bash
+./scripts/scan_secrets.sh
+./scripts/audit_dependencies.sh
+```
+
+Gitleaks is a separate binary; install it from the official Gitleaks release or
+package manager before running the scanner. The committed `.gitleaks.toml`
+excludes generated/vendor paths, ignored local secret files, and exact
+non-secret local/build placeholders; the scanner separately fails if an env or
+local key file is tracked. Findings should be investigated and removed, not
+broadly allowlisted.
+
+Before the first public launch, make a separate, read-only history scan from a
+fresh clone after fetching all refs:
+
+```bash
+git fetch --all --tags --prune
+gitleaks git --config .gitleaks.toml --redact --no-banner --log-opts="--all"
+```
+
+If history contains a real credential, stop the launch, revoke or rotate it at
+the provider, preserve only safe incident metadata, remove the current-tree
+copy, and follow the repository's approved history-remediation process. Do not
+rewrite Git history casually or treat a history scan as a substitute for
+credential rotation. Configure repository dependency alerts (for example,
+Dependabot or an equivalent hosted service) separately; no cloud credential is
+needed by the local audit command.
+
 ## One-off Resend test
 
 To test Resend without changing Django settings or the worker, put one

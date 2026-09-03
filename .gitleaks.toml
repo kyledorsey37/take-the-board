@@ -1,0 +1,23 @@
+title = "Take the Board secret scanning"
+
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Generated/vendor content and committed non-secret build/local placeholders"
+paths = [
+  '''(^|/)\.git/''',
+  '''(^|/)\.env$''',
+  '''(^|/)\.env\..*$''',
+  '''(^|/)\.resend-dev-key$''',
+  '''(^|/)\.venv/''',
+  '''(^|/)\.security-venv/''',
+  '''(^|/)(staticfiles|media|node_modules|vendor)/''',
+  '''(^|/)(coverage|htmlcov)/''',
+  '''(^|/)(\.pytest_cache|__pycache__)/''',
+]
+regexTarget = "match"
+regexes = [
+  '''unsafe-local-dev-key-change-me''',
+  '''build-placeholder-not-runtime-secret''',
+]

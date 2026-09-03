@@ -121,12 +121,7 @@ def email_verify(request: HttpRequest) -> JsonResponse:
     set_authenticated_session(
         request,
         profile=profile,
-        tokens={
-            "access_token": tokens.access_token,
-            "id_token": tokens.id_token,
-            "refresh_token": tokens.refresh_token,
-            "expires_in": tokens.expires_in,
-        },
+        expires_in=tokens.expires_in,
     )
     return JsonResponse(
         {
@@ -235,12 +230,7 @@ def oauth_callback(request: HttpRequest) -> HttpResponse:
     set_authenticated_session(
         request,
         profile=profile,
-        tokens={
-            "access_token": tokens.access_token,
-            "id_token": tokens.id_token,
-            "refresh_token": tokens.refresh_token,
-            "expires_in": tokens.expires_in,
-        },
+        expires_in=tokens.expires_in,
     )
     return redirect(next_url)
 

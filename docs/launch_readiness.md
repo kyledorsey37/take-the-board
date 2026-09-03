@@ -5,7 +5,7 @@ the current MVP implementation to a public, real-money launch. It is a status
 document, not legal advice and not a replacement for the detailed source-of-
 truth documents linked below.
 
-Last reviewed: 2026-09-02
+Last reviewed: 2026-09-03
 
 ## Status legend
 
@@ -184,8 +184,10 @@ The highest-priority items are:
 - staging verification of the first-paid-bid 18+ acknowledgement and server-side evidence;
 - Admin application protection, MFA, login throttling, and audit coverage are implemented; edge allowlist/VPN/SSO, staff enrollment/recovery, and alert destinations remain external deployment tasks;
 - immutable payment/history records in Admin;
-- fail-closed production settings, secret handling, dependency scanning, and
-  production-like integration checks;
+- fail-closed production settings, secret handling, and production-like
+  integration checks; local secret scanning, pinned dependency installation, and
+  pip-audit are implemented, while hosted dependency alerts and the one-time
+  Git-history scan remain operator launch gates;
 - CSP, security headers, authentication response caching, and request-ID
   validation;
 - authorization, OAuth state, CSRF, rate-limit, webhook, idempotency, XSS, and
@@ -215,6 +217,7 @@ production configuration evidence with the launch review.
 | --- | --- | --- |
 | 2026-09-03 | Transactional customer email | Resend was configured and a customer notification delivery was validated. The application notification/outbox path is complete; production sender monitoring, bounce/complaint handling, and a final production-environment delivery check remain launch operations work. |
 | 2026-09-03 | Bedrock/Nova moderation evaluation | Added a 250-case synthetic stratified regression suite, an uncached explicit live-dev evaluator, and the public-sports/personal-information prompt correction. The final live run completed all 250 cases with no provider failures, 0/60 must-allow false blocks, and 0/80 clear-block false allows. Quality gates passed; the ambiguous review set remains a separate operator/policy review gate. |
+| 2026-09-03 | Authentication session and supply-chain hardening | Cognito tokens are used only during in-memory profile hydration; authenticated sessions retain local identity and server expiry, with legacy token scrubbing and regression tests. Added Gitleaks worktree scanning, a generated pinned dependency lock, and pip-audit tooling. Before launch, run the documented Git-history scan, configure hosted dependency alerts, and resolve or rotate any discovered secret. |
 
 ## Source documents
 

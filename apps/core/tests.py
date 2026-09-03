@@ -177,9 +177,6 @@ class PublicNavigationTests(BoardTestCase):
         session[AUTH_SESSION_KEY] = {
             "profile_id": profile.id,
             "cognito_sub": profile.cognito_sub,
-            "access_token": "access-token",
-            "id_token": "id-token",
-            "refresh_token": "refresh-token",
             "expires_at": 4_000_000_000,
         }
         session.save()
@@ -870,9 +867,6 @@ class AuthenticatedBiddingTests(BoardTestCase):
         session[AUTH_SESSION_KEY] = {
             "profile_id": profile.id,
             "cognito_sub": profile.cognito_sub,
-            "access_token": "access-token",
-            "id_token": "id-token",
-            "refresh_token": "refresh-token",
             "expires_at": 4_000_000_000,
         }
         session.save()
@@ -907,9 +901,6 @@ class AuthenticatedBiddingTests(BoardTestCase):
         session[AUTH_SESSION_KEY] = {
             "profile_id": profile.id,
             "cognito_sub": str(profile.cognito_sub),
-            "access_token": "access-token",
-            "id_token": "id-token",
-            "refresh_token": "refresh-token",
             "expires_at": 4_000_000_000,
         }
         session.save()
@@ -945,9 +936,6 @@ class AuthenticatedBiddingTests(BoardTestCase):
         session[AUTH_SESSION_KEY] = {
             "profile_id": profile.id,
             "cognito_sub": profile.cognito_sub,
-            "access_token": "access-token",
-            "id_token": "id-token",
-            "refresh_token": "refresh-token",
             "expires_at": 4_000_000_000,
         }
         session.save()

@@ -5,10 +5,11 @@ description = "Django monolith for Take the Board."
 requires-python = ">=3.12"
 dependencies = [
   "Django>=5.2,<6.0",
-  "Pillow>=11.0,<12",
+  "Pillow>=12.3,<13",
   "qrcode>=8.0,<9",
   "boto3>=1.34,<2",
   "django-unfold>=0.102,<1.0",
+  "django-otp>=1.5,<2.0",
   "gunicorn>=23,<24",
   "whitenoise>=6.9,<7",
   "psycopg[binary]>=3.2,<4",

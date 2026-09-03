@@ -1,7 +1,7 @@
 """Cognito passwordless email OTP and Hosted UI helpers.
 
-Tokens only pass through this module into the server-side Django session. They
-must never be added to logs, responses, analytics, or templates.
+Tokens remain in memory only for the sign-in exchange and profile hydration.
+They must never be added to sessions, logs, responses, analytics, or templates.
 """
 
 import base64

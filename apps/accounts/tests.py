@@ -14,7 +14,11 @@ from apps.accounts.services.cognito import (
     start_email_auth,
     verify_email_code,
 )
-from apps.accounts.services.session import AUTH_SESSION_KEY, PENDING_AUTH_SESSION_KEY
+from apps.accounts.services.session import (
+    AUTH_SESSION_KEY,
+    PENDING_AUTH_SESSION_KEY,
+    get_authenticated_profile,
+)
 from apps.moderation.services.rate_limits import RateLimitExceeded as ModerationRateLimitExceeded
 from apps.bidding.models import Bid
 from apps.boards.models import Board, BoardTakeover
@@ -107,6 +111,7 @@ class EmailAuthenticationTests(TestCase):
             "expires_at": 4_000_000_000,
         }
         session.save()
+        initial_session_key = session.session_key
         tokens = CognitoTokens(
             access_token="access-token",
             id_token="id-token",
@@ -124,9 +129,35 @@ class EmailAuthenticationTests(TestCase):
             {"ok": True, "signed_in": True, "needs_display_name": True},
         )
         auth_session = self.client.session[AUTH_SESSION_KEY]
+        self.assertEqual(
+            set(auth_session),
+            {"profile_id", "cognito_sub", "expires_at"},
+        )
         self.assertEqual(auth_session["profile_id"], profile.id)
-        self.assertEqual(auth_session["access_token"], "access-token")
+        self.assertEqual(auth_session["cognito_sub"], profile.cognito_sub)
+        self.assertNotIn("access_token", auth_session)
+        self.assertNotIn("id_token", auth_session)
+        self.assertNotIn("refresh_token", auth_session)
         self.assertNotIn(PENDING_AUTH_SESSION_KEY, self.client.session)
+        self.assertNotEqual(self.client.session.session_key, initial_session_key)
+
+    def test_legacy_token_fields_are_removed_from_an_existing_session(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="legacy-session-subject",
+            email="legacy-session@example.com",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "expires_at": 4_000_000_000,
+        }
+        session.save()
+
+        request = self.client.get(reverse("core:home")).wsgi_request
+        self.assertEqual(get_authenticated_profile(request), profile)
+        auth_session = self.client.session[AUTH_SESSION_KEY]
+        self.assertEqual(set(auth_session), {"profile_id", "cognito_sub", "expires_at"})
 
     def test_authenticated_user_can_set_a_board_name_once(self) -> None:
         cache.clear()
@@ -138,9 +169,6 @@ class EmailAuthenticationTests(TestCase):
         session[AUTH_SESSION_KEY] = {
             "profile_id": profile.id,
             "cognito_sub": profile.cognito_sub,
-            "access_token": "access-token",
-            "id_token": "id-token",
-            "refresh_token": "refresh-token",
             "expires_at": 4_000_000_000,
         }
         session.save()
@@ -250,6 +278,40 @@ class EmailAuthenticationTests(TestCase):
 
         self.assertEqual(response.status_code, 403)
 
+    def test_expired_authenticated_session_loses_access(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="expired-session-subject",
+            email="expired-session@example.com",
+        )
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": profile.id,
+            "cognito_sub": profile.cognito_sub,
+            "expires_at": 1,
+        }
+        session.save()
+
+        response = self.client.get(reverse("accounts:account_detail"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn(AUTH_SESSION_KEY, self.client.session)
+
+    def test_logout_clears_authentication_and_pending_state(self) -> None:
+        session = self.client.session
+        session[AUTH_SESSION_KEY] = {
+            "profile_id": 1,
+            "cognito_sub": "logout-subject",
+            "expires_at": 4_000_000_000,
+        }
+        session[PENDING_AUTH_SESSION_KEY] = {"flow": "signin", "expires_at": 4_000_000_000}
+        session.save()
+
+        response = self.client.post(reverse("accounts:logout"))
+
+        self.assertEqual(response.status_code, 302)
+        self.assertNotIn(AUTH_SESSION_KEY, self.client.session)
+        self.assertNotIn(PENDING_AUTH_SESSION_KEY, self.client.session)
+
     def test_hosted_callback_rejects_an_invalid_state(self) -> None:
         session = self.client.session
         session["takeboard.auth.oauth_state"] = "expected-state"
@@ -258,6 +320,35 @@ class EmailAuthenticationTests(TestCase):
         response = self.client.get(reverse("accounts:oauth_callback"), {"state": "wrong-state", "code": "code"})
 
         self.assertEqual(response.status_code, 400)
+
+    def test_hosted_callback_hydrates_a_minimal_session(self) -> None:
+        profile = UserProfile.objects.create(
+            cognito_sub="hosted-cognito-subject",
+            email="hosted@example.com",
+        )
+        session = self.client.session
+        session["takeboard.auth.oauth_state"] = "expected-state"
+        session.save()
+        initial_session_key = session.session_key
+        tokens = CognitoTokens(
+            access_token="access-token",
+            id_token="id-token",
+            refresh_token="refresh-token",
+            expires_in=3600,
+        )
+
+        with patch("apps.accounts.views.exchange_authorization_code", return_value=tokens), patch(
+            "apps.accounts.views.hydrate_profile", return_value=profile
+        ):
+            response = self.client.get(
+                reverse("accounts:oauth_callback"),
+                {"state": "expected-state", "code": "code"},
+            )
+
+        self.assertEqual(response.status_code, 302)
+        auth_session = self.client.session[AUTH_SESSION_KEY]
+        self.assertEqual(set(auth_session), {"profile_id", "cognito_sub", "expires_at"})
+        self.assertNotEqual(self.client.session.session_key, initial_session_key)
 
     def test_sign_in_modal_renders_when_cognito_auth_is_enabled(self) -> None:
         response = self.client.get(reverse("core:home"))

@@ -11,7 +11,14 @@ The normal sign-in experience stays inside Django templates. The browser submits
 3. Existing confirmed users start Cognito `USER_AUTH` with `PREFERRED_CHALLENGE=EMAIL_OTP`.
 4. New users use their email as Cognito's email-only username, then confirm the email with Cognito's sign-up code.
 5. Cognito returns an automatic sign-in session from `ConfirmSignUp`; Django passes it to `USER_AUTH` so the same code signs the fan in without a second email.
-6. Django validates the resulting Cognito access token with `GetUser`, maps the Cognito `sub` to `UserProfile`, rotates the Django session ID, and stores tokens only in the server-side Django session.
+6. Django validates the resulting Cognito access token with `GetUser`, maps the Cognito `sub` to `UserProfile`, rotates the Django session ID, and stores only the local session identity.
+
+Cognito access, ID, and refresh tokens remain in memory only for the sign-in
+exchange and profile hydration. The authenticated Django session contains only
+`profile_id`, `cognito_sub`, and a server-calculated `expires_at` timestamp.
+Authenticated pages and bidding use the local `UserProfile`; no post-sign-in
+route needs a Cognito bearer token. Sessions created by older releases are
+scrubbed of legacy token fields when they are next read.
 
 The browser receives only success/error state. Do not log email addresses, Cognito sessions, OTPs, tokens, or raw Cognito responses.
 

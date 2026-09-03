@@ -122,6 +122,7 @@ TEMPLATES = [
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
                 "apps.core.context_processors.analytics",
+                "apps.core.context_processors.admin_dashboard",
                 "apps.accounts.context_processors.auth",
             ],
         },

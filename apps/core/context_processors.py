@@ -15,3 +15,12 @@ def analytics(request: HttpRequest) -> dict[str, str]:
             or settings.TAKEBOARD_ANALYTICS_CONSENT_PREVIEW
         ),
     }
+
+
+def admin_dashboard(request: HttpRequest) -> dict:
+    """Load the operations home only for the authenticated Admin index."""
+    if request.path.rstrip("/") != "/admin" or not getattr(request.user, "is_staff", False):
+        return {}
+    from apps.core.services.admin_dashboard import build_admin_dashboard
+
+    return {"admin_dashboard": build_admin_dashboard(request)}

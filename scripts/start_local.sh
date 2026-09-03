@@ -48,7 +48,7 @@ fi
 
 if ! "${VENV_PYTHON}" -c "import django, unfold" >/dev/null 2>&1; then
   echo "Installing local Python dependencies..."
-  "${VENV_PYTHON}" -m pip install -r requirements.txt
+  "${VENV_PYTHON}" -m pip install -r requirements.lock
 fi
 
 export DJANGO_SETTINGS_MODULE="${DJANGO_SETTINGS_MODULE:-config.settings.local}"

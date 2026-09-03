@@ -6,6 +6,7 @@
 __pycache__/
 .Python
 .venv/
+.security-venv/
 venv/
 env/
 db.sqlite3

@@ -104,6 +104,19 @@ configuration without overwriting existing records. The public Boards page and
 school pages query that competition directly; Django Admin remains the operational
 source of truth after seeding.
 
+## Admin Operations Home
+
+The Django Admin index is an operations home rather than only a model list. It
+provides a read-only, staff-permission-aware snapshot with action queues for open
+message reports, moderation review/block audits, payment remediation, and pending
+Stripe fee reconciliation. It also shows 30-day activity highlights, responsive
+inline SVG charts for captures, bids, new users, and takeovers, plus recent report
+and school-activity panels. Financial activity uses `PaymentCapture`, while game
+activity uses `Bid` and `BoardTakeover`; pending, canceled, refunded, and disputed
+records must not be presented as captured volume. The page remains under the
+existing `/admin/` authentication, MFA, and deployment access controls and does
+not add a public analytics route or analytics events.
+
 Production bootstrap uses the separate `python manage.py seed_production_roster`
 command. It requires `TAKEBOARD_ENVIRONMENT=production`, is idempotent, and creates
 only the initial competition, roster, boards, rivalries, game configuration, and
@@ -228,8 +241,8 @@ addresses, message text, payment identifiers, or provider payloads.
 
 The existing `run_bid_worker` drains the email outbox when email is enabled.
 Failed attempts use bounded exponential backoff, and `EmailOutbox` is
-read-only in Admin for operational inspection. Configure sender identity,
-domain authentication, bounce/complaint handling, and a monitored mailbox
+read-only in Admin for operational inspection. Configure sender DNS records,
+bounce/complaint handling, and a monitored mailbox
 before enabling live delivery.
 
 ## Payment and moderation operations

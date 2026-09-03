@@ -12,8 +12,8 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 - [x] Require MFA for every staff/admin account in non-local deployments using django-otp TOTP; enrollment and external access controls remain deployment tasks.
 - [x] Add shared-cache admin login throttling with safe outage behavior; alert routing remains an external deployment task.
 - [ ] Split deployment environment files so Postgres receives only `POSTGRES_DB`, `POSTGRES_USER`, and `POSTGRES_PASSWORD`.
-- [ ] Remove Cognito access, ID, and refresh tokens from Django sessions unless they are genuinely needed.
-- [ ] If tokens must remain in sessions, encrypt the session values and document the key-rotation procedure.
+- [x] Remove Cognito access, ID, and refresh tokens from Django sessions unless they are genuinely needed. Profile hydration is the only post-exchange token use; the session now stores only local identity and expiry, and legacy token fields are scrubbed on read.
+- [x] If tokens must remain in sessions, encrypt the session values and document the key-rotation procedure. Not applicable: no Cognito tokens remain in Django sessions.
 - [x] Make payment and historical records view-only in Admin: `StripeEvent`, `LedgerEntry`, `Bid`, `BoardTakeover`, `BidConfirmation`, `PaymentCapture`, and `PurchaseEvidence`.
 - [x] Disable Admin add/change/delete permissions and bulk actions for immutable records.
 - [x] Audit administrative state changes for user controls, board controls, moderation remediation, and game configuration.
@@ -27,8 +27,10 @@ release-validation, and security work, see [launch readiness](launch_readiness.m
 - [ ] Ensure production and staging use Gunicorn, never `runserver` or `--insecure`.
 - [ ] Set secret files to owner-readable only: `chmod 600 .env` and equivalent server files.
 - [ ] Keep `.env*`, database dumps, backups, private keys, and cloud credentials excluded from Git and Docker build contexts.
-- [ ] Add a secret scanner to pre-commit/CI and scan Git history before the first public launch.
-- [ ] Pin dependencies with a lock file or hashes and enable dependency vulnerability alerts.
+- [x] Add a secret scanner to pre-commit/CI. `scripts/scan_secrets.sh` runs Gitleaks against the current worktree and is CI-friendly.
+- [ ] Run the one-time Git-history secret scan before the first public launch, using the process in `docs/dev_environment_setup.md`.
+- [x] Pin dependencies with a lock file or hashes and add dependency vulnerability checking. `requirements.lock` is generated from `requirements.txt`; `scripts/audit_dependencies.sh` runs pip-audit without credentials.
+- [ ] Enable hosted repository dependency alerts as an operator configuration gate.
 
 ## Browser and HTTP hardening
 
